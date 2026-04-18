@@ -273,7 +273,7 @@ export default function LoginPage() {
         onSubmit={handlePatchProfile}
         style={{ marginTop: "1rem", display: "grid", gap: "0.75rem" }}
       >
-        <h2>PATCH /api/profile</h2>
+        <h2 className="text-lg font-semibold text-red-600">PATCH /api/profile</h2>
         <input
           value={patchName}
           onChange={(event) => setPatchName(event.target.value)}
@@ -323,6 +323,7 @@ export default function LoginPage() {
           <strong>GET/PATCH /api/profile:</strong>
           <pre>{JSON.stringify(profileResult, null, 2)}</pre>
         </div>
+
       </section>
     </main>
   );
