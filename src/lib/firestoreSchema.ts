@@ -5,6 +5,7 @@ import {
   type DocumentData,
 } from "firebase-admin/firestore";
 
+import { UnauthorizedError } from "./authMiddleware";
 import { firestore } from "./firebaseAdmin";
 
 export const firestoreCollections = {
@@ -35,6 +36,12 @@ type TimestampLike = {
   toDate: () => Date;
 };
 
+type FirestoreQueryError = {
+  code?: string | number;
+  message?: string;
+  details?: string;
+};
+
 export type UserProfile = {
   uid: string;
   email: string | null;
@@ -46,6 +53,28 @@ export type UserProfile = {
   createdAt: string | null;
   updatedAt: string | null;
   lastLoginAt: string | null;
+};
+
+export type Farm = {
+  id: string;
+  uid: string;
+  name: string;
+  location: string | null;
+  isActive: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type SoilProfile = {
+  id: string;
+  uid: string;
+  farmId: string;
+  pH: number | null;
+  nitrogen: number | null;
+  phosphorus: number | null;
+  potassium: number | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 };
 
 type EnsureUserScaffoldInput = {
@@ -63,6 +92,25 @@ type UserProfileUpdates = {
   name?: string;
   phone?: string;
   address?: string;
+};
+
+type FarmCreateInput = {
+  name: string;
+  location?: string | null;
+  isActive?: boolean;
+};
+
+type FarmUpdateInput = {
+  name?: string;
+  location?: string | null;
+  isActive?: boolean;
+};
+
+type SoilProfileCreateInput = {
+  pH: number;
+  nitrogen: number;
+  phosphorus: number;
+  potassium: number;
 };
 
 function normalizeText(value: unknown, maxLength: number): string | null {
@@ -96,12 +144,28 @@ function toIsoString(value: unknown): string | null {
   return value.toDate().toISOString();
 }
 
+function toTimestampMillis(value: unknown): number {
+  if (!isTimestampLike(value)) {
+    return 0;
+  }
+
+  return value.toDate().getTime();
+}
+
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value.filter((item): item is string => typeof item === "string");
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return null;
+  }
+
+  return value;
 }
 
 function toUserProfile(uid: string, data: DocumentData): UserProfile {
@@ -117,6 +181,95 @@ function toUserProfile(uid: string, data: DocumentData): UserProfile {
     updatedAt: toIsoString(data.updatedAt),
     lastLoginAt: toIsoString(data.lastLoginAt),
   };
+}
+
+function toFarm(id: string, data: DocumentData): Farm {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    name: normalizeText(data.name, 120) ?? "Untitled Farm",
+    location: normalizeText(data.location, 180),
+    isActive: data.isActive === true,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function toSoilProfile(id: string, data: DocumentData): SoilProfile {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    farmId: normalizeText(data.farmId, 128) ?? "",
+    pH: toNullableNumber(data.ph ?? data.pH),
+    nitrogen: toNullableNumber(data.nitrogen),
+    phosphorus: toNullableNumber(data.phosphorus),
+    potassium: toNullableNumber(data.potassium),
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function isMissingFirestoreIndexError(
+  error: unknown,
+): error is FirestoreQueryError {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const typedError = error as FirestoreQueryError;
+  const code = String(typedError.code ?? "");
+  const message = String(typedError.message ?? "");
+  const details = String(typedError.details ?? "");
+
+  return (
+    code === "9" &&
+    (message.includes("requires an index") ||
+      details.includes("requires an index"))
+  );
+}
+
+async function assertFarmOwnership(uid: string, farmId: string) {
+  const farmRef = farmsCollection.doc(farmId);
+  const farmSnapshot = await farmRef.get();
+
+  if (!farmSnapshot.exists) {
+    return null;
+  }
+
+  const farmData = farmSnapshot.data() ?? {};
+
+  if (normalizeText(farmData.uid, 128) !== uid) {
+    throw new UnauthorizedError("You are not allowed to access this farm.");
+  }
+
+  return {
+    farmRef,
+    farmSnapshot,
+    farmData,
+  };
+}
+
+async function setActiveFarmState(uid: string, activeFarmId: string) {
+  const userFarmSnapshot = await farmsCollection.where("uid", "==", uid).get();
+  const batch = firestore.batch();
+  let hasChanges = false;
+
+  for (const farmDoc of userFarmSnapshot.docs) {
+    const nextIsActive = farmDoc.id === activeFarmId;
+    const currentIsActive = farmDoc.data().isActive === true;
+
+    if (currentIsActive !== nextIsActive) {
+      hasChanges = true;
+      batch.update(farmDoc.ref, {
+        isActive: nextIsActive,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  if (hasChanges) {
+    await batch.commit();
+  }
 }
 
 function extractProviderIds(decodedToken: DecodedIdToken): string[] {
@@ -212,6 +365,7 @@ async function ensureDefaultFarm(uid: string): Promise<string> {
 async function initializeRelatedCollections(uid: string, farmId: string) {
   await ensureSeedDocument(soilProfilesCollection, uid, farmId, {
     ph: null,
+    pH: null,
     moisture: null,
     nitrogen: null,
     phosphorus: null,
@@ -347,4 +501,226 @@ export async function updateUserProfile(
   }
 
   return toUserProfile(uid, updatedSnapshot.data() ?? {});
+}
+
+export async function listFarmsByUid(uid: string): Promise<Farm[]> {
+  const farmSnapshot = await farmsCollection.where("uid", "==", uid).get();
+
+  return farmSnapshot.docs.map((farmDoc) => toFarm(farmDoc.id, farmDoc.data()));
+}
+
+export async function createFarm(
+  uid: string,
+  input: FarmCreateInput,
+): Promise<Farm> {
+  const farmRef = farmsCollection.doc();
+  const shouldBeActive = input.isActive === true;
+
+  await farmRef.set({
+    uid,
+    name: normalizeText(input.name, 120),
+    location: normalizeText(input.location, 180),
+    isActive: shouldBeActive,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  if (shouldBeActive) {
+    await setActiveFarmState(uid, farmRef.id);
+  }
+
+  const createdSnapshot = await farmRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create farm.");
+  }
+
+  return toFarm(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
+export async function getFarmByIdForUser(
+  uid: string,
+  farmId: string,
+): Promise<Farm | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  return toFarm(ownership.farmSnapshot.id, ownership.farmData);
+}
+
+export async function updateFarmByIdForUser(
+  uid: string,
+  farmId: string,
+  updates: FarmUpdateInput,
+): Promise<Farm | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const updatePayload: DocumentData = {
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(updates, "name")) {
+    updatePayload.name = normalizeText(updates.name, 120);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "location")) {
+    updatePayload.location = normalizeText(updates.location, 180);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "isActive")) {
+    updatePayload.isActive = updates.isActive === true;
+  }
+
+  await ownership.farmRef.set(updatePayload, { merge: true });
+
+  if (updates.isActive === true) {
+    await setActiveFarmState(uid, farmId);
+  }
+
+  const updatedSnapshot = await ownership.farmRef.get();
+
+  if (!updatedSnapshot.exists) {
+    throw new Error("Failed to update farm.");
+  }
+
+  return toFarm(updatedSnapshot.id, updatedSnapshot.data() ?? {});
+}
+
+export async function deleteFarmByIdForUser(
+  uid: string,
+  farmId: string,
+): Promise<boolean> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return false;
+  }
+
+  await ownership.farmRef.delete();
+
+  return true;
+}
+
+export async function activateFarmByIdForUser(
+  uid: string,
+  farmId: string,
+): Promise<Farm | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  await setActiveFarmState(uid, farmId);
+
+  const activeSnapshot = await ownership.farmRef.get();
+
+  if (!activeSnapshot.exists) {
+    throw new Error("Failed to activate farm.");
+  }
+
+  return toFarm(activeSnapshot.id, activeSnapshot.data() ?? {});
+}
+
+export async function createSoilProfileForFarm(
+  uid: string,
+  farmId: string,
+  input: SoilProfileCreateInput,
+): Promise<SoilProfile | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const soilDocRef = soilProfilesCollection.doc();
+
+  await soilDocRef.set({
+    uid,
+    farmId,
+    ph: input.pH,
+    pH: input.pH,
+    nitrogen: input.nitrogen,
+    phosphorus: input.phosphorus,
+    potassium: input.potassium,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await soilDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create soil profile.");
+  }
+
+  return toSoilProfile(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
+export async function getLatestSoilProfileForFarm(
+  uid: string,
+  farmId: string,
+): Promise<SoilProfile | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  let latestDataDoc:
+    | (typeof soilProfilesCollection extends CollectionReference<infer T>
+        ? import("firebase-admin/firestore").QueryDocumentSnapshot<T>
+        : never)
+    | null = null;
+
+  try {
+    const indexedSnapshot = await soilProfilesCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(10)
+      .get();
+
+    latestDataDoc =
+      indexedSnapshot.docs.find((doc) => doc.data().isSeedData !== true) ??
+      null;
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await soilProfilesCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    latestDataDoc = candidateDocs[0] ?? null;
+  }
+
+  if (!latestDataDoc) {
+    return null;
+  }
+
+  return toSoilProfile(latestDataDoc.id, latestDataDoc.data());
 }

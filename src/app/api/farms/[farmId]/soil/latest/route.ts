@@ -4,9 +4,9 @@ import {
   errorResponse,
   handleRouteError,
   successResponse,
-} from "../../../../../lib/apiResponse";
-import { verifyTokenWithClaims } from "../../../../../lib/authMiddleware";
-import { activateFarmByIdForUser } from "../../../../../lib/firestoreSchema";
+} from "../../../../../../lib/apiResponse";
+import { verifyTokenWithClaims } from "../../../../../../lib/authMiddleware";
+import { getLatestSoilProfileForFarm } from "../../../../../../lib/firestoreSchema";
 
 export const runtime = "nodejs";
 
@@ -14,11 +14,11 @@ const farmParamsSchema = z.object({
   farmId: z.string().trim().min(1),
 });
 
-type FarmActivateContext = {
+type FarmSoilLatestContext = {
   params: Promise<{ farmId: string }>;
 };
 
-export async function PATCH(request: Request, context: FarmActivateContext) {
+export async function GET(request: Request, context: FarmSoilLatestContext) {
   try {
     const routeParams = await context.params;
     const farmIdResult = farmParamsSchema.safeParse(routeParams);
@@ -28,21 +28,21 @@ export async function PATCH(request: Request, context: FarmActivateContext) {
     }
 
     const decodedToken = await verifyTokenWithClaims(request);
-    const farm = await activateFarmByIdForUser(
+    const soilProfile = await getLatestSoilProfileForFarm(
       decodedToken.uid,
       farmIdResult.data.farmId,
     );
 
-    if (!farm) {
-      return errorResponse(404, "FARM_NOT_FOUND", "Farm not found.");
+    if (!soilProfile) {
+      return errorResponse(
+        404,
+        "SOIL_PROFILE_NOT_FOUND",
+        "No soil profile was found for this farm.",
+      );
     }
 
-    return successResponse({ farm });
+    return successResponse({ soilProfile });
   } catch (error) {
     return handleRouteError(error);
   }
-}
-
-export async function POST(request: Request, context: FarmActivateContext) {
-  return PATCH(request, context);
 }
