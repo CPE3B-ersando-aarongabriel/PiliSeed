@@ -13,11 +13,14 @@ const farmParamsSchema = z.object({
   farmId: z.string().trim().min(1),
 });
 
-type SoilLatestContext = {
+type FarmRecommendationsContext = {
   params: Promise<{ farmId: string }>;
 };
 
-export async function GET(request: Request, context: SoilLatestContext) {
+export async function GET(
+  request: Request,
+  context: FarmRecommendationsContext,
+) {
   try {
     const routeParams = await context.params;
     const farmIdResult = farmParamsSchema.safeParse(routeParams);
@@ -39,7 +42,7 @@ export async function GET(request: Request, context: SoilLatestContext) {
     return errorResponse(
       501,
       "NOT_IMPLEMENTED",
-      "Legacy latest-soil route placeholder is protected, but this endpoint is not implemented yet.",
+      "Recommendations endpoint placeholder is ready, but recommendation logic is not implemented yet.",
       {
         farmId: farm.id,
       },
