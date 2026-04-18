@@ -1,19 +1,48 @@
+import type { DecodedIdToken } from "firebase-admin/auth";
+
 import { auth } from "./firebaseAdmin";
 
-export async function verifyToken(request: Request) {
-  try {
-    const authHeader = request.headers.get("authorization");
+export class UnauthorizedError extends Error {
+  constructor(message = "Unauthorized") {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new Error("No token provided");
+function getBearerToken(request: Request): string {
+  const authHeader = request.headers.get("authorization");
+
+  if (!authHeader) {
+    throw new UnauthorizedError("Missing Authorization header.");
+  }
+
+  const [scheme, token] = authHeader.split(" ");
+
+  if (scheme !== "Bearer" || !token) {
+    throw new UnauthorizedError("Authorization header must use Bearer token.");
+  }
+
+  return token;
+}
+
+export async function verifyTokenWithClaims(
+  request: Request,
+): Promise<DecodedIdToken> {
+  try {
+    const token = getBearerToken(request);
+
+    return await auth.verifyIdToken(token);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      throw error;
     }
 
-    const token = authHeader.split("Bearer ")[1];
-
-    const decoded = await auth.verifyIdToken(token);
-
-    return decoded.uid;
-  } catch (error) {
-    throw new Error("Unauthorized");
+    throw new UnauthorizedError("Invalid or expired Firebase ID token.");
   }
+}
+
+export async function verifyToken(request: Request) {
+  const decoded = await verifyTokenWithClaims(request);
+
+  return decoded.uid;
 }
