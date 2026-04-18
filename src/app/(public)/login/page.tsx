@@ -7,7 +7,11 @@ import {
   type User,
 } from "firebase/auth";
 
-import { clientAuth, clientGoogleProvider } from "../../../lib/firebaseClient";
+import {
+  getClientAuth,
+  getClientGoogleProvider,
+  getMissingFirebaseClientEnvVars,
+} from "../../../lib/firebaseClient";
 
 type EndpointResult = {
   status: number;
@@ -43,6 +47,8 @@ async function callProtectedEndpoint(
 }
 
 export default function LoginPage() {
+  const missingFirebaseEnvVars = getMissingFirebaseClientEnvVars();
+  const hasFirebaseConfig = missingFirebaseEnvVars.length === 0;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -83,10 +89,19 @@ export default function LoginPage() {
 
   async function handleEmailLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!hasFirebaseConfig) {
+      setError(
+        `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      const clientAuth = getClientAuth();
       const credential = await signInWithEmailAndPassword(
         clientAuth,
         email,
@@ -104,10 +119,19 @@ export default function LoginPage() {
   }
 
   async function handleGoogleLogin() {
+    if (!hasFirebaseConfig) {
+      setError(
+        `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      const clientAuth = getClientAuth();
+      const clientGoogleProvider = getClientGoogleProvider();
       const credential = await signInWithPopup(
         clientAuth,
         clientGoogleProvider,
@@ -217,6 +241,12 @@ export default function LoginPage() {
     <main style={{ maxWidth: 760, margin: "2rem auto", padding: "0 1rem" }}>
       <h1>Login Test</h1>
       <p>Use this page to sign in and test protected backend endpoints.</p>
+      {!hasFirebaseConfig ? (
+        <p style={{ color: "#b00020" }}>
+          Firebase client env configuration is incomplete. Add the missing values
+          in .env.local and restart dev server: {missingFirebaseEnvVars.join(", ")}
+        </p>
+      ) : null}
 
       <form
         onSubmit={handleEmailLogin}
@@ -247,7 +277,11 @@ export default function LoginPage() {
       </form>
 
       <div style={{ marginTop: "0.75rem" }}>
-        <button type="button" onClick={handleGoogleLogin} disabled={loading}>
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={loading || !hasFirebaseConfig}
+        >
           {loading ? "Processing..." : "Login with Google"}
         </button>
       </div>
