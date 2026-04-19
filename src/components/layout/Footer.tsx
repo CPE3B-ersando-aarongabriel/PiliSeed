@@ -39,10 +39,10 @@ export const Footer = ({ absolute = true }: FooterProps): JSX.Element => {
 
           <div className="flex items-center gap-4 relative self-stretch w-fit flex-[0_0_auto]">
             <button className="flex w-8 h-8 items-center justify-center rounded-full bg-grey hover:bg-[#E3EBDC] transition-colors cursor-pointer" aria-label="Social media icon 1">
-              <img src="/landing/Footer_1.svg" alt="Home" className="w-5 h-5" />
+              <img src="/Footer_1.svg" alt="Home" className="w-5 h-5" />
             </button>
             <button className="flex w-8 h-8 items-center justify-center rounded-full bg-grey hover:bg-[#E3EBDC] transition-colors cursor-pointer" aria-label="Social media icon 2">
-              <img src="/landing/Footer_2.svg" alt="Url" className="w-5 h-5" />
+              <img src="/Footer_2.svg" alt="Url" className="w-5 h-5" />
             </button>
           </div>
         </div>
