@@ -81,10 +81,29 @@ export function handleRouteError(error: unknown) {
 
   console.error("API route error:", error);
 
+  const internalErrorDetails =
+    typeof error === "object" && error !== null
+      ? {
+          name:
+            "name" in error && typeof (error as { name?: unknown }).name === "string"
+              ? (error as { name: string }).name
+              : "UnknownError",
+          message:
+            "message" in error &&
+            typeof (error as { message?: unknown }).message === "string"
+              ? (error as { message: string }).message
+              : "Unknown internal error",
+        }
+      : {
+          name: "UnknownError",
+          message: typeof error === "string" ? error : "Unknown internal error",
+        };
+
   return errorResponse(
     500,
     "INTERNAL_SERVER_ERROR",
     "Something went wrong while processing this request.",
+    internalErrorDetails,
   );
 }
 

@@ -1,6 +1,7 @@
 import {
   type AnalysisResult,
   type NormalizedMarketContext,
+  type NormalizedSoilClassification,
   type NormalizedSoilSnapshot,
   type NormalizedWeatherSnapshot,
   type RecommendationInput,
@@ -25,6 +26,27 @@ function clampScore(score: number): number {
 function buildFlag(code: string, message: string, severity: "info" | "warning" | "critical") {
   return { code, message, severity };
 }
+
+const stableSoilClasses = new Set([
+  "Cambisols",
+  "Luvisols",
+  "Nitisols",
+  "Phaeozems",
+]);
+
+const moistureSensitiveSoilClasses = new Set([
+  "Fluvisols",
+  "Gleysols",
+  "Histosols",
+  "Solonchaks",
+]);
+
+const shallowOrConstraintSoilClasses = new Set([
+  "Acrisols",
+  "Leptosols",
+  "Vertisols",
+  "Ferralsols",
+]);
 
 export function scoreSoilSnapshot(soil: NormalizedSoilSnapshot): AnalysisResult {
   let score = 70;
@@ -198,5 +220,117 @@ export function summarizeAnalysisInput(input: {
     hasSoil: input.soil !== undefined && input.soil !== null,
     hasWeather: input.weather !== undefined && input.weather !== null,
     hasMarket: input.market !== undefined && input.market !== null,
+  };
+}
+
+export function scoreSoilClassification(
+  classification: NormalizedSoilClassification,
+): AnalysisResult {
+  const dominantClass = classification.dominantClass ?? "Unknown";
+  const dominantProbability = classification.dominantClassProbability ?? 0;
+  const classProbabilities = classification.classProbabilities;
+  const runnerUpProbability = classProbabilities[1]?.probability ?? 0;
+
+  let score = 60;
+  const flags = [];
+
+  if (dominantProbability >= 25) {
+    score += 18;
+    flags.push(
+      buildFlag(
+        "SOIL_CLASS_CONFIDENT",
+        `Dominant WRB class is ${dominantClass} with strong probability.`,
+        "info",
+      ),
+    );
+  } else if (dominantProbability >= 15) {
+    score += 12;
+    flags.push(
+      buildFlag(
+        "SOIL_CLASS_MODERATE_CONFIDENCE",
+        `Dominant WRB class is ${dominantClass} with moderate probability.`,
+        "info",
+      ),
+    );
+  } else if (dominantProbability >= 10) {
+    score += 6;
+    flags.push(
+      buildFlag(
+        "SOIL_CLASS_LOW_CONFIDENCE",
+        `Dominant WRB class is ${dominantClass}, but confidence is limited.`,
+        "warning",
+      ),
+    );
+  } else {
+    score -= 8;
+    flags.push(
+      buildFlag(
+        "SOIL_CLASS_UNCERTAIN",
+        "Soil class probability is too low to make a strong conclusion.",
+        "warning",
+      ),
+    );
+  }
+
+  if (dominantProbability - runnerUpProbability < 5) {
+    score -= 8;
+    flags.push(
+      buildFlag(
+        "SOIL_CLASS_AMBIGUOUS",
+        "Several WRB classes have similar probabilities.",
+        "info",
+      ),
+    );
+  }
+
+  if (stableSoilClasses.has(dominantClass)) {
+    score += 6;
+  }
+
+  if (moistureSensitiveSoilClasses.has(dominantClass)) {
+    score -= 6;
+    flags.push(
+      buildFlag(
+        "SOIL_CLASS_MOISTURE_SENSITIVE",
+        "The dominant WRB class may require drainage or water management attention.",
+        "warning",
+      ),
+    );
+  }
+
+  if (shallowOrConstraintSoilClasses.has(dominantClass)) {
+    score -= 5;
+    flags.push(
+      buildFlag(
+        "SOIL_CLASS_MANAGEMENT_LIMITATION",
+        "The dominant WRB class may need closer management review before planting.",
+        "warning",
+      ),
+    );
+  }
+
+  const summary =
+    score >= 80
+      ? `WRB classification is stable, with ${dominantClass} as the dominant soil class.`
+      : score >= 60
+        ? `WRB classification is usable, but ${dominantClass} should be validated with a site sample.`
+        : `WRB classification confidence is low for ${dominantClass}; validate with a local soil sample.`;
+
+  return {
+    score: clampScore(score),
+    summary,
+    flags,
+    nextSteps:
+      score >= 80
+        ? [
+            "Use the dominant WRB class as the soil baseline.",
+            "Validate nutrient values with a field test before fertilizing.",
+          ]
+        : [
+            "Confirm the soil class with a field sample.",
+            "Review drainage, texture, and nutrient tests before planting decisions.",
+          ],
+    explanation: null,
+    raw: { classification },
   };
 }

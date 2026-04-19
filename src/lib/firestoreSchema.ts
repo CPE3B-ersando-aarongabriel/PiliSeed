@@ -6,6 +6,7 @@ import {
 } from "firebase-admin/firestore";
 
 import { UnauthorizedError } from "./authMiddleware";
+import { type SoilClassificationProbability } from "./analysisContracts";
 import { firestore } from "./firebaseAdmin";
 
 export const firestoreCollections = {
@@ -69,10 +70,19 @@ export type SoilProfile = {
   id: string;
   uid: string;
   farmId: string;
+  texture: string | null;
+  soilClass: string | null;
+  soilClassValue: number | null;
+  soilClassProbability: number | null;
+  soilClassProbabilities: SoilClassificationProbability[];
   pH: number | null;
+  moistureContent: number | null;
   nitrogen: number | null;
   phosphorus: number | null;
   potassium: number | null;
+  soilSource: "manual" | "api" | "mixed" | "unknown";
+  classificationJson: DocumentData | null;
+  analysisJson: DocumentData | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -123,6 +133,22 @@ type SoilProfileCreateInput = {
   nitrogen: number;
   phosphorus: number;
   potassium: number;
+};
+
+type SoilAnalysisCreateInput = {
+  texture?: string | null;
+  pH: number | null;
+  moistureContent: number | null;
+  nitrogen: number | null;
+  phosphorus: number | null;
+  potassium: number | null;
+  soilSource?: "manual" | "api" | "mixed";
+  soilClass?: string | null;
+  soilClassValue?: number | null;
+  soilClassProbability?: number | null;
+  soilClassProbabilities: SoilClassificationProbability[];
+  classificationJson: DocumentData;
+  analysisJson: DocumentData;
 };
 
 type WeatherSnapshotCreateInput = {
@@ -218,10 +244,38 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
     id,
     uid: normalizeText(data.uid, 128) ?? "",
     farmId: normalizeText(data.farmId, 128) ?? "",
+    texture: normalizeText(data.texture, 100),
+    soilClass: normalizeText(data.soilClass, 100),
+    soilClassValue: toNullableNumber(data.soilClassValue),
+    soilClassProbability: toNullableNumber(data.soilClassProbability),
+    soilClassProbabilities: Array.isArray(data.soilClassProbabilities)
+      ? (data.soilClassProbabilities.filter(
+          (item): item is SoilClassificationProbability =>
+            typeof item === "object" &&
+            item !== null &&
+            typeof (item as SoilClassificationProbability).className === "string" &&
+            typeof (item as SoilClassificationProbability).probability === "number",
+        ) as SoilClassificationProbability[])
+      : [],
     pH: toNullableNumber(data.ph ?? data.pH),
+    moistureContent: toNullableNumber(data.moistureContent ?? data.moisture),
     nitrogen: toNullableNumber(data.nitrogen),
     phosphorus: toNullableNumber(data.phosphorus),
     potassium: toNullableNumber(data.potassium),
+    soilSource:
+      data.soilSource === "manual" ||
+      data.soilSource === "api" ||
+      data.soilSource === "mixed"
+        ? data.soilSource
+        : "unknown",
+    classificationJson:
+      typeof data.classificationJson === "object" && data.classificationJson !== null
+        ? data.classificationJson
+        : null,
+    analysisJson:
+      typeof data.analysisJson === "object" && data.analysisJson !== null
+        ? data.analysisJson
+        : null,
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
@@ -690,6 +744,49 @@ export async function createSoilProfileForFarm(
 
   if (!createdSnapshot.exists) {
     throw new Error("Failed to create soil profile.");
+  }
+
+  return toSoilProfile(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
+export async function createSoilAnalysisForFarm(
+  uid: string,
+  farmId: string,
+  input: SoilAnalysisCreateInput,
+): Promise<SoilProfile | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const soilDocRef = soilProfilesCollection.doc();
+
+  await soilDocRef.set({
+    uid,
+    farmId,
+    texture: normalizeText(input.texture, 100),
+    soilClass: normalizeText(input.soilClass, 100),
+    soilClassValue: input.soilClassValue,
+    soilClassProbability: input.soilClassProbability,
+    soilClassProbabilities: input.soilClassProbabilities,
+    ph: input.pH,
+    pH: input.pH,
+    moistureContent: input.moistureContent,
+    nitrogen: input.nitrogen,
+    phosphorus: input.phosphorus,
+    potassium: input.potassium,
+    soilSource: input.soilSource ?? "api",
+    classificationJson: input.classificationJson,
+    analysisJson: input.analysisJson,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await soilDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create soil analysis.");
   }
 
   return toSoilProfile(createdSnapshot.id, createdSnapshot.data() ?? {});

@@ -30,6 +30,23 @@ export type NormalizedSoilSnapshot = {
   source: string;
 };
 
+export type SoilClassificationProbability = {
+  className: string;
+  probability: number;
+};
+
+export type NormalizedSoilClassification = {
+  latitude: number;
+  longitude: number;
+  dominantClass: string | null;
+  dominantClassValue: number | null;
+  dominantClassProbability: number | null;
+  classProbabilities: SoilClassificationProbability[];
+  queryTimeSeconds: number | null;
+  source: string;
+  raw: JsonRecord;
+};
+
 export type NormalizedMarketContext = {
   cropType: string | null;
   priceTrend: string | null;
