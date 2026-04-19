@@ -215,32 +215,58 @@ export default function LoginPage() {
 
   return (
     <main style={{ maxWidth: 760, margin: "2rem auto", padding: "0 1rem" }}>
-      <h1>Login Test</h1>
-      <p>Use this page to sign in and test protected backend endpoints.</p>
+      <div>
+          <h1 className="text-[#00450D] font-bold text-3xl">PiliSeed</h1>  
+      </div>
+
+      <div>
+        <div className="font-semibold text-5xl">
+          Welcome Back
+        </div>
+
+        <div className="text-[#41493E]">
+          Please enter your credentials to access your dashboard
+        </div>
+
+        
+      </div>
+
+      
 
       <form
         onSubmit={handleEmailLogin}
         style={{ display: "grid", gap: "0.75rem" }}
       >
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Name (optional)"
-        />
-        <input
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          type="email"
-          placeholder="Email"
-          required
-        />
-        <input
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          type="password"
-          placeholder="Password"
-          required
-        />
+        <div className="flex flex-col gap-1 text-[#41493E] font-semibold">
+          Email Address
+          
+          <div className="px-9 py-2 bg-[#E3EBDC] rounded-4xl relative w-full">
+            <img src="/mail.png" alt="mail icon" className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-4"/>
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              placeholder="john@piliseed.com"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1 text-[#41493E] font-semibold">
+          Password
+          <div className="px-9 py-2 bg-[#E3EBDC] rounded-4xl relative w-full">
+            <img src="/lock.png" alt="lock icon" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-5"/>
+            <input
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            type="password"
+            placeholder="••••••••"
+            required
+          />
+          </div>
+
+        </div>
+        
         <button type="submit" disabled={loading}>
           {loading ? "Processing..." : "Login with Email/Password"}
         </button>
@@ -251,80 +277,6 @@ export default function LoginPage() {
           {loading ? "Processing..." : "Login with Google"}
         </button>
       </div>
-
-      <div style={{ marginTop: "1rem", display: "grid", gap: "0.5rem" }}>
-        <button
-          type="button"
-          onClick={handleGetMe}
-          disabled={loading || !token}
-        >
-          GET /api/auth/me
-        </button>
-        <button
-          type="button"
-          onClick={handleGetProfile}
-          disabled={loading || !token}
-        >
-          GET /api/profile
-        </button>
-      </div>
-
-      <form
-        onSubmit={handlePatchProfile}
-        style={{ marginTop: "1rem", display: "grid", gap: "0.75rem" }}
-      >
-        <h2 className="text-lg font-semibold text-red-600">PATCH /api/profile</h2>
-        <input
-          value={patchName}
-          onChange={(event) => setPatchName(event.target.value)}
-          placeholder="name"
-        />
-        <input
-          value={patchPhone}
-          onChange={(event) => setPatchPhone(event.target.value)}
-          placeholder="phone"
-        />
-        <input
-          value={patchAddress}
-          onChange={(event) => setPatchAddress(event.target.value)}
-          placeholder="address"
-        />
-        <button type="submit" disabled={loading || !token}>
-          {loading ? "Processing..." : "Update Profile"}
-        </button>
-      </form>
-
-      {error ? (
-        <p style={{ color: "#b00020", marginTop: "1rem" }}>{error}</p>
-      ) : null}
-
-      <section style={{ marginTop: "1rem", display: "grid", gap: "0.75rem" }}>
-        <div>
-          <strong>UID:</strong> {uid || "-"}
-        </div>
-        <div>
-          <strong>ID Token:</strong>
-          <textarea
-            value={token}
-            readOnly
-            rows={5}
-            style={{ width: "100%", marginTop: "0.25rem" }}
-          />
-        </div>
-        <div>
-          <strong>POST /api/auth/login:</strong>
-          <pre>{JSON.stringify(loginResult, null, 2)}</pre>
-        </div>
-        <div>
-          <strong>GET /api/auth/me:</strong>
-          <pre>{JSON.stringify(meResult, null, 2)}</pre>
-        </div>
-        <div>
-          <strong>GET/PATCH /api/profile:</strong>
-          <pre>{JSON.stringify(profileResult, null, 2)}</pre>
-        </div>
-
-      </section>
     </main>
   );
 }
