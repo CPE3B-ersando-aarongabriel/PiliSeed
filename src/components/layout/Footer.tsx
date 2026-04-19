@@ -1,0 +1,125 @@
+
+import { JSX } from "react";
+import Link from "next/link";
+
+const platformLinks = [
+  { label: "Home", href: "/" },
+  { label: "Features", href: "/features" },
+  { label: "How it Works", href: "/how-it-works" },
+  { label: "About Us", href: "/about" },
+];
+const resourceLinks = ["Privacy Policy", "Terms of Service", "Documentation"];
+const contactInfo = ["info@piliseed.io", "+1 (555) 890-SEED"];
+
+interface FooterProps {
+  absolute?: boolean;
+}
+
+export const Footer = ({ absolute = true }: FooterProps): JSX.Element => {
+  const positionClass = absolute
+    ? "absolute w-full top-[4598px] left-0"
+    : "relative w-full";
+
+  return (
+    <footer className={`${positionClass} h-[381px] flex bg-[#f5fced] border-t [border-top-style:solid] [border-right-style:none] [border-bottom-style:none] [border-left-style:none] border-[#c0c9bb1a]`}>
+      <div className="grid mt-[81px] h-[219px] ml-8 mr-8 flex-1 relative grid-cols-4 grid-rows-[219px] max-w-screen-xl w-[1216px] gap-20">
+        <div className="relative row-[1_/_2] col-[1_/_2] w-full h-fit flex flex-col items-start gap-[23.1px]">
+          <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
+            <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-2xl tracking-[0] leading-8">
+              PiliSeed
+            </div>
+          </div>
+
+          <div className="flex flex-col items-start pt-0 pb-[0.88px] px-0 relative self-stretch w-full flex-[0_0_auto]">
+            <p className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d1480] text-sm tracking-[0] leading-[22.8px]">
+              Cultivating the future of agriculture through data-driven
+              intelligence and organic innovation.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 relative self-stretch w-fit flex-[0_0_auto]">
+            <button className="flex w-8 h-8 items-center justify-center rounded-full bg-grey hover:bg-[#E3EBDC] transition-colors cursor-pointer" aria-label="Social media icon 1">
+              <img src="/landing/Footer_1.svg" alt="Home" className="w-5 h-5" />
+            </button>
+            <button className="flex w-8 h-8 items-center justify-center rounded-full bg-grey hover:bg-[#E3EBDC] transition-colors cursor-pointer" aria-label="Social media icon 2">
+              <img src="/landing/Footer_2.svg" alt="Url" className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="relative row-[1_/_2] col-[2_/_3] w-full h-fit flex flex-col items-start gap-4 pt-0 pb-[51px] px-0">
+          <div className="flex flex-col items-start pt-0 pb-2 px-0 relative self-stretch w-full flex-[0_0_auto]">
+            <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
+              <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-xs tracking-[1.20px] leading-4">
+                PLATFORM
+              </div>
+            </div>
+          </div>
+
+          {platformLinks.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]"
+            >
+              <div className="[font-family:'Inter-Regular',Helvetica] font-normal text-[#171d1480] hover:text-[#171d14] text-sm tracking-[0] leading-5 relative flex items-center self-stretch mt-[-1.00px] cursor-pointer transition-colors">
+                {link.label}
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div className="relative row-[1_/_2] col-[3_/_4] w-full h-fit flex flex-col items-start gap-4 pt-0 pb-[51px] px-0">
+          <div className="flex flex-col items-start pt-0 pb-2 px-0 relative self-stretch w-full flex-[0_0_auto]">
+            <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
+              <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-xs tracking-[1.20px] leading-4">
+                RESOURCES
+              </div>
+            </div>
+          </div>
+
+          {resourceLinks.map((link) => (
+            <div
+              key={link}
+              className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]"
+            >
+              <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d1480] text-sm tracking-[0] leading-5">
+                {link}
+              </div>
+            </div>
+          ))}
+
+          <div className="relative self-stretch w-full h-5" />
+          <div className="relative self-stretch w-full h-5" />
+        </div>
+
+        <div className="relative row-[1_/_2] col-[4_/_5] w-full h-fit flex flex-col items-start gap-4 pt-0 pb-[39px] px-0">
+          <div className="flex flex-col items-start pt-0 pb-2 px-0 relative self-stretch w-full flex-[0_0_auto]">
+            <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
+              <div className="[font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-xs tracking-[1.20px] leading-4 relative flex items-center self-stretch mt-[-1.00px]">
+                CONTACT
+              </div>
+            </div>
+          </div>
+
+          {contactInfo.map((info) => (
+            <div
+              key={info}
+              className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]"
+            >
+              <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d1480] text-sm tracking-[0] leading-5">
+                {info}
+              </div>
+            </div>
+          ))}
+
+          <div className="relative self-stretch w-full h-[68px]" />
+
+          <p className="relative flex items-center w-[240.8px] h-5 [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d1480] text-sm tracking-[0] leading-5 whitespace-nowrap">
+            © 2024 PiliSeed. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};
