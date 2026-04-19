@@ -81,23 +81,22 @@ const highlights = [
 
 export const Features_summary = (): JSX.Element => {
   return (
-    <div className="flex flex-col w-[1280px] items-start gap-16 px-8 py-24 absolute top-[2730px] left-1/2 -translate-x-1/2">
+    <div className="flex flex-col w-full items-start gap-8 sm:gap-16 px-4 sm:px-8 py-12 sm:py-24 relative sm:absolute sm:top-[2730px] sm:left-1/2 sm:-translate-x-1/2">
       <div className="flex flex-col items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">
         <div className="flex items-center self-stretch w-full flex-[0_0_auto] relative flex-col">
-          <div className="relative flex items-center justify-center w-[462px] h-10 mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#171d14] text-4xl text-center tracking-[-1.80px] leading-10 whitespace-nowrap">
+          <div className="relative flex items-center justify-center w-full h-auto mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#171d14] text-2xl sm:text-4xl text-center tracking-[-1.80px] leading-8 sm:leading-10">
             Precision Agriculture Core
           </div>
         </div>
 
-        <div className="flex flex-col max-w-2xl w-[672px] items-center relative flex-[0_0_auto]">
-          <p className="relative flex items-center justify-center w-[612.98px] h-6 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-base text-center tracking-[0] leading-6 whitespace-nowrap">
-            Unlock the full potential of your land with our suite of intelligent
-            agricultural tools.
+        <div className="flex flex-col max-w-2xl w-full items-center relative flex-[0_0_auto] px-4 sm:px-0">
+          <p className="relative flex items-center justify-center w-full h-auto mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-sm sm:text-base text-center tracking-[0] leading-5 sm:leading-6">
+            Unlock the full potential of your land with our suite of intelligent agricultural tools.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 grid-rows-[304px] w-full h-fit gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 grid-rows-auto lg:grid-rows-[304px] w-full h-fit gap-4 sm:gap-8">
         {highlights.map((item, index) => (
           <div
             key={index}
@@ -117,17 +116,17 @@ export const Features_summary = (): JSX.Element => {
 
             <div className="flex flex-col w-[calc(100%_-_66px)] items-start absolute top-[113px] left-[33px]">
               <div
-                className={`relative flex items-center ${item.titleWidth} ${item.titleHeight} mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#171d14] text-2xl tracking-[0] leading-8`}
+                className="relative flex items-center w-auto h-auto mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#171d14] text-xl lg:text-2xl tracking-[0] leading-8"
               >
                 {item.title}
               </div>
             </div>
 
             <div
-              className={`flex flex-col w-[calc(100%_-_66px)] items-start absolute ${item.descriptionTop} left-[33px]`}
+              className="flex flex-col w-[calc(100%_-_66px)] items-start absolute top-[170px] lg:top-[193px] left-[33px]"
             >
               <p
-                className={`relative ${item.descriptionWidth} ${item.descriptionHeight} mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-base tracking-[0] leading-[26px]`}
+                className="relative w-full h-auto mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-sm lg:text-base tracking-[0] leading-[26px]"
               >
                 {item.description}
               </p>

@@ -9,12 +9,12 @@ interface EncouragementProps {
 
 export const Encouragement = ({ absolute = false, className = "" }: EncouragementProps): JSX.Element => {
   const positionClass = absolute
-    ? "absolute top-[4120px] left-8"
-    : "relative mx-8";
+    ? "sm:absolute sm:top-[4120px] sm:left-8"
+    : "relative mx-4 sm:mx-8";
   
   return (
     <motion.div
-      className={`flex w-[calc(100%_-_64px)] min-h-[500px] items-center justify-center px-12 py-[90.5px] ${positionClass} rounded-[48px] overflow-hidden ${className}`}
+      className={`flex w-full sm:w-[calc(100%_-_64px)] min-h-[500px] items-center justify-center px-4 sm:px-12 py-12 sm:py-[90.5px] ${positionClass} rounded-[32px] sm:rounded-[48px] overflow-hidden ${className}`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.35 }}
@@ -29,29 +29,27 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
       </div>
 
       <motion.div
-        className="inline-flex flex-col max-w-screen-md items-start gap-8 relative flex-[0_0_auto]"
+        className="inline-flex flex-col max-w-screen-md items-center gap-6 sm:gap-8 relative flex-[0_0_auto] w-full"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.45 }}
         transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="flex items-center self-stretch w-full flex-[0_0_auto] relative flex-col">
-          <p className="relative flex items-center justify-center w-[498.18px] h-[120px] mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-6xl text-center tracking-[-3.00px] leading-[60px]">
+          <p className="relative flex items-center justify-center w-full h-auto mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-4xl sm:text-5xl lg:text-6xl text-center tracking-[-3.00px] leading-tight sm:leading-[60px]">
             Ready to optimize your harvest?
           </p>
         </div>
 
-        <div className="flex flex-col items-center relative self-stretch w-full flex-[0_0_auto]">
-          <p className="relative w-[765.58px] h-[65px] mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-[#a3f69ccc] text-xl text-center tracking-[0] leading-7">
-            Join&nbsp;&nbsp;farmers using PiliSeed to bridge the gap between
-            <br />
-            tradition and technology.
+        <div className="flex flex-col items-center relative self-stretch w-full flex-[0_0_auto] px-4 sm:px-0">
+          <p className="relative w-full h-auto mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-[#a3f69ccc] text-lg sm:text-xl text-center tracking-[0] leading-6 sm:leading-7">
+            Join farmers using PiliSeed to bridge the gap between tradition and technology.
           </p>
         </div>
 
-        <div className="flex items-start justify-center gap-4 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto]">
+        <div className="flex items-center justify-center gap-3 sm:gap-4 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto] flex-wrap">
           <motion.button
-            className="all-[unset] box-border pt-[16.5px] pb-[17.5px] px-8 bg-white rounded-full inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
+            className="all-[unset] box-border pt-[16.5px] pb-[17.5px] px-6 sm:px-8 bg-white rounded-full inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
             whileHover={{ y: -4, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 360, damping: 20 }}
@@ -64,12 +62,12 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
           </motion.button>
 
           <motion.button
-            className="all-[unset] box-border px-8 py-4 bg-[#ffffff1a] rounded-full border border-solid border-[#ffffff33] backdrop-blur-[6px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(6px)_brightness(100%)] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
+            className="all-[unset] box-border px-6 sm:px-8 py-4 bg-[#ffffff1a] rounded-full border border-solid border-[#ffffff33] backdrop-blur-[6px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(6px)_brightness(100%)] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
             whileHover={{ y: -4, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ type: "spring", stiffness: 360, damping: 20 }}
           >
-            <div className="w-[144.8px] h-7 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-white text-lg leading-7 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
+            <div className="w-auto h-7 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-white text-lg leading-7 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
               Sign Up
             </div>
           </motion.button>

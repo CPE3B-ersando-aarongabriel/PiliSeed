@@ -141,8 +141,8 @@ export const Problem = (): JSX.Element => {
   ];
 
   return (
-    <div className="flex flex-col w-full items-start px-8 py-24 absolute top-[1315px] left-1/2 -translate-x-1/2 bg-white">
-      <div className="grid grid-cols-2 grid-rows-[518.50px] h-fit gap-16">
+    <div className="flex flex-col w-full items-start px-4 sm:px-8 py-12 sm:py-24 relative sm:absolute sm:top-[1315px] sm:left-1/2 sm:-translate-x-1/2 bg-white">
+      <div className="grid grid-cols-1 lg:grid-cols-2 grid-rows-auto lg:grid-rows-[518.50px] h-fit gap-8 lg:gap-16 w-full">
         <div className="relative row-[1_/_2] col-[1_/_2] self-center w-full h-fit flex flex-col items-start gap-6">
           <div className="flex items-center gap-2 relative self-stretch w-full flex-[0_0_auto]">
             <div className="relative w-12 h-0.5 bg-[#00450d]" />

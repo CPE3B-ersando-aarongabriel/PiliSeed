@@ -11,7 +11,7 @@ import { Footer } from "@/components/layout/Footer";
 
 export default function Home() {
   return (
-    <div className="bg-[#f5fced] w-full min-w-[1280px] min-h-[4978px] relative">
+    <div className="bg-[#f5fced] w-full min-h-screen relative overflow-x-hidden">
       <Navbar />
       <Hero />
       <Problem />

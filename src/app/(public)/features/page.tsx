@@ -5,7 +5,7 @@ import { Encouragement } from "@/components/layout/Encouragement";
 import { Footer } from "@/components/layout/Footer";
 export default function Features() {
   return (
-    <div className="bg-[#f5fced] w-full min-w-[1280px] min-h-screen relative">
+    <div className="bg-[#f5fced] w-full min-h-screen relative overflow-x-hidden flex flex-col">
       <Navbar />
       <Hero_features />
       <Grid_features />

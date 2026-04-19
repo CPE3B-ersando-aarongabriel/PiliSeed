@@ -27,14 +27,14 @@ export const Navbar = (): JSX.Element => {
   }, [pathname]);
 
   return (
-    <nav className="flex w-full h-20 items-center justify-between px-8 py-0 fixed top-0 left-0 z-50 bg-[#f5fcedb2] backdrop-blur-[32px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(32px)_brightness(100%)]">
-      <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-        <div className="relative flex items-center w-fit mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-2xl tracking-[-1.20px] leading-8 whitespace-nowrap">
+    <nav className="flex w-full h-20 items-center justify-between px-4 sm:px-6 lg:px-8 py-0 fixed top-0 left-0 z-50 bg-[#f5fcedb2] backdrop-blur-[32px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(32px)_brightness(100%)] overflow-x-auto">
+      <div className="inline-flex flex-col items-start relative flex-[0_0_auto] min-w-fit">
+        <div className="relative flex items-center w-fit mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-xl sm:text-2xl tracking-[-1.20px] leading-8 whitespace-nowrap">
           PiliSeed
         </div>
       </div>
 
-      <div className="inline-flex items-center gap-8 relative flex-[0_0_auto]">
+      <div className="hidden md:inline-flex items-center gap-4 lg:gap-8 relative flex-[0_0_auto]">
         {navLinks.map((link) => (
           <Link key={link.label} href={link.href}>
             <button
@@ -59,17 +59,17 @@ export const Navbar = (): JSX.Element => {
         ))}
       </div>
 
-      <div className="inline-flex items-center gap-4 relative flex-[0_0_auto]">
+      <div className="inline-flex items-center gap-2 sm:gap-4 relative flex-[0_0_auto] ml-auto md:ml-0">
         <Link href="/login">
-        <button className="all-[unset] box-border px-6 py-2 inline-flex flex-col rounded-full shadow-[0px_1px_2px_#0000000d] items-center justify-center relative flex-[0_0_auto] border border-solid border-[#00450d] hover:shadow-[inset_0_0_0_2px_#00450d] cursor-pointer transition-all">
-          <div className="w-[62px] h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-base leading-6 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
+        <button className="all-[unset] box-border px-4 sm:px-6 py-2 inline-flex flex-col rounded-full shadow-[0px_1px_2px_#0000000d] items-center justify-center relative flex-[0_0_auto] border border-solid border-[#00450d] hover:shadow-[inset_0_0_0_2px_#00450d] cursor-pointer transition-all">
+          <div className="w-auto h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-sm sm:text-base leading-6 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
             Sign In
           </div>
         </button>
         </Link>
         <Link href="/signup">
-        <button className="all-[unset] box-border px-6 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] hover:shadow-[inset_0_0_0_2px_#38873A] cursor-pointer transition-all">
-          <div className="relative flex items-center justify-center h-6 mt-[-1.00px] w-[62px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-base text-center tracking-[0] leading-6 whitespace-nowrap">
+        <button className="all-[unset] box-border px-4 sm:px-6 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] hover:shadow-[inset_0_0_0_2px_#38873A] cursor-pointer transition-all">
+          <div className="relative flex items-center justify-center h-6 mt-[-1.00px] w-auto [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-sm sm:text-base text-center tracking-[0] leading-6 whitespace-nowrap">
             Sign Up
           </div>
         </button>

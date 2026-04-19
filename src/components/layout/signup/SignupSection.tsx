@@ -136,9 +136,9 @@ export const SignupSection = (): JSX.Element => {
   }
 
   return (
-    <div className="relative mt-20 w-full min-h-[929px] overflow-hidden">
+    <div className="relative mt-20 w-full min-h-screen overflow-hidden mb-20">
       <motion.div 
-        className="absolute top-0 left-0 h-full w-1/2 overflow-hidden bg-[url(/signup/Signup.png)] bg-cover bg-[50%_50%]"
+        className="hidden lg:flex absolute top-0 left-0 h-full w-1/2 overflow-hidden bg-[url(/signup/Signup.png)] bg-cover bg-[50%_50%]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -185,7 +185,7 @@ export const SignupSection = (): JSX.Element => {
         </motion.div>
       </motion.div>
       <motion.div 
-        className="absolute top-0 left-1/2 h-full w-1/2 bg-[#f5fced]"
+        className="absolute top-0 left-0 lg:left-1/2 h-full w-full lg:w-1/2 bg-[#f5fced] flex flex-col items-center pt-20 lg:pt-0 lg:justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}

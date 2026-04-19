@@ -35,8 +35,8 @@ export const Hero = (): JSX.Element => {
             </div>
           </div>
 
-          <div className="flex flex-1 max-h-[390px] relative mt-6 flex-col w-[568px] items-start">
-            <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-transparent text-7xl leading-[72px]">
+          <div className="flex flex-1 max-h-[390px] relative mt-6 flex-col w-full max-w-2xl items-start px-4 sm:px-0">
+            <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-transparent text-5xl sm:text-6xl lg:text-7xl leading-tight sm:leading-[60px] lg:leading-[72px]">
               <span className="text-[#171d14] tracking-[-2.59px]">
                 Empowering
                 <br />
@@ -57,8 +57,8 @@ export const Hero = (): JSX.Element => {
             </p>
           </div>
 
-          <div className="flex mr-14 flex-1 max-h-24 relative mt-[26.1px] flex-col max-w-lg w-[512px] items-start pt-2 pb-0 px-0">
-            <p className="relative w-[505.17px] h-[88px] mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-white text-lg tracking-[0] leading-[29.2px]">
+          <div className="flex flex-1 max-h-24 relative mt-[26.1px] flex-col max-w-lg w-full items-start pt-2 pb-0 px-4 sm:px-0">
+            <p className="relative w-full h-auto mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-white text-base sm:text-lg tracking-[0] leading-relaxed">
               Transform your agricultural legacy with real-time soil
               <br />
               analysis, hyper-local weather intelligence, and AI-powered
@@ -69,7 +69,7 @@ export const Hero = (): JSX.Element => {
         </div>
       </motion.div>
 
-      <div className="flex w-[calc(100%_-_712px)] h-20 items-start gap-4 pt-4 pb-0 px-0 absolute top-[840px] left-12">
+      <div className="flex w-full sm:w-auto h-auto sm:h-20 items-start gap-4 pt-4 pb-0 px-4 sm:px-0 sm:absolute sm:top-[840px] sm:left-12 flex-wrap sm:flex-nowrap">
         <Link href="/signup">
           <motion.button
             className="all-[unset] box-border px-10 py-4 bg-white rounded-full border-2 border-solid border-[#00450d1a] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"

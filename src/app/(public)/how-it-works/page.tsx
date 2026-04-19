@@ -5,7 +5,7 @@ import { Encouragement } from "@/components/layout/Encouragement";
 
 export default function HowItWorks() {
  return (
-    <div className="bg-[#f5fced] w-full min-w-[1280px] min-h-screen relative">
+    <div className="bg-[#f5fced] w-full min-h-screen relative overflow-x-hidden flex flex-col">
       <Navbar />
       <HIW_Body />
       <Encouragement className="mb-20" />

@@ -146,10 +146,10 @@ export const LoginSection = (): JSX.Element => {
 
 
   return (
-    <section className="relative w-full pt-20 pb-32">
-      <div className="relative h-[860px] w-full overflow-hidden bg-[#eff6e7]">
+    <section className="relative w-full pt-20 pb-20">
+      <div className="relative w-full overflow-hidden bg-[#eff6e7] flex flex-col lg:flex-row lg:h-[860px]">
         <motion.div 
-          className="absolute inset-y-0 left-0 w-1/2 overflow-hidden"
+          className="hidden lg:flex absolute inset-y-0 left-0 w-1/2 overflow-hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
@@ -192,7 +192,7 @@ export const LoginSection = (): JSX.Element => {
         </motion.div>
 
         <motion.div 
-          className="absolute inset-y-0 right-0 flex w-1/2 items-start justify-center px-16 pt-28"
+          className="absolute inset-y-0 right-0 flex w-full lg:w-1/2 items-start justify-center px-4 sm:px-16 pt-20 lg:pt-28 bg-[#eff6e7] lg:bg-transparent"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
