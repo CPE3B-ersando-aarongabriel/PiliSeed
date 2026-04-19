@@ -207,6 +207,11 @@ export function buildYieldForecast(input: YieldForecastInput): YieldForecastResu
       expectedYield >= 4
         ? "Yield outlook is positive if farm conditions remain stable."
         : "Yield outlook is moderate and may improve with better soil or weather conditions.",
+    warningFlags: [
+      input.market ? null : "Market context is missing. Revenue estimate may be less reliable.",
+      soilScore < 60 ? "Soil quality may constrain projected yield." : null,
+      weatherScore < 60 ? "Weather conditions increase yield uncertainty." : null,
+    ].filter((value): value is string => Boolean(value)),
     raw: { input, soilScore, weatherScore, marketConfidence },
   };
 }

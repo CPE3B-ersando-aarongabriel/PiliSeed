@@ -114,5 +114,6 @@ export type YieldForecastResult = {
   estimatedRevenue: number | null;
   marketContext: JsonRecord | null;
   analysisText: string;
+  warningFlags: string[];
   raw: JsonRecord;
 };
