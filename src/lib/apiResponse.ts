@@ -53,11 +53,20 @@ export function handleRouteError(error: unknown) {
   }
 
   if (error instanceof AnalysisError) {
+    if (error instanceof AnalysisExternalServiceError) {
+      return errorResponse(
+        error.status >= 400 && error.status < 600 ? error.status : 502,
+        error.code,
+        error.message,
+        error.details,
+      );
+    }
+
     return errorResponse(
       error.code === "CONFIGURATION_ERROR" ? 500 : 400,
       error.code,
       error.message,
-      error instanceof AnalysisExternalServiceError ? error.details : undefined,
+      undefined,
     );
   }
 

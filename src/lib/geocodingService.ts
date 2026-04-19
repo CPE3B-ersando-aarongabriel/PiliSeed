@@ -1,45 +1,114 @@
 import { type NormalizedGeocodeResult } from "./analysisContracts";
-import { getAnalysisProviderConfig } from "./analysisEnv";
-import { AnalysisConfigurationError } from "./analysisErrors";
-import { normalizeNumber, normalizeString, requestJson } from "./analysisHttp";
+import {
+  AnalysisConfigurationError,
+  AnalysisExternalServiceError,
+  AnalysisInvalidInputError,
+} from "./analysisErrors";
+import { normalizeString, requestJson } from "./analysisHttp";
 
 type GeocodingServiceResponse = {
   results?: unknown[];
   data?: unknown[];
+  features?: unknown[];
 };
 
-function extractCandidate(payload: unknown): Record<string, unknown> | null {
-  if (Array.isArray(payload)) {
-    return (payload[0] as Record<string, unknown> | undefined) ?? null;
+type GeocodingOptions = {
+  countryCode?: string;
+  limit?: number;
+};
+
+type GeocodingProviderErrorPayload = {
+  error?: boolean;
+  reason?: string;
+};
+
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
   }
 
-  if (typeof payload === "object" && payload !== null) {
-    const record = payload as Record<string, unknown>;
-    const results = record.results ?? record.data;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
 
-    if (Array.isArray(results)) {
-      return (results[0] as Record<string, unknown> | undefined) ?? null;
-    }
-
-    return record;
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
   return null;
 }
 
-export function normalizeGeocodeResult(payload: unknown): NormalizedGeocodeResult | null {
-  const candidate = extractCandidate(payload);
+function toConfidence(value: unknown): number {
+  const normalizedValue = toNumber(value);
 
-  if (!candidate) {
-    return null;
+  if (normalizedValue === null) {
+    return 0;
   }
 
-  const latitude = normalizeNumber(candidate.latitude ?? candidate.lat);
-  const longitude = normalizeNumber(candidate.longitude ?? candidate.lng ?? candidate.lon);
-  const formattedAddress = normalizeString(
-    candidate.formattedAddress ?? candidate.address ?? candidate.label,
-  );
-  const confidence = normalizeNumber(candidate.confidence ?? candidate.score, 0) ?? 0;
+  if (normalizedValue > 1) {
+    return Math.max(0, Math.min(1, normalizedValue / 100));
+  }
+
+  return Math.max(0, Math.min(1, normalizedValue));
+}
+
+function extractCandidates(payload: unknown): Record<string, unknown>[] {
+  if (Array.isArray(payload)) {
+    return payload.filter(
+      (item): item is Record<string, unknown> =>
+        typeof item === "object" && item !== null,
+    );
+  }
+
+  if (typeof payload === "object" && payload !== null) {
+    const record = payload as Record<string, unknown>;
+    const results = record.results ?? record.data ?? record.features;
+
+    if (Array.isArray(results)) {
+      return results.filter(
+        (item): item is Record<string, unknown> =>
+          typeof item === "object" && item !== null,
+      );
+    }
+
+    return [record];
+  }
+
+  return [];
+}
+
+function normalizeGeocodeCandidate(
+  candidate: Record<string, unknown>,
+): NormalizedGeocodeResult | null {
+  const geometry =
+    typeof candidate.geometry === "object" && candidate.geometry !== null
+      ? (candidate.geometry as Record<string, unknown>)
+      : null;
+  const geometryCoordinates = Array.isArray(geometry?.coordinates)
+    ? geometry?.coordinates
+    : null;
+
+  const latitude =
+    toNumber(candidate.latitude ?? candidate.lat) ??
+    (geometryCoordinates ? toNumber(geometryCoordinates[1]) : null);
+  const longitude =
+    toNumber(candidate.longitude ?? candidate.lng ?? candidate.lon) ??
+    (geometryCoordinates ? toNumber(geometryCoordinates[0]) : null);
+
+  const composedAddress = [
+    normalizeString(candidate.name),
+    normalizeString(candidate.admin1),
+    normalizeString(candidate.country),
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const formattedAddress =
+    normalizeString(
+      candidate.formattedAddress ??
+        candidate.formatted ??
+        candidate.display_name ??
+        candidate.address ??
+        candidate.label,
+    ) || composedAddress;
 
   if (latitude === null || longitude === null || !formattedAddress) {
     return null;
@@ -49,52 +118,125 @@ export function normalizeGeocodeResult(payload: unknown): NormalizedGeocodeResul
     latitude,
     longitude,
     formattedAddress,
-    confidence: Math.max(0, Math.min(1, confidence)),
+    confidence: toConfidence(
+      candidate.confidence ?? candidate.score ?? candidate.importance,
+    ),
     source: normalizeString(candidate.source, "geocoding") || "geocoding",
   };
 }
 
-export function createGeocodingService(baseUrl?: string | null, apiKey?: string) {
-  const providerConfig = apiKey
-    ? {
-        apiKey,
-        baseUrl: baseUrl ?? null,
-      }
-    : getAnalysisProviderConfig("geocoding");
+export function normalizeGeocodeResults(
+  payload: unknown,
+): NormalizedGeocodeResult[] {
+  const normalizedCandidates = extractCandidates(payload)
+    .map(normalizeGeocodeCandidate)
+    .filter(
+      (candidate): candidate is NormalizedGeocodeResult => candidate !== null,
+    );
 
-  if (!providerConfig.baseUrl) {
+  if (normalizedCandidates.length === 0) {
+    return [];
+  }
+
+  normalizedCandidates.sort((firstCandidate, secondCandidate) => {
+    if (secondCandidate.confidence !== firstCandidate.confidence) {
+      return secondCandidate.confidence - firstCandidate.confidence;
+    }
+
+    return firstCandidate.formattedAddress.localeCompare(
+      secondCandidate.formattedAddress,
+    );
+  });
+
+  return normalizedCandidates;
+}
+
+export function createGeocodingService(baseUrl?: string | null, apiKey?: string) {
+  const providerBaseUrl =
+    baseUrl?.trim() ||
+    process.env.GEOCODING_API_BASE_URL?.trim() ||
+    "https://geocoding-api.open-meteo.com/v1";
+  const providerApiKey = apiKey?.trim() || process.env.GEOCODING_API_KEY?.trim();
+  const endpointPath =
+    process.env.GEOCODING_API_ENDPOINT_PATH?.trim() || "search";
+
+  if (!providerBaseUrl) {
     throw new AnalysisConfigurationError("Missing geocoding provider base URL.");
   }
 
-  const providerBaseUrl = providerConfig.baseUrl;
-
   return {
-    async geocodeLocationText(locationText: string): Promise<NormalizedGeocodeResult> {
+    async geocodeLocationText(
+      locationText: string,
+      options?: GeocodingOptions,
+    ): Promise<NormalizedGeocodeResult[]> {
       const trimmedLocationText = locationText.trim();
 
       if (!trimmedLocationText) {
-        throw new AnalysisConfigurationError("Location text is required for geocoding.");
+        throw new AnalysisInvalidInputError("Location text is required for geocoding.");
       }
 
-      const url = new URL("/geocode", providerBaseUrl);
-      url.searchParams.set("q", trimmedLocationText);
+      const normalizedEndpointPath = endpointPath.replace(/^\/+/, "");
+      const normalizedBaseUrl = providerBaseUrl.endsWith("/")
+        ? providerBaseUrl
+        : `${providerBaseUrl}/`;
+      const fetchPayload = async (queryText: string) => {
+        const url = new URL(normalizedEndpointPath, normalizedBaseUrl);
+        url.searchParams.set("name", queryText);
 
-      const payload = await requestJson<GeocodingServiceResponse>(url.toString(), {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${providerConfig.apiKey}`,
-          Accept: "application/json",
-        },
-      });
+        if (options?.countryCode) {
+          url.searchParams.set("countryCode", options.countryCode.toUpperCase());
+        }
 
-      const result = normalizeGeocodeResult(payload);
+        if (options?.limit !== undefined) {
+          url.searchParams.set("count", String(options.limit));
+        }
 
-      if (!result) {
-        throw new AnalysisConfigurationError("Geocoding provider returned an unrecognized payload.");
+        return requestJson<GeocodingServiceResponse & GeocodingProviderErrorPayload>(
+          url.toString(),
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              ...(providerApiKey
+                ? { Authorization: `Bearer ${providerApiKey}` }
+                : {}),
+            },
+          },
+        );
+      };
+
+      const payload = await fetchPayload(trimmedLocationText);
+
+      if (payload?.error) {
+        throw new AnalysisExternalServiceError(
+          normalizeString(payload.reason, "Geocoding provider returned an error."),
+          502,
+          payload,
+        );
       }
 
-      return result;
+      let results = normalizeGeocodeResults(payload);
+
+      if (results.length === 0 && trimmedLocationText.includes(",")) {
+        const fallbackLocationText = trimmedLocationText.split(",")[0]?.trim();
+
+        if (fallbackLocationText && fallbackLocationText !== trimmedLocationText) {
+          const fallbackPayload = await fetchPayload(fallbackLocationText);
+
+          if (!fallbackPayload?.error) {
+            results = normalizeGeocodeResults(fallbackPayload);
+          }
+        }
+      }
+
+      if (results.length === 0) {
+        throw new AnalysisInvalidInputError(
+          "No geocoding results found for the provided location.",
+        );
+      }
+
+      return results;
     },
-    normalizeGeocodeResult,
+    normalizeGeocodeResults,
   };
 }
