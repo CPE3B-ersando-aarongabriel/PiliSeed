@@ -851,3 +851,58 @@ export async function getLatestWeatherSnapshotForFarm(
 
   return toWeatherSnapshot(latestDataDoc.id, latestDataDoc.data());
 }
+
+export async function listRecentWeatherSnapshotsForFarm(
+  uid: string,
+  farmId: string,
+  limit = 30,
+): Promise<WeatherSnapshot[]> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(120, Math.trunc(limit)));
+
+  try {
+    const indexedSnapshot = await weatherSnapshotsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(safeLimit)
+      .get();
+
+    return indexedSnapshot.docs
+      .filter((doc) => doc.data().isSeedData !== true)
+      .map((doc) => toWeatherSnapshot(doc.id, doc.data()));
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await weatherSnapshotsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    return candidateDocs
+      .slice(0, safeLimit)
+      .map((doc) => toWeatherSnapshot(doc.id, doc.data()));
+  }
+}

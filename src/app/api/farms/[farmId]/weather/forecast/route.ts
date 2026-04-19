@@ -9,6 +9,7 @@ import { verifyTokenWithClaims } from "../../../../../../lib/authMiddleware";
 import {
   createWeatherSnapshotForFarm,
   getFarmByIdForUser,
+  listRecentWeatherSnapshotsForFarm,
 } from "../../../../../../lib/firestoreSchema";
 import { createGeocodingService } from "../../../../../../lib/geocodingService";
 import { createWeatherService } from "../../../../../../lib/weatherService";
@@ -29,6 +30,156 @@ type FarmWeatherForecastContext = {
 
 const geocodingService = createGeocodingService();
 const weatherService = createWeatherService();
+
+type WeatherTimelineEntry = {
+  date: string;
+  sourceType: "observed" | "backfilled" | "forecast";
+  temperatureC: number | null;
+  humidity: number | null;
+  rainfallMm: number | null;
+  rainRisk: "low" | "medium" | "high" | "unknown";
+  isInferred: boolean;
+};
+
+function toIsoDateString(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
+function startOfIsoWeekUtc(value: Date) {
+  const normalized = new Date(Date.UTC(
+    value.getUTCFullYear(),
+    value.getUTCMonth(),
+    value.getUTCDate(),
+  ));
+  const day = normalized.getUTCDay();
+  const daysFromMonday = (day + 6) % 7;
+
+  normalized.setUTCDate(normalized.getUTCDate() - daysFromMonday);
+
+  return normalized;
+}
+
+function toRainRisk(rainfallMm: number | null): "low" | "medium" | "high" | "unknown" {
+  if (rainfallMm === null) {
+    return "unknown";
+  }
+
+  if (rainfallMm >= 8) {
+    return "high";
+  }
+
+  if (rainfallMm >= 2) {
+    return "medium";
+  }
+
+  return "low";
+}
+
+function toTimelineDateRange(now = new Date()) {
+  const weekStart = startOfIsoWeekUtc(now);
+  const weekDates = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(weekStart);
+    day.setUTCDate(weekStart.getUTCDate() + index);
+
+    return toIsoDateString(day);
+  });
+
+  return {
+    weekDates,
+    weekStartDate: weekDates[0],
+    weekEndDate: weekDates[6],
+    todayDate: toIsoDateString(now),
+  };
+}
+
+function toProviderDailyMap(forecast: Array<Record<string, unknown>>) {
+  return forecast.reduce<Record<string, Record<string, unknown>>>((map, item) => {
+    const date = typeof item.date === "string" ? item.date : null;
+
+    if (!date) {
+      return map;
+    }
+
+    map[date] = item;
+
+    return map;
+  }, {});
+}
+
+function toObservedDailyMap(
+  snapshots: Array<{ recordedAt: string | null; temperatureC: number | null; humidity: number | null; rainfallMm: number | null }>,
+) {
+  return snapshots.reduce<Record<string, {
+    temperatureC: number | null;
+    humidity: number | null;
+    rainfallMm: number | null;
+  }>>((map, snapshot) => {
+    if (!snapshot.recordedAt) {
+      return map;
+    }
+
+    const date = snapshot.recordedAt.slice(0, 10);
+
+    if (date.length !== 10 || map[date]) {
+      return map;
+    }
+
+    map[date] = {
+      temperatureC: snapshot.temperatureC,
+      humidity: snapshot.humidity,
+      rainfallMm: snapshot.rainfallMm,
+    };
+
+    return map;
+  }, {});
+}
+
+function buildWeatherTimeline(input: {
+  weekDates: string[];
+  todayDate: string;
+  observedByDate: Record<string, { temperatureC: number | null; humidity: number | null; rainfallMm: number | null }>;
+  providerByDate: Record<string, Record<string, unknown>>;
+}) {
+  const timeline: WeatherTimelineEntry[] = [];
+
+  for (const date of input.weekDates) {
+    const observed = input.observedByDate[date];
+
+    if (observed) {
+      timeline.push({
+        date,
+        sourceType: "observed",
+        temperatureC: observed.temperatureC,
+        humidity: observed.humidity,
+        rainfallMm: observed.rainfallMm,
+        rainRisk: toRainRisk(observed.rainfallMm),
+        isInferred: false,
+      });
+      continue;
+    }
+
+    const provider = input.providerByDate[date] ?? null;
+    const isPastDay = date < input.todayDate;
+
+    timeline.push({
+      date,
+      sourceType: isPastDay ? "backfilled" : "forecast",
+      temperatureC:
+        typeof provider?.temperatureMaxC === "number"
+          ? provider.temperatureMaxC
+          : null,
+      humidity: null,
+      rainfallMm:
+        typeof provider?.rainfallMm === "number" ? provider.rainfallMm : null,
+      rainRisk: toRainRisk(
+        typeof provider?.rainfallMm === "number" ? provider.rainfallMm : null,
+      ),
+      isInferred: true,
+    });
+  }
+
+  return timeline;
+}
 
 function buildForecastWarnings(forecastLength: number) {
   if (forecastLength > 0) {
@@ -97,12 +248,37 @@ export async function GET(
     }
 
     const forecastDays = validationResult.data.days ?? 7;
+    const timelineRange = toTimelineDateRange();
+    const pastDays = timelineRange.weekDates.filter(
+      (date) => date < timelineRange.todayDate,
+    ).length;
+    const futureDays = timelineRange.weekDates.filter(
+      (date) => date >= timelineRange.todayDate,
+    ).length;
 
     const weather = await weatherService.fetchWeatherForecast({
       latitude: geocode.latitude,
       longitude: geocode.longitude,
-      days: forecastDays,
+      days: Math.max(forecastDays, futureDays),
+      pastDays,
     });
+
+    const recentSnapshots = await listRecentWeatherSnapshotsForFarm(
+      decodedToken.uid,
+      farm.id,
+      60,
+    );
+    const observedByDate = toObservedDailyMap(recentSnapshots);
+    const providerByDate = toProviderDailyMap(weather.forecast);
+    const weatherTimeline = buildWeatherTimeline({
+      weekDates: timelineRange.weekDates,
+      todayDate: timelineRange.todayDate,
+      observedByDate,
+      providerByDate,
+    });
+    const timelineMissingCount = weatherTimeline.filter(
+      (entry) => entry.temperatureC === null && entry.rainfallMm === null,
+    ).length;
 
     const weatherSnapshot = await createWeatherSnapshotForFarm(decodedToken.uid, farm.id, {
       temperatureC: weather.temperatureC,
@@ -117,9 +293,22 @@ export async function GET(
     return successResponse({
       farmId: farm.id,
       requestedDays: forecastDays,
+      timelineWindow: {
+        startDate: timelineRange.weekStartDate,
+        endDate: timelineRange.weekEndDate,
+        todayDate: timelineRange.todayDate,
+      },
       geocode,
       weather,
-      warnings: buildForecastWarnings(weather.forecast.length),
+      weatherTimeline,
+      warnings: [
+        ...buildForecastWarnings(weather.forecast.length),
+        ...(timelineMissingCount > 0
+          ? [
+              `${timelineMissingCount} timeline day(s) are missing provider and observed data; values were left null.`,
+            ]
+          : []),
+      ],
       weatherSnapshot,
     });
   } catch (error) {

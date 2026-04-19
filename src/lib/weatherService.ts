@@ -135,6 +135,7 @@ export function createWeatherService(baseUrl?: string | null, apiKey?: string) {
     latitude: number;
     longitude: number;
     days?: number;
+    pastDays?: number;
     mode?: "current" | "forecast" | "refresh";
   }): Promise<NormalizedWeatherSnapshot> {
     const normalizedEndpointPath = endpointPath.replace(/^\/+/, "");
@@ -162,6 +163,10 @@ export function createWeatherService(baseUrl?: string | null, apiKey?: string) {
       if (query.days !== undefined) {
         url.searchParams.set("forecast_days", String(query.days));
       }
+
+      if (query.pastDays !== undefined && query.pastDays > 0) {
+        url.searchParams.set("past_days", String(query.pastDays));
+      }
     }
 
     const payload = await requestJson<unknown>(url.toString(), {
@@ -186,7 +191,12 @@ export function createWeatherService(baseUrl?: string | null, apiKey?: string) {
   return {
     fetchCurrentWeather: (query: { latitude: number; longitude: number }) =>
       fetchWeatherSnapshot({ ...query, mode: "current" }),
-    fetchWeatherForecast: (query: { latitude: number; longitude: number; days?: number }) =>
+    fetchWeatherForecast: (query: {
+      latitude: number;
+      longitude: number;
+      days?: number;
+      pastDays?: number;
+    }) =>
       fetchWeatherSnapshot({ ...query, mode: "forecast" }),
     refreshWeatherSnapshot: (query: { latitude: number; longitude: number }) =>
       fetchWeatherSnapshot({ ...query, mode: "refresh" }),
