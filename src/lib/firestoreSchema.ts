@@ -77,6 +77,18 @@ export type SoilProfile = {
   updatedAt: string | null;
 };
 
+export type WeatherSnapshot = {
+  id: string;
+  uid: string;
+  farmId: string;
+  temperatureC: number | null;
+  humidity: number | null;
+  rainfallMm: number | null;
+  recordedAt: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 type EnsureUserScaffoldInput = {
   decodedToken: DecodedIdToken;
   requestedName?: string | null;
@@ -204,6 +216,20 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
     nitrogen: toNullableNumber(data.nitrogen),
     phosphorus: toNullableNumber(data.phosphorus),
     potassium: toNullableNumber(data.potassium),
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function toWeatherSnapshot(id: string, data: DocumentData): WeatherSnapshot {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    farmId: normalizeText(data.farmId, 128) ?? "",
+    temperatureC: toNullableNumber(data.temperatureC),
+    humidity: toNullableNumber(data.humidity),
+    rainfallMm: toNullableNumber(data.rainfallMm),
+    recordedAt: toIsoString(data.recordedAt),
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
@@ -723,4 +749,66 @@ export async function getLatestSoilProfileForFarm(
   }
 
   return toSoilProfile(latestDataDoc.id, latestDataDoc.data());
+}
+
+export async function getLatestWeatherSnapshotForFarm(
+  uid: string,
+  farmId: string,
+): Promise<WeatherSnapshot | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  let latestDataDoc:
+    | (typeof weatherSnapshotsCollection extends CollectionReference<infer T>
+        ? import("firebase-admin/firestore").QueryDocumentSnapshot<T>
+        : never)
+    | null = null;
+
+  try {
+    const indexedSnapshot = await weatherSnapshotsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(10)
+      .get();
+
+    latestDataDoc =
+      indexedSnapshot.docs.find((doc) => doc.data().isSeedData !== true) ??
+      null;
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await weatherSnapshotsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    latestDataDoc = candidateDocs[0] ?? null;
+  }
+
+  if (!latestDataDoc) {
+    return null;
+  }
+
+  return toWeatherSnapshot(latestDataDoc.id, latestDataDoc.data());
 }

@@ -7,7 +7,11 @@ import {
   type User,
 } from "firebase/auth";
 
-import { clientAuth, clientGoogleProvider } from "../../../lib/firebaseClient";
+import {
+  getClientAuth,
+  getClientGoogleProvider,
+  getMissingFirebaseClientEnvVars,
+} from "../../../lib/firebaseClient";
 
 type EndpointResult = {
   status: number;
@@ -43,6 +47,8 @@ async function callProtectedEndpoint(
 }
 
 export default function LoginPage() {
+  const missingFirebaseEnvVars = getMissingFirebaseClientEnvVars();
+  const hasFirebaseConfig = missingFirebaseEnvVars.length === 0;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -83,10 +89,19 @@ export default function LoginPage() {
 
   async function handleEmailLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!hasFirebaseConfig) {
+      setError(
+        `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      const clientAuth = getClientAuth();
       const credential = await signInWithEmailAndPassword(
         clientAuth,
         email,
@@ -104,10 +119,19 @@ export default function LoginPage() {
   }
 
   async function handleGoogleLogin() {
+    if (!hasFirebaseConfig) {
+      setError(
+        `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      const clientAuth = getClientAuth();
+      const clientGoogleProvider = getClientGoogleProvider();
       const credential = await signInWithPopup(
         clientAuth,
         clientGoogleProvider,
@@ -232,6 +256,12 @@ export default function LoginPage() {
       </div>
 
       
+      {!hasFirebaseConfig ? (
+        <p style={{ color: "#b00020" }}>
+          Firebase client env configuration is incomplete. Add the missing values
+          in .env.local and restart dev server: {missingFirebaseEnvVars.join(", ")}
+        </p>
+      ) : null}
 
       <form
         onSubmit={handleEmailLogin}
@@ -273,10 +303,87 @@ export default function LoginPage() {
       </form>
 
       <div style={{ marginTop: "0.75rem" }}>
-        <button type="button" onClick={handleGoogleLogin} disabled={loading}>
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={loading || !hasFirebaseConfig}
+        >
           {loading ? "Processing..." : "Login with Google"}
         </button>
       </div>
+
+      <div style={{ marginTop: "1rem", display: "grid", gap: "0.5rem" }}>
+        <button
+          type="button"
+          onClick={handleGetMe}
+          disabled={loading || !token}
+        >
+          GET /api/auth/me
+        </button>
+        <button
+          type="button"
+          onClick={handleGetProfile}
+          disabled={loading || !token}
+        >
+          GET /api/profile
+        </button>
+      </div>
+
+      <form
+        onSubmit={handlePatchProfile}
+        style={{ marginTop: "1rem", display: "grid", gap: "0.75rem" }}
+      >
+        <h2>PATCH /api/profile</h2>
+        <input
+          value={patchName}
+          onChange={(event) => setPatchName(event.target.value)}
+          placeholder="name"
+        />
+        <input
+          value={patchPhone}
+          onChange={(event) => setPatchPhone(event.target.value)}
+          placeholder="phone"
+        />
+        <input
+          value={patchAddress}
+          onChange={(event) => setPatchAddress(event.target.value)}
+          placeholder="address"
+        />
+        <button type="submit" disabled={loading || !token}>
+          {loading ? "Processing..." : "Update Profile"}
+        </button>
+      </form>
+
+      {error ? (
+        <p style={{ color: "#b00020", marginTop: "1rem" }}>{error}</p>
+      ) : null}
+
+      <section style={{ marginTop: "1rem", display: "grid", gap: "0.75rem" }}>
+        <div>
+          <strong>UID:</strong> {uid || "-"}
+        </div>
+        <div>
+          <strong>ID Token:</strong>
+          <textarea
+            value={token}
+            readOnly
+            rows={5}
+            style={{ width: "100%", marginTop: "0.25rem" }}
+          />
+        </div>
+        <div>
+          <strong>POST /api/auth/login:</strong>
+          <pre>{JSON.stringify(loginResult, null, 2)}</pre>
+        </div>
+        <div>
+          <strong>GET /api/auth/me:</strong>
+          <pre>{JSON.stringify(meResult, null, 2)}</pre>
+        </div>
+        <div>
+          <strong>GET/PATCH /api/profile:</strong>
+          <pre>{JSON.stringify(profileResult, null, 2)}</pre>
+        </div>
+      </section>
     </main>
   );
 }
