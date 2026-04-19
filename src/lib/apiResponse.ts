@@ -1,4 +1,8 @@
 import { UnauthorizedError } from "./authMiddleware";
+import {
+  AnalysisError,
+  AnalysisExternalServiceError,
+} from "./analysisErrors";
 
 type ApiErrorPayload = {
   code: string;
@@ -10,6 +14,7 @@ export function successResponse<T>(data: T, status = 200) {
   return Response.json(
     {
       success: true,
+      message: "Operation completed successfully",
       data,
     },
     { status },
@@ -34,6 +39,8 @@ export function errorResponse(
   return Response.json(
     {
       success: false,
+      message,
+      errors: details === undefined ? [] : [details],
       error: errorPayload,
     },
     { status },
@@ -43,6 +50,15 @@ export function errorResponse(
 export function handleRouteError(error: unknown) {
   if (error instanceof UnauthorizedError) {
     return errorResponse(401, "UNAUTHORIZED", error.message);
+  }
+
+  if (error instanceof AnalysisError) {
+    return errorResponse(
+      error.code === "CONFIGURATION_ERROR" ? 500 : 400,
+      error.code,
+      error.message,
+      error instanceof AnalysisExternalServiceError ? error.details : undefined,
+    );
   }
 
   if (isFirebaseAdminAuthError(error)) {
