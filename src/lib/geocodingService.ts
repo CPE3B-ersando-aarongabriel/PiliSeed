@@ -17,6 +17,10 @@ type GeocodingOptions = {
   limit?: number;
 };
 
+type ReverseGeocodingOptions = {
+  limit?: number;
+};
+
 type GeocodingProviderErrorPayload = {
   error?: boolean;
   reason?: string;
@@ -159,6 +163,13 @@ export function createGeocodingService(baseUrl?: string | null, apiKey?: string)
   const providerApiKey = apiKey?.trim() || process.env.GEOCODING_API_KEY?.trim();
   const endpointPath =
     process.env.GEOCODING_API_ENDPOINT_PATH?.trim() || "search";
+  const reverseProviderBaseUrl =
+    process.env.GEOCODING_API_REVERSE_BASE_URL?.trim() ||
+    (providerBaseUrl.includes("geocoding-api.open-meteo.com")
+      ? "https://nominatim.openstreetmap.org"
+      : providerBaseUrl);
+  const reverseEndpointPath =
+    process.env.GEOCODING_API_REVERSE_ENDPOINT_PATH?.trim() || "reverse";
 
   if (!providerBaseUrl) {
     throw new AnalysisConfigurationError("Missing geocoding provider base URL.");
@@ -232,6 +243,70 @@ export function createGeocodingService(baseUrl?: string | null, apiKey?: string)
       if (results.length === 0) {
         throw new AnalysisInvalidInputError(
           "No geocoding results found for the provided location.",
+        );
+      }
+
+      return results;
+    },
+    async reverseGeocodeCoordinates(
+      latitude: number,
+      longitude: number,
+      options?: ReverseGeocodingOptions,
+    ): Promise<NormalizedGeocodeResult[]> {
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        throw new AnalysisInvalidInputError(
+          "Latitude and longitude are required for reverse geocoding.",
+        );
+      }
+
+      const normalizedReverseEndpointPath = reverseEndpointPath.replace(/^\/+/, "");
+      const normalizedReverseBaseUrl = reverseProviderBaseUrl.endsWith("/")
+        ? reverseProviderBaseUrl
+        : `${reverseProviderBaseUrl}/`;
+      const url = new URL(normalizedReverseEndpointPath, normalizedReverseBaseUrl);
+
+      url.searchParams.set("latitude", String(latitude));
+      url.searchParams.set("longitude", String(longitude));
+      url.searchParams.set("lat", String(latitude));
+      url.searchParams.set("lon", String(longitude));
+
+      if (url.hostname.includes("nominatim.openstreetmap.org")) {
+        url.searchParams.set("format", "jsonv2");
+      }
+
+      if (options?.limit !== undefined) {
+        url.searchParams.set("count", String(options.limit));
+      }
+
+      const payload = await requestJson<GeocodingServiceResponse & GeocodingProviderErrorPayload>(
+        url.toString(),
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            ...(url.hostname.includes("nominatim.openstreetmap.org")
+              ? { "User-Agent": "PiliSeed/1.0 (reverse-geocoding)" }
+              : {}),
+            ...(providerApiKey
+              ? { Authorization: `Bearer ${providerApiKey}` }
+              : {}),
+          },
+        },
+      );
+
+      if (payload?.error) {
+        throw new AnalysisExternalServiceError(
+          normalizeString(payload.reason, "Reverse geocoding provider returned an error."),
+          502,
+          payload,
+        );
+      }
+
+      const results = normalizeGeocodeResults(payload);
+
+      if (results.length === 0) {
+        throw new AnalysisInvalidInputError(
+          "No address result found for the provided coordinates.",
         );
       }
 
