@@ -125,6 +125,12 @@ type SoilProfileCreateInput = {
   potassium: number;
 };
 
+type WeatherSnapshotCreateInput = {
+  temperatureC: number | null;
+  humidity: number | null;
+  rainfallMm: number | null;
+};
+
 function normalizeText(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") {
     return null;
@@ -687,6 +693,39 @@ export async function createSoilProfileForFarm(
   }
 
   return toSoilProfile(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
+export async function createWeatherSnapshotForFarm(
+  uid: string,
+  farmId: string,
+  input: WeatherSnapshotCreateInput,
+): Promise<WeatherSnapshot | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const weatherDocRef = weatherSnapshotsCollection.doc();
+
+  await weatherDocRef.set({
+    uid,
+    farmId,
+    temperatureC: input.temperatureC,
+    humidity: input.humidity,
+    rainfallMm: input.rainfallMm,
+    recordedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await weatherDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create weather snapshot.");
+  }
+
+  return toWeatherSnapshot(createdSnapshot.id, createdSnapshot.data() ?? {});
 }
 
 export async function getLatestSoilProfileForFarm(
