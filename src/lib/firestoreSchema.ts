@@ -6,6 +6,10 @@ import {
 } from "firebase-admin/firestore";
 
 import { UnauthorizedError } from "./authMiddleware";
+import {
+  type RecommendationItem,
+  type SoilClassificationProbability,
+} from "./analysisContracts";
 import { firestore } from "./firebaseAdmin";
 
 export const firestoreCollections = {
@@ -69,10 +73,19 @@ export type SoilProfile = {
   id: string;
   uid: string;
   farmId: string;
+  texture: string | null;
+  soilClass: string | null;
+  soilClassValue: number | null;
+  soilClassProbability: number | null;
+  soilClassProbabilities: SoilClassificationProbability[];
   pH: number | null;
+  moistureContent: number | null;
   nitrogen: number | null;
   phosphorus: number | null;
   potassium: number | null;
+  soilSource: "manual" | "api" | "mixed" | "unknown";
+  classificationJson: DocumentData | null;
+  analysisJson: DocumentData | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -85,6 +98,38 @@ export type WeatherSnapshot = {
   humidity: number | null;
   rainfallMm: number | null;
   recordedAt: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type CropRecommendation = {
+  id: string;
+  uid: string;
+  farmId: string;
+  recommendedCrops: RecommendationItem[];
+  analysisText: string;
+  warningFlags: string[];
+  generatedBy: "deterministic" | "openai" | "hybrid";
+  recommendationJson: DocumentData | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type YieldForecast = {
+  id: string;
+  uid: string;
+  farmId: string;
+  cropType: string;
+  season: string;
+  forecastPeriod: string;
+  expectedYield: number;
+  unit: string;
+  estimatedRevenue: number | null;
+  marketContext: DocumentData | null;
+  analysisText: string;
+  warningFlags: string[];
+  generatedBy: "deterministic" | "openai" | "hybrid";
+  forecastJson: DocumentData | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -123,6 +168,50 @@ type SoilProfileCreateInput = {
   nitrogen: number;
   phosphorus: number;
   potassium: number;
+};
+
+type SoilAnalysisCreateInput = {
+  texture?: string | null;
+  pH: number | null;
+  moistureContent: number | null;
+  nitrogen: number | null;
+  phosphorus: number | null;
+  potassium: number | null;
+  soilSource?: "manual" | "api" | "mixed";
+  soilClass?: string | null;
+  soilClassValue?: number | null;
+  soilClassProbability?: number | null;
+  soilClassProbabilities: SoilClassificationProbability[];
+  classificationJson: DocumentData;
+  analysisJson: DocumentData;
+};
+
+type CropRecommendationCreateInput = {
+  recommendedCrops: RecommendationItem[];
+  analysisText: string;
+  warningFlags: string[];
+  generatedBy: "deterministic" | "openai" | "hybrid";
+  recommendationJson: DocumentData;
+};
+
+type WeatherSnapshotCreateInput = {
+  temperatureC: number | null;
+  humidity: number | null;
+  rainfallMm: number | null;
+};
+
+type YieldForecastCreateInput = {
+  cropType: string;
+  season: string;
+  forecastPeriod: string;
+  expectedYield: number;
+  unit: string;
+  estimatedRevenue: number | null;
+  marketContext: DocumentData | null;
+  analysisText: string;
+  warningFlags: string[];
+  generatedBy: "deterministic" | "openai" | "hybrid";
+  forecastJson: DocumentData;
 };
 
 function normalizeText(value: unknown, maxLength: number): string | null {
@@ -212,10 +301,38 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
     id,
     uid: normalizeText(data.uid, 128) ?? "",
     farmId: normalizeText(data.farmId, 128) ?? "",
+    texture: normalizeText(data.texture, 100),
+    soilClass: normalizeText(data.soilClass, 100),
+    soilClassValue: toNullableNumber(data.soilClassValue),
+    soilClassProbability: toNullableNumber(data.soilClassProbability),
+    soilClassProbabilities: Array.isArray(data.soilClassProbabilities)
+      ? (data.soilClassProbabilities.filter(
+          (item): item is SoilClassificationProbability =>
+            typeof item === "object" &&
+            item !== null &&
+            typeof (item as SoilClassificationProbability).className === "string" &&
+            typeof (item as SoilClassificationProbability).probability === "number",
+        ) as SoilClassificationProbability[])
+      : [],
     pH: toNullableNumber(data.ph ?? data.pH),
+    moistureContent: toNullableNumber(data.moistureContent ?? data.moisture),
     nitrogen: toNullableNumber(data.nitrogen),
     phosphorus: toNullableNumber(data.phosphorus),
     potassium: toNullableNumber(data.potassium),
+    soilSource:
+      data.soilSource === "manual" ||
+      data.soilSource === "api" ||
+      data.soilSource === "mixed"
+        ? data.soilSource
+        : "unknown",
+    classificationJson:
+      typeof data.classificationJson === "object" && data.classificationJson !== null
+        ? data.classificationJson
+        : null,
+    analysisJson:
+      typeof data.analysisJson === "object" && data.analysisJson !== null
+        ? data.analysisJson
+        : null,
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
@@ -230,6 +347,85 @@ function toWeatherSnapshot(id: string, data: DocumentData): WeatherSnapshot {
     humidity: toNullableNumber(data.humidity),
     rainfallMm: toNullableNumber(data.rainfallMm),
     recordedAt: toIsoString(data.recordedAt),
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function toCropRecommendation(
+  id: string,
+  data: DocumentData,
+): CropRecommendation {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    farmId: normalizeText(data.farmId, 128) ?? "",
+    recommendedCrops: Array.isArray(data.recommendedCrops)
+      ? (data.recommendedCrops.filter(
+          (item): item is RecommendationItem =>
+            typeof item === "object" &&
+            item !== null &&
+            typeof (item as RecommendationItem).crop === "string" &&
+            typeof (item as RecommendationItem).score === "number" &&
+            typeof (item as RecommendationItem).reason === "string",
+        ) as RecommendationItem[])
+      : [],
+    analysisText: normalizeText(data.analysisText, 1200) ?? "",
+    warningFlags: Array.isArray(data.warningFlags)
+      ? data.warningFlags.filter(
+          (item): item is string => typeof item === "string",
+        )
+      : [],
+    generatedBy:
+      data.generatedBy === "openai" ||
+      data.generatedBy === "hybrid" ||
+      data.generatedBy === "deterministic"
+        ? data.generatedBy
+        : "deterministic",
+    recommendationJson:
+      typeof data.recommendationJson === "object" &&
+      data.recommendationJson !== null
+        ? data.recommendationJson
+        : null,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function toYieldForecast(id: string, data: DocumentData): YieldForecast {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    farmId: normalizeText(data.farmId, 128) ?? "",
+    cropType: normalizeText(data.cropType, 80) ?? "",
+    season: normalizeText(data.season, 40) ?? "",
+    forecastPeriod: normalizeText(data.forecastPeriod, 60) ?? "",
+    expectedYield:
+      typeof data.expectedYield === "number" && !Number.isNaN(data.expectedYield)
+        ? data.expectedYield
+        : 0,
+    unit: normalizeText(data.unit, 40) ?? "tons_per_hectare",
+    estimatedRevenue: toNullableNumber(data.estimatedRevenue),
+    marketContext:
+      typeof data.marketContext === "object" && data.marketContext !== null
+        ? data.marketContext
+        : null,
+    analysisText: normalizeText(data.analysisText, 1200) ?? "",
+    warningFlags: Array.isArray(data.warningFlags)
+      ? data.warningFlags.filter(
+          (item): item is string => typeof item === "string",
+        )
+      : [],
+    generatedBy:
+      data.generatedBy === "openai" ||
+      data.generatedBy === "hybrid" ||
+      data.generatedBy === "deterministic"
+        ? data.generatedBy
+        : "deterministic",
+    forecastJson:
+      typeof data.forecastJson === "object" && data.forecastJson !== null
+        ? data.forecastJson
+        : null,
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
@@ -689,6 +885,158 @@ export async function createSoilProfileForFarm(
   return toSoilProfile(createdSnapshot.id, createdSnapshot.data() ?? {});
 }
 
+export async function createSoilAnalysisForFarm(
+  uid: string,
+  farmId: string,
+  input: SoilAnalysisCreateInput,
+): Promise<SoilProfile | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const soilDocRef = soilProfilesCollection.doc();
+
+  await soilDocRef.set({
+    uid,
+    farmId,
+    texture: normalizeText(input.texture, 100),
+    soilClass: normalizeText(input.soilClass, 100),
+    soilClassValue: input.soilClassValue,
+    soilClassProbability: input.soilClassProbability,
+    soilClassProbabilities: input.soilClassProbabilities,
+    ph: input.pH,
+    pH: input.pH,
+    moistureContent: input.moistureContent,
+    nitrogen: input.nitrogen,
+    phosphorus: input.phosphorus,
+    potassium: input.potassium,
+    soilSource: input.soilSource ?? "api",
+    classificationJson: input.classificationJson,
+    analysisJson: input.analysisJson,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await soilDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create soil analysis.");
+  }
+
+  return toSoilProfile(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
+export async function createWeatherSnapshotForFarm(
+  uid: string,
+  farmId: string,
+  input: WeatherSnapshotCreateInput,
+): Promise<WeatherSnapshot | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const weatherDocRef = weatherSnapshotsCollection.doc();
+
+  await weatherDocRef.set({
+    uid,
+    farmId,
+    temperatureC: input.temperatureC,
+    humidity: input.humidity,
+    rainfallMm: input.rainfallMm,
+    recordedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await weatherDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create weather snapshot.");
+  }
+
+  return toWeatherSnapshot(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
+export async function createCropRecommendationForFarm(
+  uid: string,
+  farmId: string,
+  input: CropRecommendationCreateInput,
+): Promise<CropRecommendation | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const recommendationDocRef = cropRecommendationsCollection.doc();
+
+  await recommendationDocRef.set({
+    uid,
+    farmId,
+    recommendedCrops: input.recommendedCrops,
+    analysisText: normalizeText(input.analysisText, 1200),
+    warningFlags: input.warningFlags,
+    generatedBy: input.generatedBy,
+    recommendationJson: input.recommendationJson,
+    generatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await recommendationDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create crop recommendation.");
+  }
+
+  return toCropRecommendation(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
+export async function createYieldForecastForFarm(
+  uid: string,
+  farmId: string,
+  input: YieldForecastCreateInput,
+): Promise<YieldForecast | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const yieldDocRef = yieldForecastsCollection.doc();
+
+  await yieldDocRef.set({
+    uid,
+    farmId,
+    cropType: normalizeText(input.cropType, 80),
+    season: normalizeText(input.season, 40),
+    forecastPeriod: normalizeText(input.forecastPeriod, 60),
+    expectedYield: input.expectedYield,
+    unit: normalizeText(input.unit, 40),
+    estimatedRevenue: input.estimatedRevenue,
+    marketContext: input.marketContext,
+    analysisText: normalizeText(input.analysisText, 1200),
+    warningFlags: input.warningFlags,
+    generatedBy: input.generatedBy,
+    forecastJson: input.forecastJson,
+    generatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await yieldDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create yield forecast.");
+  }
+
+  return toYieldForecast(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
 export async function getLatestSoilProfileForFarm(
   uid: string,
   farmId: string,
@@ -811,4 +1159,348 @@ export async function getLatestWeatherSnapshotForFarm(
   }
 
   return toWeatherSnapshot(latestDataDoc.id, latestDataDoc.data());
+}
+
+export async function listRecentWeatherSnapshotsForFarm(
+  uid: string,
+  farmId: string,
+  limit = 30,
+): Promise<WeatherSnapshot[]> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(120, Math.trunc(limit)));
+
+  try {
+    const indexedSnapshot = await weatherSnapshotsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(safeLimit)
+      .get();
+
+    return indexedSnapshot.docs
+      .filter((doc) => doc.data().isSeedData !== true)
+      .map((doc) => toWeatherSnapshot(doc.id, doc.data()));
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await weatherSnapshotsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    return candidateDocs
+      .slice(0, safeLimit)
+      .map((doc) => toWeatherSnapshot(doc.id, doc.data()));
+  }
+}
+
+export async function listRecentSoilProfilesForFarm(
+  uid: string,
+  farmId: string,
+  limit = 30,
+): Promise<SoilProfile[]> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(120, Math.trunc(limit)));
+
+  try {
+    const indexedSnapshot = await soilProfilesCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(safeLimit)
+      .get();
+
+    return indexedSnapshot.docs
+      .filter((doc) => doc.data().isSeedData !== true)
+      .map((doc) => toSoilProfile(doc.id, doc.data()));
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await soilProfilesCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    return candidateDocs
+      .slice(0, safeLimit)
+      .map((doc) => toSoilProfile(doc.id, doc.data()));
+  }
+}
+
+export async function getLatestCropRecommendationForFarm(
+  uid: string,
+  farmId: string,
+): Promise<CropRecommendation | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  let latestDataDoc:
+    | (typeof cropRecommendationsCollection extends CollectionReference<infer T>
+        ? import("firebase-admin/firestore").QueryDocumentSnapshot<T>
+        : never)
+    | null = null;
+
+  try {
+    const indexedSnapshot = await cropRecommendationsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(10)
+      .get();
+
+    latestDataDoc =
+      indexedSnapshot.docs.find((doc) => doc.data().isSeedData !== true) ??
+      null;
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await cropRecommendationsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    latestDataDoc = candidateDocs[0] ?? null;
+  }
+
+  if (!latestDataDoc) {
+    return null;
+  }
+
+  return toCropRecommendation(latestDataDoc.id, latestDataDoc.data());
+}
+
+export async function listRecentCropRecommendationsForFarm(
+  uid: string,
+  farmId: string,
+  limit = 10,
+): Promise<CropRecommendation[]> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(100, Math.trunc(limit)));
+
+  try {
+    const indexedSnapshot = await cropRecommendationsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(safeLimit)
+      .get();
+
+    return indexedSnapshot.docs
+      .filter((doc) => doc.data().isSeedData !== true)
+      .map((doc) => toCropRecommendation(doc.id, doc.data()));
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await cropRecommendationsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    return candidateDocs
+      .slice(0, safeLimit)
+      .map((doc) => toCropRecommendation(doc.id, doc.data()));
+  }
+}
+
+export async function getLatestYieldForecastForFarm(
+  uid: string,
+  farmId: string,
+): Promise<YieldForecast | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  let latestDataDoc:
+    | (typeof yieldForecastsCollection extends CollectionReference<infer T>
+        ? import("firebase-admin/firestore").QueryDocumentSnapshot<T>
+        : never)
+    | null = null;
+
+  try {
+    const indexedSnapshot = await yieldForecastsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(10)
+      .get();
+
+    latestDataDoc =
+      indexedSnapshot.docs.find((doc) => doc.data().isSeedData !== true) ??
+      null;
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await yieldForecastsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    latestDataDoc = candidateDocs[0] ?? null;
+  }
+
+  if (!latestDataDoc) {
+    return null;
+  }
+
+  return toYieldForecast(latestDataDoc.id, latestDataDoc.data());
+}
+
+export async function listRecentYieldForecastsForFarm(
+  uid: string,
+  farmId: string,
+  limit = 30,
+): Promise<YieldForecast[]> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(120, Math.trunc(limit)));
+
+  try {
+    const indexedSnapshot = await yieldForecastsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(safeLimit)
+      .get();
+
+    return indexedSnapshot.docs
+      .filter((doc) => doc.data().isSeedData !== true)
+      .map((doc) => toYieldForecast(doc.id, doc.data()));
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await yieldForecastsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    return candidateDocs
+      .slice(0, safeLimit)
+      .map((doc) => toYieldForecast(doc.id, doc.data()));
+  }
 }
