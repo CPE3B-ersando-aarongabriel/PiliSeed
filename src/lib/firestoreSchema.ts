@@ -1216,6 +1216,61 @@ export async function listRecentWeatherSnapshotsForFarm(
   }
 }
 
+export async function listRecentSoilProfilesForFarm(
+  uid: string,
+  farmId: string,
+  limit = 30,
+): Promise<SoilProfile[]> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(120, Math.trunc(limit)));
+
+  try {
+    const indexedSnapshot = await soilProfilesCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(safeLimit)
+      .get();
+
+    return indexedSnapshot.docs
+      .filter((doc) => doc.data().isSeedData !== true)
+      .map((doc) => toSoilProfile(doc.id, doc.data()));
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await soilProfilesCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    return candidateDocs
+      .slice(0, safeLimit)
+      .map((doc) => toSoilProfile(doc.id, doc.data()));
+  }
+}
+
 export async function getLatestCropRecommendationForFarm(
   uid: string,
   farmId: string,
@@ -1393,4 +1448,59 @@ export async function getLatestYieldForecastForFarm(
   }
 
   return toYieldForecast(latestDataDoc.id, latestDataDoc.data());
+}
+
+export async function listRecentYieldForecastsForFarm(
+  uid: string,
+  farmId: string,
+  limit = 30,
+): Promise<YieldForecast[]> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return [];
+  }
+
+  const safeLimit = Math.max(1, Math.min(120, Math.trunc(limit)));
+
+  try {
+    const indexedSnapshot = await yieldForecastsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(safeLimit)
+      .get();
+
+    return indexedSnapshot.docs
+      .filter((doc) => doc.data().isSeedData !== true)
+      .map((doc) => toYieldForecast(doc.id, doc.data()));
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await yieldForecastsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    return candidateDocs
+      .slice(0, safeLimit)
+      .map((doc) => toYieldForecast(doc.id, doc.data()));
+  }
 }
