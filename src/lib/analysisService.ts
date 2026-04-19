@@ -219,7 +219,6 @@ export function summarizeAnalysisInput(input: {
   return {
     hasSoil: input.soil !== undefined && input.soil !== null,
     hasWeather: input.weather !== undefined && input.weather !== null,
-    hasMarket: input.market !== undefined && input.market !== null,
   };
 }
 

@@ -6,7 +6,10 @@ import {
 } from "firebase-admin/firestore";
 
 import { UnauthorizedError } from "./authMiddleware";
-import { type SoilClassificationProbability } from "./analysisContracts";
+import {
+  type RecommendationItem,
+  type SoilClassificationProbability,
+} from "./analysisContracts";
 import { firestore } from "./firebaseAdmin";
 
 export const firestoreCollections = {
@@ -99,6 +102,19 @@ export type WeatherSnapshot = {
   updatedAt: string | null;
 };
 
+export type CropRecommendation = {
+  id: string;
+  uid: string;
+  farmId: string;
+  recommendedCrops: RecommendationItem[];
+  analysisText: string;
+  warningFlags: string[];
+  generatedBy: "deterministic" | "openai" | "hybrid";
+  recommendationJson: DocumentData | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 type EnsureUserScaffoldInput = {
   decodedToken: DecodedIdToken;
   requestedName?: string | null;
@@ -149,6 +165,14 @@ type SoilAnalysisCreateInput = {
   soilClassProbabilities: SoilClassificationProbability[];
   classificationJson: DocumentData;
   analysisJson: DocumentData;
+};
+
+type CropRecommendationCreateInput = {
+  recommendedCrops: RecommendationItem[];
+  analysisText: string;
+  warningFlags: string[];
+  generatedBy: "deterministic" | "openai" | "hybrid";
+  recommendationJson: DocumentData;
 };
 
 type WeatherSnapshotCreateInput = {
@@ -290,6 +314,46 @@ function toWeatherSnapshot(id: string, data: DocumentData): WeatherSnapshot {
     humidity: toNullableNumber(data.humidity),
     rainfallMm: toNullableNumber(data.rainfallMm),
     recordedAt: toIsoString(data.recordedAt),
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function toCropRecommendation(
+  id: string,
+  data: DocumentData,
+): CropRecommendation {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    farmId: normalizeText(data.farmId, 128) ?? "",
+    recommendedCrops: Array.isArray(data.recommendedCrops)
+      ? (data.recommendedCrops.filter(
+          (item): item is RecommendationItem =>
+            typeof item === "object" &&
+            item !== null &&
+            typeof (item as RecommendationItem).crop === "string" &&
+            typeof (item as RecommendationItem).score === "number" &&
+            typeof (item as RecommendationItem).reason === "string",
+        ) as RecommendationItem[])
+      : [],
+    analysisText: normalizeText(data.analysisText, 1200) ?? "",
+    warningFlags: Array.isArray(data.warningFlags)
+      ? data.warningFlags.filter(
+          (item): item is string => typeof item === "string",
+        )
+      : [],
+    generatedBy:
+      data.generatedBy === "openai" ||
+      data.generatedBy === "hybrid" ||
+      data.generatedBy === "deterministic"
+        ? data.generatedBy
+        : "deterministic",
+    recommendationJson:
+      typeof data.recommendationJson === "object" &&
+      data.recommendationJson !== null
+        ? data.recommendationJson
+        : null,
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
@@ -825,6 +889,41 @@ export async function createWeatherSnapshotForFarm(
   return toWeatherSnapshot(createdSnapshot.id, createdSnapshot.data() ?? {});
 }
 
+export async function createCropRecommendationForFarm(
+  uid: string,
+  farmId: string,
+  input: CropRecommendationCreateInput,
+): Promise<CropRecommendation | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const recommendationDocRef = cropRecommendationsCollection.doc();
+
+  await recommendationDocRef.set({
+    uid,
+    farmId,
+    recommendedCrops: input.recommendedCrops,
+    analysisText: normalizeText(input.analysisText, 1200),
+    warningFlags: input.warningFlags,
+    generatedBy: input.generatedBy,
+    recommendationJson: input.recommendationJson,
+    generatedAt: FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await recommendationDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create crop recommendation.");
+  }
+
+  return toCropRecommendation(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
 export async function getLatestSoilProfileForFarm(
   uid: string,
   farmId: string,
@@ -1002,4 +1101,66 @@ export async function listRecentWeatherSnapshotsForFarm(
       .slice(0, safeLimit)
       .map((doc) => toWeatherSnapshot(doc.id, doc.data()));
   }
+}
+
+export async function getLatestCropRecommendationForFarm(
+  uid: string,
+  farmId: string,
+): Promise<CropRecommendation | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  let latestDataDoc:
+    | (typeof cropRecommendationsCollection extends CollectionReference<infer T>
+        ? import("firebase-admin/firestore").QueryDocumentSnapshot<T>
+        : never)
+    | null = null;
+
+  try {
+    const indexedSnapshot = await cropRecommendationsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .orderBy("createdAt", "desc")
+      .limit(10)
+      .get();
+
+    latestDataDoc =
+      indexedSnapshot.docs.find((doc) => doc.data().isSeedData !== true) ??
+      null;
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await cropRecommendationsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return data.isSeedData !== true && normalizeText(data.uid, 128) === uid;
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    latestDataDoc = candidateDocs[0] ?? null;
+  }
+
+  if (!latestDataDoc) {
+    return null;
+  }
+
+  return toCropRecommendation(latestDataDoc.id, latestDataDoc.data());
 }
