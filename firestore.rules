@@ -32,6 +32,12 @@ service cloud.firestore {
       allow update: if ownsExistingDoc() && request.resource.data.uid == resource.data.uid;
     }
 
+    match /farmDevices/{deviceId} {
+      allow read, delete: if ownsExistingDoc();
+      allow create: if ownsIncomingDoc();
+      allow update: if ownsExistingDoc() && request.resource.data.uid == resource.data.uid;
+    }
+
     match /soilProfiles/{soilId} {
       allow read, delete: if ownsExistingDoc();
       allow create: if ownsIncomingDoc();
