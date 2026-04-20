@@ -7,6 +7,7 @@ interface ForecastData {
   high: number;
   low: number;
   condition: string;
+  isToday?: boolean;
 }
 
 interface ForecastCardProps {
@@ -24,12 +25,14 @@ const getWeatherIcon = (condition: string) => {
 };
 
 export default function ForecastCard({ data }: ForecastCardProps) {
+  const hasToday = data.some((entry) => entry.isToday);
+
   return (
     <div className="col-span-12">
       <h3 className="text-xl font-bold mb-6">7-Day Agricultural Outlook</h3>
       <div className="grid grid-cols-7 gap-4">
         {data.map((day, idx) => {
-          const isHighlighted = idx === 2;
+          const isHighlighted = day.isToday ?? (!hasToday && idx === 0);
           return (
             <div
               key={day.day}
