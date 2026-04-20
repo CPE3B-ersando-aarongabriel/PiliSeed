@@ -41,7 +41,7 @@ export default function AddFarmForm({
         <div className="flex flex-col items-end gap-2 relative self-stretch w-full flex-[0_0_auto]">
           <div className="flex flex-col w-[360px] items-start relative flex-[0_0_auto]">
             <label className="relative flex items-center w-[146.16px] h-[15px] mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493E] text-[10px] tracking-[1.00px] leading-[15px] whitespace-nowrap">
-              LOCATION COORDINATES
+              LOCATION
             </label>
           </div>
 
@@ -49,7 +49,7 @@ export default function AddFarmForm({
             <div className="flex items-start justify-center pl-6 pr-12 py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-white rounded-md overflow-hidden">
               <input
                 className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-gray-500 text-base tracking-[0] leading-[normal] p-0 outline-none w-full"
-                placeholder="Search city or coordinates..."
+                placeholder="City, region, or coordinates"
                 type="text"
                 value={locationCoords}
                 onChange={(e) => onLocationChange(e.target.value)}
