@@ -37,6 +37,11 @@ export default function YieldPredictionCard({
   yieldHistory,
   isLoading = false,
 }: YieldPredictionCardProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const gradientId = "yieldGradient";
 
   const handleExportCSV = () => {
@@ -76,7 +81,7 @@ export default function YieldPredictionCard({
   if (!yieldHistory || yieldHistory.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-md border border-[#41493E]/10 p-6">
-        <div className="text-center py-12">
+        <div className="h-[300px] flex items-center justify-center">
           <p className="text-[#41493E]/60">No yield data available</p>
         </div>
       </div>
@@ -111,60 +116,64 @@ export default function YieldPredictionCard({
         </div>
       </div>
 
-      <div className="h-60 sm:h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={yieldHistory}>
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00450D" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#00450D" stopOpacity={0} />
-              </linearGradient>
-            </defs>
+      <div className="w-full h-[300px] sm:h-[350px] min-h-[300px]">
+        {mounted ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={yieldHistory}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00450D" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#00450D" stopOpacity={0} />
+                </linearGradient>
+              </defs>
 
-            <CartesianGrid vertical={false} stroke="#E5E7EB" />
+              <CartesianGrid vertical={false} stroke="#E5E7EB" />
 
-            <XAxis
-              dataKey="month"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#6B7280", fontSize: 12 }}
-            />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6B7280", fontSize: 12 }}
+              />
 
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#6B7280", fontSize: 12 }}
-            />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6B7280", fontSize: 12 }}
+              />
 
-            <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} />
 
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="none"
-              fill={`url(#${gradientId})`}
-            />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="none"
+                fill={`url(#${gradientId})`}
+              />
 
-            <Line
-              type="natural"
-              dataKey="value"
-              stroke="#00450D"
-              strokeWidth={3}
-              dot={{
-                r: 4,
-                fill: "#00450D",
-                stroke: "white",
-                strokeWidth: 2,
-              }}
-              activeDot={{
-                r: 7,
-                fill: "#00450D",
-              }}
-              isAnimationActive={true}
-              animationDuration={800}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+              <Line
+                type="natural"
+                dataKey="value"
+                stroke="#00450D"
+                strokeWidth={3}
+                dot={{
+                  r: 4,
+                  fill: "#00450D",
+                  stroke: "white",
+                  strokeWidth: 2,
+                }}
+                activeDot={{
+                  r: 7,
+                  fill: "#00450D",
+                }}
+                isAnimationActive={true}
+                animationDuration={800}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ width: '100%', height: '100%' }} />
+        )}
       </div>
     </div>
   );
