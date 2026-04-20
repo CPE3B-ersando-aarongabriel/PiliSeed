@@ -83,7 +83,7 @@ export const Hero = (): JSX.Element => {
           </motion.button>
         </Link>
 
-        <Link href="/demo">
+        <Link href="/how-it-works">
           <motion.button
             className="all-[unset] box-border px-10 py-4 bg-white rounded-full border-2 border-solid border-[#00450d1a] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
             whileHover={{ y: -4, scale: 1.02 }}
@@ -91,7 +91,7 @@ export const Hero = (): JSX.Element => {
             transition={{ type: "spring", stiffness: 360, damping: 20 }}
           >
             <div className="relative flex items-center justify-center w-[80.91px] h-7 [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-lg text-center tracking-[0] leading-7 whitespace-nowrap">
-              Try Demo
+              How It Works
             </div>
           </motion.button>
         </Link>

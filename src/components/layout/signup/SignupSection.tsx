@@ -151,7 +151,12 @@ export const SignupSection = (): JSX.Element => {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-            <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-5xl tracking-[-2.40px] leading-[48px]">
+            <div className="relative flex items-center gap-3 self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-5xl tracking-[-2.40px] leading-[48px]">
+              <img
+                src="/Pili-logo-main.png"
+                alt="PiliSeed logo"
+                className="w-12 h-12 object-contain"
+              />
               PiliSeed
             </div>
           </div>

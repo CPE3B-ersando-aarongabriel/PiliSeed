@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { JSX, useState, useEffect } from "react";
+import { JSX } from "react";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
@@ -12,7 +12,7 @@ const navLinks = [
 
 export const Navbar = (): JSX.Element => {
   const pathname = usePathname();
-  
+
   const pathToLabel: Record<string, string> = {
     "/": "Home",
     "/features": "Features",
@@ -20,15 +20,16 @@ export const Navbar = (): JSX.Element => {
     "/about": "About Us",
   };
 
-  const [activeNav, setActiveNav] = useState(() => pathToLabel[pathname] || "Home");
-
-  useEffect(() => {
-    setActiveNav(pathToLabel[pathname] || "Home");
-  }, [pathname]);
+  const activeNav = pathToLabel[pathname] || "Home";
 
   return (
     <nav className="flex w-full h-20 items-center justify-between px-4 sm:px-6 lg:px-8 py-0 fixed top-0 left-0 z-50 bg-[#f5fcedb2] backdrop-blur-[32px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(32px)_brightness(100%)] overflow-x-auto">
-      <div className="inline-flex flex-col items-start relative flex-[0_0_auto] min-w-fit">
+      <div className="inline-flex items-center gap-2 relative flex-[0_0_auto] min-w-fit">
+        <img
+          src="/Pili-logo-main.png"
+          alt="PiliSeed logo"
+          className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
+        />
         <div className="relative flex items-center w-fit mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-xl sm:text-2xl tracking-[-1.20px] leading-8 whitespace-nowrap">
           PiliSeed
         </div>
@@ -38,7 +39,6 @@ export const Navbar = (): JSX.Element => {
         {navLinks.map((link) => (
           <Link key={link.label} href={link.href}>
             <button
-              onClick={() => setActiveNav(link.label)}
               className={`all-[unset] box-border inline-flex flex-col items-start relative flex-[0_0_auto] cursor-pointer ${
                 activeNav === link.label
                   ? "border-b-2 [border-bottom-style:solid] border-[#00450d]"
