@@ -1,0 +1,72 @@
+import Link from "next/link";
+
+export interface FarmData {
+  id: string;
+  name: string;
+  location: string | null;
+  latitude?: number;
+  longitude?: number;
+  size?: number;
+  sizeUnit?: string;
+  isActive: boolean;
+}
+
+interface FarmCardProps {
+  farm: FarmData;
+}
+
+export default function FarmCard({ farm }: FarmCardProps) {
+  return (
+    <div className="flex-1 bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-md border border-[#41493E]/10 flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="rounded-2xl bg-[#FDCDBC] p-2">
+            <img
+              src="/dashboard/location.svg"
+              alt="location"
+              className="w-8 h-8 sm:w-10 sm:h-9"
+            />
+          </div>
+          <h2 className="text-lg sm:text-xl font-bold text-[#171D14]">{farm.name}</h2>
+        </div>
+
+        {farm.isActive && (
+          <div className="rounded-full bg-[#00450D]/15 px-3 py-1">
+            <p className="text-xs font-semibold text-[#00450D]">
+              CURRENTLY VIEWING
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3 mb-6">
+        <div>
+          <span className="text-[12px] font-bold text-[#41493E]/60">LOCATION</span>
+          <p className="font-semibold text-[#171D14] text-sm sm:text-base">{farm.location || "--"}</p>
+        </div>
+        <div>
+          <span className="text-[12px] font-bold text-[#41493E]/60">SIZE</span>
+          <p className="font-semibold text-[#171D14] text-sm sm:text-base">
+            {farm.size !== undefined && farm.sizeUnit
+              ? `${farm.size} ${farm.sizeUnit}`
+              : "--"}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex-1"></div>
+
+      <Link
+        href="/farms"
+        className="text-[#00450D] text-sm font-semibold hover:text-[#003d0b] transition"
+      >
+        Go to Farm Management
+        <img
+          src="/dashboard/arrow.svg"
+          alt="arrow right"
+          className="w-3 h-3 ml-2 inline"
+        />
+      </Link>
+    </div>
+  );
+}
