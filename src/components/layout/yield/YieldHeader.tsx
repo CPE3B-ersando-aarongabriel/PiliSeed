@@ -1,0 +1,92 @@
+"use client";
+
+interface YieldHeaderProps {
+  selectedFarm: string;
+  onFarmChange: (farm: string) => void;
+  onRunAnalysis: () => void;
+  isLoading: boolean;
+  isFarmDropdownOpen: boolean;
+  setIsFarmDropdownOpen: (open: boolean) => void;
+  farmOptions: string[];
+}
+
+export default function YieldHeader({
+  selectedFarm,
+  onFarmChange,
+  onRunAnalysis,
+  isLoading,
+  isFarmDropdownOpen,
+  setIsFarmDropdownOpen,
+  farmOptions,
+}: YieldHeaderProps) {
+  return (
+    <div className="flex items-start justify-between mt-2 mb-8">
+      <div>
+        <h1 className="font-extrabold text-4xl text-[#171D14] tracking-tight">
+          Yield Prediction
+        </h1>
+        <p className="mt-3 text-medium text-[#41493E] leading-relaxed max-w-2xl">
+          AI-driven harvest forecasting for <span className="text-[#00450D] font-semibold">{selectedFarm}</span>.
+        </p>
+      </div>
+
+      <div className="flex items-end gap-3">
+      
+        <div className="flex flex-col">
+          <label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1.5">
+            SELECTED FARM
+          </label>
+          <div className="relative">
+            <button
+              onClick={() => setIsFarmDropdownOpen(!isFarmDropdownOpen)}
+              className="w-[200px] h-[42px] bg-[#E3eBDC] rounded-full shadow-sm flex items-center justify-between px-5 hover:bg-[#D5E0CC] transition-colors"
+            >
+              <span className="font-semibold text-[#00450D] text-sm">
+                {selectedFarm}
+              </span>
+              <img 
+                  src="/soil/dropdown.svg"
+                  alt="Dropdown"
+                  className="w-3 h-2 object-contain"/>
+            </button>
+
+            {isFarmDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsFarmDropdownOpen(false)} />
+                <div className="absolute left-0 mt-2 w-[220px] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  {farmOptions.map((farm) => (
+                    <button
+                      key={farm}
+                      onClick={() => {
+                        onFarmChange(farm);
+                        setIsFarmDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-5 py-2.5 text-sm hover:bg-[#E3EBDC] transition ${
+                        farm === selectedFarm ? 'text-[#00450D] font-medium bg-[#EEF3EA]' : 'text-[#171D14]'
+                      }`}
+                    >
+                      {farm}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={onRunAnalysis}
+          disabled={isLoading}
+          className="flex items-center justify-center gap-2 w-[165px] h-[42px] bg-[#00450D] text-white rounded-full hover:bg-[#00380A] transition-colors disabled:opacity-50 whitespace-nowrap"
+        >
+          <img 
+            src="/yield/run-analysis.svg"
+            alt="run analysis" 
+            className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
+          />
+          <span className="font-semibold text-sm">Run New Analysis</span>
+        </button>
+      </div>
+    </div>
+  );
+}

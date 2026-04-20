@@ -1,0 +1,96 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
+interface TemperatureData {
+  day: string;
+  high: number;
+  low: number;
+}
+
+interface TemperatureChartProps {
+  data: TemperatureData[];
+}
+
+export default function TemperatureChart({ data }: TemperatureChartProps) {
+  const maxTemp = Math.max(...data.map(d => d.high));
+  const minTemp = Math.min(...data.map(d => d.low));
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <div className="col-span-8">
+      <div className="p-8 bg-white rounded-[48px] shadow-sm h-full">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold">Temperature Evolution</h3>
+          <div className="flex gap-2">
+            <span className="flex items-center gap-1 px-3 py-1 bg-[#EFF6E7] rounded-full text-xs">
+              <span className="w-2 h-2 bg-[#00450D] rounded-full" />
+              Daytime
+            </span>
+            <span className="flex items-center gap-1 px-3 py-1 bg-[#EFF6E7] rounded-full text-xs">
+              <span className="w-2 h-2 bg-[#003E63] rounded-full" />
+              Nighttime
+            </span>
+          </div>
+        </div>
+
+        <div className="h-64 mb-2" style={{ minWidth: 0, minHeight: 0 }}>
+          {mounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+              <LineChart data={data} margin={{ top: 15, right: 10, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 10, fill: '#41493E', fontWeight: 600 }}
+                  axisLine={{ stroke: '#C0C9BB33' }}
+                  tickLine={false}
+                  padding={{ left: 10, right: 10 }}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: '#41493E' }}
+                  axisLine={false}
+                  tickLine={false}
+                  domain={[minTemp - 2, maxTemp + 2]}
+                  tickCount={6}
+                />
+                <Tooltip
+                  cursor={{ stroke: '#C0C9BB' }}
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    borderColor: '#E5E7EB',
+                    borderRadius: '16px',
+                    boxShadow: '0 4px 6px -4px rgba(0,0,0,0.1)',
+                    fontSize: '12px',
+                    padding: '8px 12px'
+                  }}
+                />
+                <Line type="monotone" dataKey="high" stroke="#00450D" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
+                <Line type="monotone" dataKey="low" stroke="#003E63" strokeWidth={2} strokeDasharray="3 4 5 2" dot={false} activeDot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ width: "100%", height: "100%" }} />
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-[#41493E] mt-2">
+          <img src="/weather/info.svg" alt="info" className="w-4 h-4" />
+          <p>Average temperature is 2.4°C higher than the seasonal baseline.</p>
+        </div>
+      </div>
+    </div>
+  );
+}

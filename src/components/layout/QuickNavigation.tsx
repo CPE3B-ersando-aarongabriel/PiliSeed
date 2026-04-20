@@ -1,0 +1,123 @@
+"use client";
+
+import Link from "next/link";
+
+interface NavigationItem {
+  id: string;
+  path: string;
+  bgCard: string;
+  borderCard: string;
+  bgIcon: string;
+  iconSrc: string;
+  iconAlt: string;
+  label: string;
+  labelClass: string;
+}
+
+const allNavigationItems: Record<string, NavigationItem> = {
+  "soil-data": {
+    id: "soil-data",
+    path: "/soil",
+    bgCard: "bg-[#065F181A]",
+    borderCard: "border-[#065F1833]",
+    bgIcon: "bg-[#065F18]",
+    iconSrc: "/recommendations/soil-data.svg",
+    iconAlt: "Soil data icon",
+    label: "SOIL DATA ANALYSIS",
+    labelClass: "text-[#065F18]",
+  },
+  "crop-recommendations": {
+    id: "crop-recommendations",
+    path: "/recommendations",
+    bgCard: "bg-[#065F181A]",
+    borderCard: "border-[#065F1833]",
+    bgIcon: "bg-[#065F18]",
+    iconSrc: "/weather/crop-reco.svg",
+    iconAlt: "Crop Recommendation icon",
+    label: "CROP RECOMMENDATION",
+    labelClass: "text-[#065F18]",
+  },
+  "weather-analysis": {
+    id: "weather-analysis",
+    path: "/weather",
+    bgCard: "bg-[#0056871a]",
+    borderCard: "border-[#00568733]",
+    bgIcon: "bg-[#005687]",
+    iconSrc: "/soil/weather-forecast.svg",
+    iconAlt: "Weather forecasting icon",
+    label: "WEATHER ANALYSIS",
+    labelClass: "text-[#005687]",
+  },
+  "yield-prediction": {
+    id: "yield-prediction",
+    path: "/yield",
+    bgCard: "bg-[#fdcdbc33]",
+    borderCard: "border-[#FDCDBC4C]",
+    bgIcon: "bg-[#7A5649]",
+    iconSrc: "/soil/yield-pred.svg",
+    iconAlt: "Yield prediction icon",
+    label: "YIELD PREDICTION",
+    labelClass: "text-[#7A5649]",
+  },
+};
+
+const excludePages: Record<string, string[]> = {
+  "soil-data": ["soil-data"],
+  "crop-recommendations": ["crop-recommendations"],
+  "weather-analysis": ["weather-analysis"],
+  "yield-prediction": ["yield-prediction"],
+};
+
+interface QuickNavigationProps {
+  currentPage:
+    | "soil-data"
+    | "crop-recommendations"
+    | "weather-analysis"
+    | "yield-prediction";
+}
+
+export default function QuickNavigation({ currentPage }: QuickNavigationProps) {
+  const excludeList = excludePages[currentPage];
+
+  const navigationItems = Object.values(allNavigationItems).filter(
+    (item) => !excludeList.includes(item.id),
+  );
+
+  return (
+    <div className="pt-8 mt-8">
+      <div className="flex flex-col items-start gap-5 w-full">
+        <div className="flex items-center gap-3 w-full">
+          <div className="w-6 h-1 bg-[#00450D] rounded-full" />
+          <h2 className="font-extrabold text-[#171D14] text-lg">
+            Quick Navigation
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 w-full">
+          {navigationItems.map((item) => (
+            <Link
+              key={item.id}
+              href={item.path}
+              className={`${item.bgCard} ${item.borderCard} flex flex-col items-center justify-center gap-5 py-10 px-4 w-full rounded-2xl border shadow-sm hover:shadow-md transition-shadow`}
+            >
+              <div
+                className={`w-12 h-12 rounded-full flex items-center justify-center ${item.bgIcon}`}
+              >
+                <img
+                  className="w-6 h-6 object-contain"
+                  alt={item.iconAlt}
+                  src={item.iconSrc}
+                />
+              </div>
+              <span
+                className={`font-semibold text-xs text-center tracking-[1.2px] ${item.labelClass}`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
