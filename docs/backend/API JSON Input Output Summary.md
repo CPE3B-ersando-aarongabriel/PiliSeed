@@ -207,7 +207,7 @@ Error responses use:
   - `weather`
   - `weatherSnapshot`
 
-### POST /api/farms/:farmId/weather/refresh
+### POST /api/farms/:farmId/weather/gitrefresh
 - Request JSON: none
 - Response data:
   - `farmId`
