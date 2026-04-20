@@ -6,7 +6,10 @@ import {
 	successResponse,
 } from "../../../../../../lib/apiResponse";
 import { verifyTokenWithClaims } from "../../../../../../lib/authMiddleware";
-import { getFarmByIdForUser } from "../../../../../../lib/firestoreSchema";
+import {
+	getFarmByIdForUser,
+	getFarmDeviceLinkForUser,
+} from "../../../../../../lib/firestoreSchema";
 
 export const runtime = "nodejs";
 
@@ -14,43 +17,9 @@ const farmParamsSchema = z.object({
 	farmId: z.string().trim().min(1),
 });
 
-const deviceQuerySchema = z.object({
-	simulateNoDevice: z
-		.enum(["1", "true", "yes", "on"])
-		.optional(),
-});
-
 type SoilDeviceContext = {
 	params: Promise<{ farmId: string }>;
 };
-
-function hashString(value: string) {
-	let hash = 0;
-
-	for (let index = 0; index < value.length; index += 1) {
-		hash = (hash << 5) - hash + value.charCodeAt(index);
-		hash |= 0;
-	}
-
-	return Math.abs(hash);
-}
-
-function buildMockReadings(seed: string) {
-	const hash = hashString(seed);
-	const moistureContent = Number((28 + (hash % 36) / 2).toFixed(1));
-	const pH = Number((5.6 + ((hash >> 3) % 19) / 10).toFixed(1));
-	const lightLevel = Math.round(800 + (hash % 9200));
-	const temperatureC = Number((24 + ((hash >> 6) % 85) / 10).toFixed(1));
-	const humidity = Number((52 + ((hash >> 9) % 34)).toFixed(1));
-
-	return {
-		moistureContent,
-		pH,
-		lightLevel,
-		temperatureC,
-		humidity,
-	};
-}
 
 export async function GET(request: Request, context: SoilDeviceContext) {
 	try {
@@ -59,20 +28,6 @@ export async function GET(request: Request, context: SoilDeviceContext) {
 
 		if (!farmIdResult.success) {
 			return errorResponse(400, "VALIDATION_ERROR", "Invalid farm id.");
-		}
-
-		const requestUrl = new URL(request.url);
-		const queryValidation = deviceQuerySchema.safeParse({
-			simulateNoDevice: requestUrl.searchParams.get("simulateNoDevice") ?? undefined,
-		});
-
-		if (!queryValidation.success) {
-			return errorResponse(
-				400,
-				"VALIDATION_ERROR",
-				"Invalid soil device query parameters.",
-				queryValidation.error.flatten(),
-			);
 		}
 
 		const decodedToken = await verifyTokenWithClaims(request);
@@ -85,7 +40,9 @@ export async function GET(request: Request, context: SoilDeviceContext) {
 			return errorResponse(404, "FARM_NOT_FOUND", "Farm not found.");
 		}
 
-		if (queryValidation.data.simulateNoDevice) {
+		const linkedDevice = await getFarmDeviceLinkForUser(decodedToken.uid, farm.id);
+
+		if (!linkedDevice) {
 			return errorResponse(
 				404,
 				"DEVICE_NOT_CONNECTED",
@@ -94,20 +51,26 @@ export async function GET(request: Request, context: SoilDeviceContext) {
 			);
 		}
 
-		const readings = buildMockReadings(`${farm.id}:${farm.name}:${farm.location ?? ""}`);
-		const collectedAt = new Date().toISOString();
-
 		return successResponse(
 			{
 				farmId: farm.id,
 				device: {
-					id: "mock-esp32-soil-node",
+					id: linkedDevice.deviceId,
+					name: linkedDevice.deviceName,
+					tokenHint: linkedDevice.tokenHint,
 					status: "connected",
-					source: "mock",
+					linkedAt: linkedDevice.linkedAt,
+					lastSeenAt: linkedDevice.lastSeenAt,
+					source: "linked-farm-device",
 				},
-				readings,
-				collectedAt,
-				source: "mock-device",
+				activation: {
+					pending: linkedDevice.activationPending,
+					lastRequestedAt: linkedDevice.lastActivationRequestedAt,
+					lastFulfilledAt: linkedDevice.lastActivationFulfilledAt,
+				},
+				readings: linkedDevice.lastReadings,
+				collectedAt: linkedDevice.lastCollectedAt,
+				source: "device-link",
 			},
 			200,
 		);
