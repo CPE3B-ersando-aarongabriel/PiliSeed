@@ -95,6 +95,7 @@ export default function Sidebar() {
                 src="/Pili-logo-main.png"
                 alt="PiliSeed logo"
                 className="w-8 h-8 object-contain"
+                loading="eager"
               />
               <h1 className="text-2xl font-bold text-[#00450D]">PiliSeed</h1>
             </div>
@@ -134,11 +135,15 @@ export default function Sidebar() {
                     <img
                       src={item.icon}
                       alt={item.name}
+                      
+    
                       className={`w-5 h-5 ${isActive ? "hidden" : "block group-hover:hidden"}`}
                     />
                     <img
                       src={item.iconHover}
                       alt={item.name}
+                      
+                      
                       className={`w-5 h-5 ${isActive ? "block" : "hidden group-hover:block"}`}
                     />
                     {item.name}
@@ -154,11 +159,15 @@ export default function Sidebar() {
             <img
               src="/sidebar/add-device.svg"
               alt="add device"
+              
+              
               className="w-4 h-4 block group-hover:hidden"
             />
             <img
               src="/sidebar/add-device-hover.svg"
               alt="add device"
+              
+              
               className="w-4 h-4 hidden group-hover:block"
             />
             Add a Device
@@ -182,6 +191,8 @@ export default function Sidebar() {
             <img
               src="/sidebar/setting.svg"
               alt="settings"
+              
+              
               className="w-5 h-5 cursor-pointer opacity-70 hover:opacity-100 transition shrink-0"
             />
           </Link>

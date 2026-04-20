@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -23,6 +23,11 @@ export default function SeasonalYieldChart({
   legendItems,
 }: SeasonalYieldChartProps) {
   const [activeTab, setActiveTab] = useState<"Monthly" | "Quarterly">("Monthly");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Normalize shape so X axis uses a consistent key (`label`) for both tabs
   // Also ensure a `month` property exists on each point (required by some typings)
@@ -70,9 +75,10 @@ export default function SeasonalYieldChart({
       </div>
 
 
-      <div className="h-[350px] bg-[#Eff6e74C] rounded-[32px] p-4">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
+      <div className="h-[350px] bg-[#Eff6e74C] rounded-[32px] p-4" style={{ minWidth: 0, minHeight: 0 }}>
+        {mounted ? (
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <AreaChart
             data={chartData}
             margin={{ top: 20, right: 20, left: 0, bottom: 20 }}
           >
@@ -118,8 +124,11 @@ export default function SeasonalYieldChart({
               strokeWidth={2}
               strokeDasharray="5 5"
             />
-          </AreaChart>
-        </ResponsiveContainer>
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ width: "100%", height: "100%" }} />
+        )}
       </div>
 
  
