@@ -19,7 +19,7 @@ export default function Home() {
       <Features_summary />
       <Howitworks_summary />
       <Encouragement absolute />
-      <Footer />
+      <Footer absolute />
     </div>
   );
 }
