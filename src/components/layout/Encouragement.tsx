@@ -1,6 +1,7 @@
 "use client";
 import { JSX } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 interface EncouragementProps {
   absolute?: boolean;
@@ -48,29 +49,35 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
         </div>
 
         <div className="flex items-center justify-center gap-3 sm:gap-4 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto] flex-wrap">
-          <motion.button
-            className="all-[unset] box-border pt-[16.5px] pb-[17.5px] px-6 sm:px-8 bg-white rounded-full inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 360, damping: 20 }}
-          >
-            <div className="shadow-[0px_25px_50px_-12px_#00000040] absolute w-full h-full top-0 left-0 bg-[#ffffff01] rounded-full" />
+          <Link href="/login" aria-label="Go to login page">
+            <motion.button
+              type="button"
+              className="all-[unset] box-border pt-[16.5px] pb-[17.5px] px-6 sm:px-8 bg-white rounded-full inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
+              whileHover={{ y: -4, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 360, damping: 20 }}
+            >
+              <div className="shadow-[0px_25px_50px_-12px_#00000040] absolute w-full h-full top-0 left-0 bg-[#ffffff01] rounded-full" />
 
-            <div className="relative flex items-center justify-center w-fit mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#00450d] text-lg text-center tracking-[0] leading-7 whitespace-nowrap">
-              Login
-            </div>
-          </motion.button>
+              <div className="relative flex items-center justify-center w-fit mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#00450d] text-lg text-center tracking-[0] leading-7 whitespace-nowrap">
+                Login
+              </div>
+            </motion.button>
+          </Link>
 
-          <motion.button
-            className="all-[unset] box-border px-6 sm:px-8 py-4 bg-[#ffffff1a] rounded-full border border-solid border-[#ffffff33] backdrop-blur-[6px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(6px)_brightness(100%)] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 360, damping: 20 }}
-          >
-            <div className="w-auto h-7 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-white text-lg leading-7 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
-              Sign Up
-            </div>
-          </motion.button>
+          <Link href="/signup" aria-label="Go to sign up page">
+            <motion.button
+              type="button"
+              className="all-[unset] box-border px-6 sm:px-8 py-4 bg-[#ffffff1a] rounded-full border border-solid border-[#ffffff33] backdrop-blur-[6px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(6px)_brightness(100%)] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
+              whileHover={{ y: -4, scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 360, damping: 20 }}
+            >
+              <div className="w-auto h-7 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-white text-lg leading-7 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
+                Sign Up
+              </div>
+            </motion.button>
+          </Link>
         </div>
       </motion.div>
     </motion.div>

@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import { JSX } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, Sprout, User } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
   signInWithPopup,
-  type User,
+  type User as FirebaseUser,
 } from "firebase/auth";
 import {
   getClientAuth,
@@ -57,9 +58,8 @@ export const SignupSection = (): JSX.Element => {
   const missingFirebaseEnvVars = getMissingFirebaseClientEnvVars();
   const hasFirebaseConfig = missingFirebaseEnvVars.length === 0;
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  async function completeSignup(user: User) {
+  async function completeSignup(user: FirebaseUser) {
     const idToken = await user.getIdToken();
     const response = await callSignupEndpoint(idToken, fullName.trim());
 
@@ -75,14 +75,28 @@ export const SignupSection = (): JSX.Element => {
     event.preventDefault();
 
     if (!hasFirebaseConfig) {
-      setError(
+      toast.error(
         `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
       );
       return;
     }
 
+    if (!fullName.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+
+    if (!email.trim()) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
+
     setLoading(true);
-    setError("");
 
     try {
       const clientAuth = getClientAuth();
@@ -94,9 +108,19 @@ export const SignupSection = (): JSX.Element => {
 
       await completeSignup(credential.user);
     } catch (caughtError) {
+      const firebaseCode =
+        typeof caughtError === "object" && caughtError !== null && "code" in caughtError
+          ? String((caughtError as { code: unknown }).code)
+          : "";
+
       const message =
-        caughtError instanceof Error ? caughtError.message : "Signup failed.";
-      setError(message);
+        firebaseCode === "auth/email-already-in-use"
+          ? "That email is already registered. Please log in instead."
+          : firebaseCode === "auth/invalid-email"
+            ? "Please enter a valid email address."
+            : firebaseCode === "auth/weak-password"
+              ? "Password is too weak. Use at least 8 characters."
+              : "Signup failed. Please check your details and try again.";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -105,14 +129,13 @@ export const SignupSection = (): JSX.Element => {
 
   async function handleGoogleSignup() {
     if (!hasFirebaseConfig) {
-      setError(
+      toast.error(
         `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
       );
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const clientAuth = getClientAuth();
@@ -124,11 +147,17 @@ export const SignupSection = (): JSX.Element => {
 
       await completeSignup(credential.user);
     } catch (caughtError) {
+      const firebaseCode =
+        typeof caughtError === "object" && caughtError !== null && "code" in caughtError
+          ? String((caughtError as { code: unknown }).code)
+          : "";
+
       const message =
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Google signup failed.";
-      setError(message);
+        firebaseCode === "auth/popup-closed-by-user"
+          ? "Google sign-up was cancelled."
+          : firebaseCode === "auth/popup-blocked"
+            ? "Popup was blocked by the browser. Please allow popups and try again."
+            : "Google signup failed. Please try again.";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -136,7 +165,7 @@ export const SignupSection = (): JSX.Element => {
   }
 
   return (
-    <div className="relative mt-20 w-full min-h-screen overflow-hidden mb-20">
+    <div className="relative mt-12 sm:mt-16 lg:mt-20 w-full min-h-[720px] lg:min-h-[860px] overflow-hidden mb-12 sm:mb-16 lg:mb-20 bg-[#f5fced]">
       <motion.div 
         className="hidden lg:flex absolute top-0 left-0 h-full w-1/2 overflow-hidden bg-[url(/signup/Signup.png)] bg-cover bg-[50%_50%]"
         initial={{ opacity: 0 }}
@@ -176,21 +205,17 @@ export const SignupSection = (): JSX.Element => {
           whileHover={{ scale: 1.05 }}
         >
           <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-            <img
-              className="relative w-[17px] h-[16.99px]"
-              alt="Icon"
-              src="/signup/Signup.svg"
-            />
+            <Sprout className="relative h-[16.99px] w-[17px] text-[#00450d]" aria-hidden="true" />
           </div>
           <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-            <div className="w-[141.84px] h-6 [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-base tracking-[-0.40px] leading-6 relative flex items-center mt-[-1.00px] whitespace-nowrap">
-              Digital Greenhouse
+            <div className="[font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-xs tracking-[1.2px] leading-5 uppercase relative flex items-center mt-[-1.00px] whitespace-nowrap">
+              AI FARM INTELLIGENCE PLATFORM
             </div>
           </div>
         </motion.div>
       </motion.div>
       <motion.div 
-        className="absolute top-0 left-0 lg:left-1/2 h-full w-full lg:w-1/2 bg-[#f5fced] flex flex-col items-center pt-20 lg:pt-0 lg:justify-center"
+        className="relative lg:absolute top-0 left-0 lg:left-1/2 w-full lg:w-1/2 min-h-[720px] lg:min-h-full bg-[#f5fced] flex flex-col items-center pt-12 sm:pt-16 lg:pt-0 pb-10 sm:pb-12 lg:pb-0 lg:justify-center px-4 sm:px-8 lg:px-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -198,7 +223,8 @@ export const SignupSection = (): JSX.Element => {
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#fdcdbc33] rounded-full blur-[32px]" />
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col max-w-md w-[calc(100%_-_192px)] h-[762px] items-start gap-12 pt-0 pb-4 px-0 absolute top-[calc(50.00%_-_380px)] left-24"
+          autoComplete="off"
+          className="flex flex-col max-w-md w-full lg:w-[calc(100%_-_192px)] items-start gap-12 pt-0 pb-4 px-0 relative lg:ml-24 lg:mr-16"
         >
           <motion.div 
             className="flex flex-col items-start gap-2 relative self-stretch w-full flex-[0_0_auto]"
@@ -223,9 +249,9 @@ export const SignupSection = (): JSX.Element => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <div className="flex flex-col w-[448px] items-start gap-6 relative flex-[0_0_auto]">
+            <div className="flex flex-col w-full items-start gap-6 relative flex-[0_0_auto]">
               <div className="flex flex-col items-end gap-2 relative self-stretch w-full flex-[0_0_auto]">
-                <div className="flex flex-col w-[444px] items-start relative flex-[0_0_auto]">
+                <div className="flex flex-col w-full items-start relative flex-[0_0_auto]">
                   <label
                     htmlFor="full-name"
                     className="w-[66.75px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap"
@@ -243,20 +269,22 @@ export const SignupSection = (): JSX.Element => {
                   <div className="flex items-center pl-12 pr-4 py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden transition-all hover:bg-[#d9e1d0]">
                     <input
                       id="full-name"
+                      name="signup-full-name"
                       type="text"
+                      autoComplete="off"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Johnathan Appleseed"
-                      className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
+                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
-                    <img className="relative w-4 h-4" alt="Icon" src= "/signup/Signup2.svg" />
+                    <User className="relative h-4 w-4 text-[#8b9587]" aria-hidden="true" />
                   </div>
                 </motion.div>
               </div>
               <div className="flex flex-col items-end gap-2 relative self-stretch w-full flex-[0_0_auto]">
-                <div className="flex flex-col w-[444px] items-start relative flex-[0_0_auto]">
+                <div className="flex flex-col w-full items-start relative flex-[0_0_auto]">
                   <label
                     className="w-[96.34px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap"
                     htmlFor="input-1"
@@ -273,21 +301,26 @@ export const SignupSection = (): JSX.Element => {
                 >
                   <div className="flex items-center pl-12 pr-4 py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden">
                     <input
-                      className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
+                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
                       id="input-1"
+                      name="signup-email"
                       placeholder="john@piliseed.com"
                       type="email"
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
-                    <img className="relative w-5 h-4" alt="Icon" src="/signup/Signup3.svg" />
+                    <Mail className="relative h-4 w-5 text-[#8b9587]" aria-hidden="true" />
                   </div>
                 </motion.div>
               </div>
               <div className="flex flex-col items-end gap-2 relative self-stretch w-full flex-[0_0_auto]">
-                <div className="flex flex-col w-[444px] items-start relative flex-[0_0_auto]">
+                <div className="flex flex-col w-full items-start relative flex-[0_0_auto]">
                   <label
                     htmlFor="password"
                     className="w-[66.39px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap"
@@ -305,19 +338,17 @@ export const SignupSection = (): JSX.Element => {
                   <div className="flex items-center pl-12 pr-12 py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden transition-all hover:bg-[#d9e1d0]">
                     <input
                       id="password"
+                      name="signup-password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min. 8 characters"
-                      className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
+                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
-                    <img
-                      className="relative w-4 h-[21px]"
-                      alt="Icon"
-                        src="/signup/Signup4.svg"
-                    />
+                    <Lock className="relative h-[21px] w-4 text-[#8b9587]" aria-hidden="true" />
                   </div>
                   <button
                     type="button"
@@ -328,11 +359,11 @@ export const SignupSection = (): JSX.Element => {
                     }
                   >
                     <div className="inline-flex items-start justify-center relative flex-[0_0_auto]">
-                      <img
-                        className="relative w-[22px] h-[15px]"
-                        alt="Icon"
-                        src="/signup/Signup5.svg"
-                      />
+                      {showPassword ? (
+                        <EyeOff className="relative h-[15px] w-[22px] text-[#8b9587]" aria-hidden="true" />
+                      ) : (
+                        <Eye className="relative h-[15px] w-[22px] text-[#8b9587]" aria-hidden="true" />
+                      )}
                     </div>
                   </button>
                 </motion.div>
@@ -354,11 +385,7 @@ export const SignupSection = (): JSX.Element => {
                 </div>
               </div>
               <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                <img
-                  className="relative w-[12.75px] h-[12.74px]"
-                  alt="Icon"
-                  src="/signup/Signup6.svg"
-                />
+                <ArrowRight className="relative h-[12.74px] w-[12.75px] text-white" aria-hidden="true" />
               </div>
             </motion.button>
             <motion.div 
@@ -379,7 +406,7 @@ export const SignupSection = (): JSX.Element => {
               </div>
             </motion.div>
             <motion.div 
-              className="grid grid-cols-2 grid-rows-[50px] h-fit gap-4"
+              className="grid grid-cols-1 grid-rows-[50px] h-fit gap-4 self-stretch w-full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.65 }}
@@ -388,35 +415,20 @@ export const SignupSection = (): JSX.Element => {
                 type="button"
                 onClick={handleGoogleSignup}
                 disabled={loading || !hasFirebaseConfig}
-                className="all-[unset] box-border row-[1_/_2] col-[1_/_2] w-fit h-fit inline-flex gap-2 pl-[68.88px] pr-[68.89px] py-3.5 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="all-[unset] box-border row-[1_/_2] col-[1_/_2] w-full h-fit inline-flex gap-2 pl-[68.88px] pr-[68.89px] py-3.5 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 whileHover={{ scale: 1.05, borderColor: "#a3f69c" }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
                   <img
-                    className="relative w-5 h-5"
-                    alt="Icon"
                     src="/signup/Google.svg"
+                    alt="Google"
+                    className="relative h-5 w-5"
                   />
                 </div>
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
                   <div className="justify-center w-[48.23px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
                     {loading ? "Processing..." : "Google"}
-                  </div>
-                </div>
-              </motion.button>
-              <motion.button
-                type="button"
-                className="all-[unset] box-border row-[1_/_2] col-[2_/_3] w-fit h-fit inline-flex gap-[7.99px] px-[71.19px] py-3 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer transition-all"
-                whileHover={{ scale: 1.05, borderColor: "#a3f69c" }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <img className="relative w-4 h-2.5" alt="Icon" src="/signup/Apple.svg" />
-                </div>
-                <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <div className="justify-center w-[39.61px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
-                    Apple
                   </div>
                 </div>
               </motion.button>
@@ -440,16 +452,6 @@ export const SignupSection = (): JSX.Element => {
           </motion.div>
         </form>
 
-        {error ? (
-          <motion.p 
-            style={{ color: "#b00020", marginTop: "1rem", marginLeft: "6rem" }}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {error}
-          </motion.p>
-        ) : null}
       </motion.div>
     </div>
   );

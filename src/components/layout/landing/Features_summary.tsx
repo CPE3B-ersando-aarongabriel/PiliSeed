@@ -1,29 +1,30 @@
 import { JSX } from "react";
+import { BrainCircuit, CloudSunRain, FlaskConical } from "lucide-react";
 
 const highlights = [
   {
-    iconSrc: "/landing/features_1.svg",
+    Icon: FlaskConical,
     iconAlt: "Precision soil analysis icon",
     iconWrapperBg: "bg-[#00450d1a]",
-    iconClassName: "w-[22.57px] h-[22.5px]",
+    iconClassName: "h-6 w-6",
     title: "Precision Soil Analysis",
     description:
       "Deep-dive into your soil's chemical composition. We analyze pH, NPK, and micronutrients to build a custom nourishment profile.",
   },
   {
-    iconSrc: "/landing/features_2.svg",
+    Icon: CloudSunRain,
     iconAlt: "Weather alerts icon",
     iconWrapperBg: "bg-[#003e631a]",
-    iconClassName: "w-[25px] h-[26.25px]",
+    iconClassName: "h-6 w-6",
     title: "Real-time Weather Alerts",
     description:
       "Hyper-local forecasting that warns you of micro-climatic shifts before they impact your crops. Never be surprised by frost again.",
   },
   {
-    iconSrc: "/landing/features_3.svg",
+    Icon: BrainCircuit,
     iconAlt: "AI recommendations icon",
     iconWrapperBg: "bg-[#7a56491a]",
-    iconClassName: "w-[23.76px] h-[25px]",
+    iconClassName: "h-6 w-6",
     title: "AI-Driven Recommendations",
     description:
       "Our neural network suggests optimal crop rotation and planting schedules based on historical data and current soil state.",
@@ -54,11 +55,7 @@ export const Features_summary = (): JSX.Element => {
               <div
                 className={`flex h-14 w-14 items-center justify-center rounded-full ${item.iconWrapperBg}`}
               >
-                <img
-                  className={item.iconClassName}
-                  alt={item.iconAlt}
-                  src={item.iconSrc}
-                />
+                <item.Icon className={`${item.iconClassName} text-[#171d14]`} aria-label={item.iconAlt} />
               </div>
 
               <h3 className="mt-5 [font-family:'Manrope-Bold',Helvetica] text-[#171d14] text-xl sm:text-2xl font-bold leading-8 tracking-[0]">

@@ -22,28 +22,28 @@ export const Hero = (): JSX.Element => {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="flex w-full max-w-3xl flex-col items-center text-center lg:items-start lg:text-left">
-          <div className="inline-flex h-9 items-center rounded-full bg-[#a3f69c] px-4 py-2">
-            <div className="[font-family:'Manrope-Bold',Helvetica] text-xs sm:text-sm font-bold tracking-[1.2px] sm:tracking-[1.4px] leading-5 text-[#002204] whitespace-nowrap">
-              DIGITAL GREENHOUSE V2.0
+          <div className="inline-flex h-9 items-center rounded-full bg-[#2f7a33] px-4 py-2">
+            <div className="[font-family:'Manrope-Bold',Helvetica] text-xs sm:text-sm font-bold tracking-[1.2px] sm:tracking-[1.4px] leading-5 text-[#ecffe7] whitespace-nowrap">
+              AI FARM INTELLIGENCE PLATFORM
             </div>
           </div>
 
           <div className="mt-6 w-full">
             <p className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-tight sm:leading-[1.08] lg:leading-[72px] text-transparent">
-              <span className="text-[#171d14] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
+              <span className="text-[#f4fbef] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
                 Empowering Farmers with
               </span>{" "}
-              <span className="text-[#00450d] tracking-[0]">
+              <span className="text-[#f4d35e] tracking-[0]">
                 Smarter Data-Driven
               </span>{" "}
-              <span className="text-[#171d14] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
+              <span className="text-[#f4fbef] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
                 Decisions.
               </span>
             </p>
           </div>
 
           <div className="mt-6 w-full max-w-2xl">
-            <p className="[font-family:'Inter-Medium',Helvetica] text-white text-base sm:text-lg font-medium leading-relaxed tracking-[0]">
+            <p className="[font-family:'Inter-Medium',Helvetica] text-[#e6f2e2] text-base sm:text-lg font-medium leading-relaxed tracking-[0]">
               Transform your agricultural legacy with real-time soil analysis,
               hyper-local weather intelligence, and AI-powered yield predictions
               tailored for your soil&#39;s unique DNA.

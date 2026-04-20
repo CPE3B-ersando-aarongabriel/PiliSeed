@@ -23,7 +23,7 @@ export const Navbar = (): JSX.Element => {
   const activeNav = pathToLabel[pathname] || "Home";
 
   return (
-    <nav className="flex w-full h-20 items-center justify-between px-4 sm:px-6 lg:px-8 py-0 fixed top-0 left-0 z-50 bg-[#f5fcedb2] backdrop-blur-[32px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(32px)_brightness(100%)] overflow-x-auto">
+    <nav className="flex w-full h-20 items-center justify-between px-4 sm:px-6 lg:px-8 py-0 fixed top-0 left-0 z-50 bg-[#f5fcedb2] backdrop-blur-[32px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(32px)_brightness(100%)] overflow-x-hidden">
       <div className="inline-flex items-center gap-2 relative flex-[0_0_auto] min-w-fit">
         <img
           src="/Pili-logo-main.png"
@@ -63,7 +63,7 @@ export const Navbar = (): JSX.Element => {
         <Link href="/login">
         <button className="all-[unset] box-border px-4 sm:px-6 py-2 inline-flex flex-col rounded-full shadow-[0px_1px_2px_#0000000d] items-center justify-center relative flex-[0_0_auto] border border-solid border-[#00450d] hover:shadow-[inset_0_0_0_2px_#00450d] cursor-pointer transition-all">
           <div className="w-auto h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-sm sm:text-base leading-6 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
-            Sign In
+            Log in
           </div>
         </button>
         </Link>

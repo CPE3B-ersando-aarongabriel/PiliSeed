@@ -1,24 +1,25 @@
 "use client";
 import { JSX } from "react";
+import { FlaskConical, Lightbulb, MapPin } from "lucide-react";
 
 const steps = [
   {
     number: "1",
-    icon: "/landing/Hiw_1.svg",
+    Icon: MapPin,
     title: "Enter Location",
     description:
       "Define your plot boundaries using our high-resolution satellite mapping tool.",
   },
   {
     number: "2",
-    icon: "/landing/Hiw_2.svg",
+    Icon: FlaskConical,
     title: "Log Soil Data",
     description:
       "Input your latest laboratory results or sync with your existing field sensors.",
   },
   {
     number: "3",
-    icon: "/landing/Hiw_3.svg",
+    Icon: Lightbulb,
     title: "Get Recommendations",
     description:
       "Receive an actionable harvest roadmap within seconds of data processing.",
@@ -57,7 +58,7 @@ export const Howitworks_summary = (): JSX.Element => {
               >
                 <div className="relative mb-7">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[#ffffff33] bg-[#ffffff1a] backdrop-blur-md">
-                    <img className="h-6 w-6" alt={step.title} src={step.icon} />
+                    <step.Icon className="h-6 w-6 text-[#a3f69c]" aria-label={step.title} />
                   </div>
                   <div className="absolute -left-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#a3f69c]">
                     <span className="text-[#002204] text-sm font-semibold">
