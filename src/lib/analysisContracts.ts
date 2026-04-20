@@ -28,7 +28,7 @@ export type NormalizedSoilSnapshot = {
   nitrogen: number | null;
   phosphorus: number | null;
   potassium: number | null;
-  soilSource: "manual" | "api" | "mixed" | "unknown";
+  soilSource: "manual" | "api" | "mixed" | "device" | "unknown";
   analysis: JsonRecord;
   source: string;
 };

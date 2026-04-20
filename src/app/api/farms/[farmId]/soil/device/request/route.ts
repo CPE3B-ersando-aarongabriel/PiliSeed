@@ -4,12 +4,12 @@ import {
   errorResponse,
   handleRouteError,
   successResponse,
-} from "../../../../../../lib/apiResponse";
-import { verifyTokenWithClaims } from "../../../../../../lib/authMiddleware";
+} from "../../../../../../../lib/apiResponse";
+import { verifyTokenWithClaims } from "../../../../../../../lib/authMiddleware";
 import {
   getFarmByIdForUser,
-  getFarmDeviceLinkForUser,
-} from "../../../../../../lib/firestoreSchema";
+  requestFarmDeviceReadingForUser,
+} from "../../../../../../../lib/firestoreSchema";
 
 export const runtime = "nodejs";
 
@@ -17,11 +17,14 @@ const farmParamsSchema = z.object({
   farmId: z.string().trim().min(1),
 });
 
-type SoilDeviceContext = {
+type SoilDeviceRequestContext = {
   params: Promise<{ farmId: string }>;
 };
 
-export async function GET(request: Request, context: SoilDeviceContext) {
+export async function POST(
+  request: Request,
+  context: SoilDeviceRequestContext,
+) {
   try {
     const routeParams = await context.params;
     const farmIdResult = farmParamsSchema.safeParse(routeParams);
@@ -40,7 +43,7 @@ export async function GET(request: Request, context: SoilDeviceContext) {
       return errorResponse(404, "FARM_NOT_FOUND", "Farm not found.");
     }
 
-    const linkedDevice = await getFarmDeviceLinkForUser(
+    const linkedDevice = await requestFarmDeviceReadingForUser(
       decodedToken.uid,
       farm.id,
     );
@@ -54,29 +57,18 @@ export async function GET(request: Request, context: SoilDeviceContext) {
       );
     }
 
-    return successResponse(
-      {
-        farmId: farm.id,
-        device: {
-          id: linkedDevice.deviceId,
-          name: linkedDevice.deviceName,
-          tokenHint: linkedDevice.tokenHint,
-          status: "connected",
-          linkedAt: linkedDevice.linkedAt,
-          lastSeenAt: linkedDevice.lastSeenAt,
-          source: "linked-farm-device",
-        },
-        activation: {
-          pending: linkedDevice.activationPending,
-          lastRequestedAt: linkedDevice.lastActivationRequestedAt,
-          lastFulfilledAt: linkedDevice.lastActivationFulfilledAt,
-        },
-        readings: linkedDevice.lastReadings,
-        collectedAt: linkedDevice.lastCollectedAt,
-        source: "device-link",
+    return successResponse({
+      farmId: farm.id,
+      device: {
+        id: linkedDevice.deviceId,
+        name: linkedDevice.deviceName,
       },
-      200,
-    );
+      activation: {
+        pending: linkedDevice.activationPending,
+        requestedAt: linkedDevice.lastActivationRequestedAt,
+      },
+      message: "Device reading request queued.",
+    });
   } catch (error) {
     return handleRouteError(error);
   }
