@@ -12,9 +12,12 @@ export default function TestAuthHomePage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-[#6a8b4a]">
             Temporary QA Route
           </p>
-          <h1 className="mt-2 text-2xl font-bold text-[#1d2f13]">Test Auth Tools</h1>
+          <h1 className="mt-2 text-2xl font-bold text-[#1d2f13]">
+            Test Auth Tools
+          </h1>
           <p className="mt-3 text-sm text-[#3d4f2f]">
-            Use these temporary pages to generate Firebase ID tokens for API testing.
+            Use these temporary pages to generate Firebase ID tokens for API
+            testing.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">

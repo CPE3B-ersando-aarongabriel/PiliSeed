@@ -43,7 +43,8 @@ export function TestAuthPanel({ mode }: TestAuthPanelProps) {
   const title =
     mode === "signup" ? "Temporary Test Signup" : "Temporary Test Login";
 
-  const actionLabel = mode === "signup" ? "Create Test User" : "Login Test User";
+  const actionLabel =
+    mode === "signup" ? "Create Test User" : "Login Test User";
 
   const alternateLink = mode === "signup" ? "/test/login" : "/test/signup";
   const alternateLabel =
@@ -71,7 +72,9 @@ export function TestAuthPanel({ mode }: TestAuthPanelProps) {
     }
 
     if (mode === "signup" && password.trim().length < 6) {
-      setErrorMessage("Password must be at least 6 characters for Firebase Auth.");
+      setErrorMessage(
+        "Password must be at least 6 characters for Firebase Auth.",
+      );
       return;
     }
 
@@ -88,7 +91,8 @@ export function TestAuthPanel({ mode }: TestAuthPanelProps) {
       setIdToken(nextToken);
       setUid(authResult.user.uid);
 
-      const apiPath = mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
+      const apiPath =
+        mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
 
       const response = await fetch(apiPath, {
         method: "POST",
@@ -189,7 +193,8 @@ export function TestAuthPanel({ mode }: TestAuthPanelProps) {
           </p>
           <h1 className="mt-2 text-2xl font-bold text-[#1d2f13]">{title}</h1>
           <p className="mt-2 text-sm text-[#3d4f2f]">
-            This page is separate from your production login/signup UI and is only for fast token generation.
+            This page is separate from your production login/signup UI and is
+            only for fast token generation.
           </p>
         </div>
 
@@ -276,12 +281,12 @@ export function TestAuthPanel({ mode }: TestAuthPanelProps) {
             </button>
           </div>
 
-          <p className="text-xs text-[#465a36]">
-            UID: {uid || "-"}
-          </p>
+          <p className="text-xs text-[#465a36]">UID: {uid || "-"}</p>
 
           <div>
-            <p className="text-xs font-semibold text-[#3f5130]">ID Token Preview</p>
+            <p className="text-xs font-semibold text-[#3f5130]">
+              ID Token Preview
+            </p>
             <textarea
               readOnly
               value={tokenPreview}
