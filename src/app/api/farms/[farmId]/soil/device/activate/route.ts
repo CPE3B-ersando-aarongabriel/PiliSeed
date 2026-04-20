@@ -26,7 +26,10 @@ function hashToken(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-export async function GET(request: Request, context: SoilDeviceActivateContext) {
+export async function GET(
+  request: Request,
+  context: SoilDeviceActivateContext,
+) {
   try {
     const routeParams = await context.params;
     const farmIdResult = farmParamsSchema.safeParse(routeParams);
@@ -59,7 +62,9 @@ export async function GET(request: Request, context: SoilDeviceActivateContext) 
       );
     }
 
-    const linkedDevice = await getFarmDeviceLinkByFarmId(farmIdResult.data.farmId);
+    const linkedDevice = await getFarmDeviceLinkByFarmId(
+      farmIdResult.data.farmId,
+    );
 
     if (!linkedDevice) {
       return errorResponse(

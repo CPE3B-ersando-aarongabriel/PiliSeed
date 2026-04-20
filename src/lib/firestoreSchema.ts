@@ -402,9 +402,9 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
       : [],
     pH: toNullableNumber(data.ph ?? data.pH),
     moistureContent: toNullableNumber(data.moistureContent ?? data.moisture),
-        lightLevel: toNullableNumber(data.lightLevel ?? data.light),
-        temperatureC: toNullableNumber(data.temperatureC ?? data.temperature),
-        humidity: toNullableNumber(data.humidity),
+    lightLevel: toNullableNumber(data.lightLevel ?? data.light),
+    temperatureC: toNullableNumber(data.temperatureC ?? data.temperature),
+    humidity: toNullableNumber(data.humidity),
     nitrogen: toNullableNumber(data.nitrogen),
     phosphorus: toNullableNumber(data.phosphorus),
     potassium: toNullableNumber(data.potassium),
@@ -1076,10 +1076,15 @@ export async function getFarmDeviceLinkForUser(
     return null;
   }
 
-  const linkedDevice = toFarmDeviceLink(deviceSnapshot.id, deviceSnapshot.data() ?? {});
+  const linkedDevice = toFarmDeviceLink(
+    deviceSnapshot.id,
+    deviceSnapshot.data() ?? {},
+  );
 
   if (linkedDevice.uid !== uid || linkedDevice.farmId !== farmId) {
-    throw new UnauthorizedError("You are not allowed to access this farm device.");
+    throw new UnauthorizedError(
+      "You are not allowed to access this farm device.",
+    );
   }
 
   return linkedDevice;

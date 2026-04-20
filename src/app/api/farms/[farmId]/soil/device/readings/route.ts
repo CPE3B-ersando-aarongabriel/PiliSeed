@@ -72,7 +72,10 @@ function normalizeOptionalNumericInput(value: unknown): number | undefined {
   return undefined;
 }
 
-export async function POST(request: Request, context: SoilDeviceReadingsContext) {
+export async function POST(
+  request: Request,
+  context: SoilDeviceReadingsContext,
+) {
   try {
     const routeParams = await context.params;
     const farmIdResult = farmParamsSchema.safeParse(routeParams);
@@ -181,7 +184,9 @@ export async function POST(request: Request, context: SoilDeviceReadingsContext)
         typeof normalizedBody.deviceId === "string"
           ? normalizedBody.deviceId.trim()
           : undefined,
-      moistureContent: normalizeOptionalNumericInput(normalizedBody.moistureContent),
+      moistureContent: normalizeOptionalNumericInput(
+        normalizedBody.moistureContent,
+      ),
       pH: normalizeOptionalNumericInput(normalizedBody.pH),
       lightLevel: normalizeOptionalNumericInput(normalizedBody.lightLevel),
       temperatureC: normalizeOptionalNumericInput(normalizedBody.temperatureC),
@@ -197,7 +202,9 @@ export async function POST(request: Request, context: SoilDeviceReadingsContext)
       );
     }
 
-    const linkedDevice = await getFarmDeviceLinkByFarmId(farmIdResult.data.farmId);
+    const linkedDevice = await getFarmDeviceLinkByFarmId(
+      farmIdResult.data.farmId,
+    );
 
     if (!linkedDevice) {
       return errorResponse(
@@ -237,41 +244,48 @@ export async function POST(request: Request, context: SoilDeviceReadingsContext)
       humidity: validationResult.data.humidity,
     };
 
-    const soilProfile = await createSoilAnalysisForFarm(linkedDevice.uid, linkedDevice.farmId, {
-      texture: null,
-      soilClass: null,
-      soilClassValue: null,
-      soilClassProbability: null,
-      soilClassProbabilities: [],
-      pH: readingsPayload.pH ?? null,
-      moistureContent: readingsPayload.moistureContent ?? null,
-      lightLevel: readingsPayload.lightLevel ?? null,
-      temperatureC: readingsPayload.temperatureC ?? null,
-      humidity: readingsPayload.humidity ?? null,
-      nitrogen: null,
-      phosphorus: null,
-      potassium: null,
-      soilSource: "device",
-      classificationJson: {
-        source: "soil-device-readings",
-        collectedAt,
+    const soilProfile = await createSoilAnalysisForFarm(
+      linkedDevice.uid,
+      linkedDevice.farmId,
+      {
+        texture: null,
+        soilClass: null,
+        soilClassValue: null,
+        soilClassProbability: null,
+        soilClassProbabilities: [],
+        pH: readingsPayload.pH ?? null,
+        moistureContent: readingsPayload.moistureContent ?? null,
+        lightLevel: readingsPayload.lightLevel ?? null,
+        temperatureC: readingsPayload.temperatureC ?? null,
+        humidity: readingsPayload.humidity ?? null,
+        nitrogen: null,
+        phosphorus: null,
+        potassium: null,
+        soilSource: "device",
+        classificationJson: {
+          source: "soil-device-readings",
+          collectedAt,
+        },
+        analysisJson: {
+          inputMode: "device-readings",
+          collectedAt,
+          source: "soil-device-readings",
+          sensorContext: readingsPayload,
+        },
       },
-      analysisJson: {
-        inputMode: "device-readings",
-        collectedAt,
-        source: "soil-device-readings",
-        sensorContext: readingsPayload,
-      },
-    });
+    );
 
     if (!soilProfile) {
       return errorResponse(404, "FARM_NOT_FOUND", "Farm not found.");
     }
 
-    const updatedDevice = await completeFarmDeviceReadingUpload(linkedDevice.farmId, {
-      ...readingsPayload,
-      collectedAt,
-    });
+    const updatedDevice = await completeFarmDeviceReadingUpload(
+      linkedDevice.farmId,
+      {
+        ...readingsPayload,
+        collectedAt,
+      },
+    );
 
     if (!updatedDevice) {
       return errorResponse(

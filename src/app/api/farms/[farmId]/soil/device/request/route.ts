@@ -21,7 +21,10 @@ type SoilDeviceRequestContext = {
   params: Promise<{ farmId: string }>;
 };
 
-export async function POST(request: Request, context: SoilDeviceRequestContext) {
+export async function POST(
+  request: Request,
+  context: SoilDeviceRequestContext,
+) {
   try {
     const routeParams = await context.params;
     const farmIdResult = farmParamsSchema.safeParse(routeParams);
