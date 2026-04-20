@@ -29,23 +29,16 @@ const farmParamsSchema = z.object({
 
 const soilAnalyzeRequestSchema = z
 	.object({
-		latitude: z.number().min(-90).max(90).optional(),
-		longitude: z.number().min(-180).max(180).optional(),
-		locationText: z.string().trim().min(1).max(180).optional(),
 		numberClasses: z.number().int().min(1).max(10).optional(),
 		nitrogen: z.number().min(0).optional(),
 		phosphorus: z.number().min(0).optional(),
 		potassium: z.number().min(0).optional(),
+		moistureContent: z.number().min(0).max(100).optional(),
+		pH: z.number().min(0).max(14).optional(),
+		lightLevel: z.number().min(0).optional(),
+		temperatureC: z.number().min(-50).max(80).optional(),
+		humidity: z.number().min(0).max(100).optional(),
 	})
-	.refine(
-		(data) =>
-			(data.latitude === undefined && data.longitude === undefined) ||
-			(data.latitude !== undefined && data.longitude !== undefined),
-		{
-			message: "latitude and longitude must be provided together.",
-			path: ["latitude"],
-		},
-	)
 	.refine(
 		(data) => {
 			const hasNitrogen = data.nitrogen !== undefined;
@@ -86,51 +79,11 @@ function normalizeOptionalNumericInput(value: unknown) {
 	return value;
 }
 
-async function resolveCoordinates(
-	farmLocation: string | null,
-	input: SoilAnalyzeRequest,
-) {
-	if (input.latitude !== undefined && input.longitude !== undefined) {
-		return {
-			latitude: input.latitude,
-			longitude: input.longitude,
-			geocode: {
-				latitude: input.latitude,
-				longitude: input.longitude,
-				formattedAddress:
-					input.locationText ?? farmLocation ?? `${input.latitude}, ${input.longitude}`,
-				confidence: 1,
-				source: "manual",
-			},
-		};
-	}
-
-	const locationText = input.locationText ?? farmLocation?.trim() ?? "";
-
-	if (!locationText) {
-		return null;
-	}
-
-	const geocodes = await geocodingService.geocodeLocationText(locationText, {
-		limit: 1,
-	});
-	const geocode = geocodes[0];
-
-	if (!geocode) {
-		return null;
-	}
-
-	return {
-		latitude: geocode.latitude,
-		longitude: geocode.longitude,
-		geocode,
-	};
-}
-
 function toFirestoreClassificationPayload(
 	classification: Awaited<
 		ReturnType<ReturnType<typeof createSoilService>["fetchSoilClassification"]>
 	>,
+	sensorContext: Record<string, number | null>,
 ) {
 	return {
 		latitude: classification.latitude,
@@ -141,32 +94,79 @@ function toFirestoreClassificationPayload(
 		classProbabilities: classification.classProbabilities,
 		queryTimeSeconds: classification.queryTimeSeconds,
 		source: classification.source,
+		sensorContext,
 	};
 }
 
-function toFirestoreAnalysisPayload(analysis: AnalysisResult) {
+function toFirestoreAnalysisPayload(
+	analysis: AnalysisResult,
+	sensorContext: Record<string, number | null>,
+) {
 	return {
 		score: analysis.score,
 		summary: analysis.summary,
 		flags: analysis.flags,
 		nextSteps: analysis.nextSteps,
 		explanation: analysis.explanation,
+		sensorContext,
 	};
 }
 
-function toManualNpkSnapshot(input: SoilAnalyzeRequest): NormalizedSoilSnapshot {
+function buildSensorContext(input: SoilAnalyzeRequest) {
+	return {
+		pH: input.pH ?? null,
+		moistureContent: input.moistureContent ?? null,
+		lightLevel: input.lightLevel ?? null,
+		temperatureC: input.temperatureC ?? null,
+		humidity: input.humidity ?? null,
+		nitrogen: input.nitrogen ?? null,
+		phosphorus: input.phosphorus ?? null,
+		potassium: input.potassium ?? null,
+	};
+}
+
+function hasManualSoilContext(input: SoilAnalyzeRequest) {
+	return (
+		input.pH !== undefined ||
+		input.moistureContent !== undefined ||
+		input.nitrogen !== undefined ||
+		input.phosphorus !== undefined ||
+		input.potassium !== undefined
+	);
+}
+
+function hasAnySensorReadings(input: SoilAnalyzeRequest) {
+	return (
+		input.pH !== undefined ||
+		input.moistureContent !== undefined ||
+		input.lightLevel !== undefined ||
+		input.temperatureC !== undefined ||
+		input.humidity !== undefined
+	);
+}
+
+function toManualSoilSnapshot(input: SoilAnalyzeRequest): NormalizedSoilSnapshot {
 	return {
 		texture: null,
-		phLevel: null,
-		moistureContent: null,
+		phLevel: input.pH ?? null,
+		moistureContent: input.moistureContent ?? null,
+		lightLevel: input.lightLevel ?? null,
+		temperatureC: input.temperatureC ?? null,
+		humidity: input.humidity ?? null,
 		nitrogen: input.nitrogen ?? null,
 		phosphorus: input.phosphorus ?? null,
 		potassium: input.potassium ?? null,
 		soilSource: "manual",
 		analysis: {
-			inputMode: "manual-npk",
+			inputMode:
+				input.nitrogen !== undefined ||
+				input.phosphorus !== undefined ||
+				input.potassium !== undefined
+					? "manual-npk"
+					: "sensor-context",
+			sensorContext: buildSensorContext(input),
 		},
-		source: "soil-analyze-manual-npk",
+		source: "soil-analyze-manual-context",
 	};
 }
 
@@ -187,6 +187,14 @@ export async function POST(request: Request, context: SoilRouteContext) {
 
 		if (!farm) {
 			return errorResponse(404, "FARM_NOT_FOUND", "Farm not found.");
+		}
+
+		if (!farm.location?.trim()) {
+			return errorResponse(
+				400,
+				"FARM_LOCATION_REQUIRED",
+				"The selected farm must have a saved location before soil analysis can run.",
+			);
 		}
 
 		const requestBody = await request.json().catch(() => null);
@@ -216,9 +224,49 @@ export async function POST(request: Request, context: SoilRouteContext) {
 		normalizedBody.potassium = normalizeOptionalNumericInput(
 			normalizedBody.potassium,
 		);
+		normalizedBody.moistureContent = normalizeOptionalNumericInput(
+			normalizedBody.moistureContent,
+		);
+		normalizedBody.pH = normalizeOptionalNumericInput(normalizedBody.pH);
+		normalizedBody.lightLevel = normalizeOptionalNumericInput(
+			normalizedBody.lightLevel,
+		);
+		normalizedBody.temperatureC = normalizeOptionalNumericInput(
+			normalizedBody.temperatureC,
+		);
+		normalizedBody.humidity = normalizeOptionalNumericInput(
+			normalizedBody.humidity,
+		);
 		normalizedBody.n = normalizeOptionalNumericInput(normalizedBody.n);
 		normalizedBody.p = normalizeOptionalNumericInput(normalizedBody.p);
 		normalizedBody.k = normalizeOptionalNumericInput(normalizedBody.k);
+		if (normalizedBody.pH === undefined && normalizedBody.ph !== undefined) {
+			normalizedBody.pH = normalizeOptionalNumericInput(normalizedBody.ph);
+		}
+		if (
+			normalizedBody.moistureContent === undefined &&
+			normalizedBody.moisture !== undefined
+		) {
+			normalizedBody.moistureContent = normalizeOptionalNumericInput(
+				normalizedBody.moisture,
+			);
+		}
+		if (
+			normalizedBody.lightLevel === undefined &&
+			normalizedBody.light !== undefined
+		) {
+			normalizedBody.lightLevel = normalizeOptionalNumericInput(
+				normalizedBody.light,
+			);
+		}
+		if (
+			normalizedBody.temperatureC === undefined &&
+			normalizedBody.temperature !== undefined
+		) {
+			normalizedBody.temperatureC = normalizeOptionalNumericInput(
+				normalizedBody.temperature,
+			);
+		}
 
 		if (normalizedBody.latitude === undefined && normalizedBody.lat !== undefined) {
 			normalizedBody.latitude = normalizedBody.lat;
@@ -261,18 +309,24 @@ export async function POST(request: Request, context: SoilRouteContext) {
 			);
 		}
 
+		const sensorContext = buildSensorContext(validationResult.data);
 		const hasManualNpk =
 			validationResult.data.nitrogen !== undefined &&
 			validationResult.data.phosphorus !== undefined &&
 			validationResult.data.potassium !== undefined;
+		const hasManualSoilInputs = hasManualSoilContext(validationResult.data);
+		const hasAnySensorData = hasAnySensorReadings(validationResult.data);
+		const geocodes = await geocodingService.geocodeLocationText(
+			farm.location.trim(),
+			{ limit: 1 },
+		);
+		const geocode = geocodes[0];
 
-		const coordinates = await resolveCoordinates(farm.location, validationResult.data);
-
-		if (!coordinates) {
+		if (!geocode) {
 			return errorResponse(
 				400,
-				"FARM_LOCATION_REQUIRED",
-				"Provide latitude and longitude or set a farm location before analyzing soil.",
+				"FARM_LOCATION_UNRESOLVED",
+				"The selected farm location could not be resolved to coordinates.",
 			);
 		}
 
@@ -280,25 +334,32 @@ export async function POST(request: Request, context: SoilRouteContext) {
 			ReturnType<ReturnType<typeof createSoilService>["fetchSoilClassification"]>
 		> | null = null;
 		let soilAnalysis: AnalysisResult;
-		let soilSource: "manual" | "api" = "api";
+		let soilSource: "manual" | "api" | "mixed" = "api";
+		let analysisBasis: "manual_npk" | "sensor_context" | "api_classification" =
+			"api_classification";
 
-		if (hasManualNpk) {
+		if (hasManualSoilInputs) {
 			soilSource = "manual";
-			soilAnalysis = scoreSoilSnapshot(toManualNpkSnapshot(validationResult.data));
+			analysisBasis = hasManualNpk ? "manual_npk" : "sensor_context";
+			soilAnalysis = scoreSoilSnapshot(toManualSoilSnapshot(validationResult.data));
 		} else {
 			soilClassification = await soilService.fetchSoilClassification({
-				latitude: coordinates.latitude,
-				longitude: coordinates.longitude,
+				latitude: geocode.latitude,
+				longitude: geocode.longitude,
 				numberClasses: validationResult.data.numberClasses,
 			});
 
 			soilAnalysis = scoreSoilClassification(soilClassification);
+			soilSource = hasAnySensorData ? "mixed" : "api";
 		}
 
 		const soilProfile = await createSoilAnalysisForFarm(decodedToken.uid, farm.id, {
 			texture: soilClassification?.dominantClass ?? null,
-			pH: null,
-			moistureContent: null,
+			pH: validationResult.data.pH ?? null,
+			moistureContent: validationResult.data.moistureContent ?? null,
+			lightLevel: validationResult.data.lightLevel ?? null,
+			temperatureC: validationResult.data.temperatureC ?? null,
+			humidity: validationResult.data.humidity ?? null,
 			nitrogen: validationResult.data.nitrogen ?? null,
 			phosphorus: validationResult.data.phosphorus ?? null,
 			potassium: validationResult.data.potassium ?? null,
@@ -308,15 +369,16 @@ export async function POST(request: Request, context: SoilRouteContext) {
 			soilClassProbability: soilClassification?.dominantClassProbability ?? null,
 			soilClassProbabilities: soilClassification?.classProbabilities ?? [],
 			classificationJson: soilClassification
-				? toFirestoreClassificationPayload(soilClassification)
+				? toFirestoreClassificationPayload(soilClassification, sensorContext)
 				: {
-					inputMode: "manual-npk",
+					inputMode: hasManualNpk ? "manual-npk" : "sensor-context",
+					sensorContext,
 					nitrogen: validationResult.data.nitrogen ?? null,
 					phosphorus: validationResult.data.phosphorus ?? null,
 					potassium: validationResult.data.potassium ?? null,
 					source: "manual",
 				},
-			analysisJson: toFirestoreAnalysisPayload(soilAnalysis),
+			analysisJson: toFirestoreAnalysisPayload(soilAnalysis, sensorContext),
 		});
 
 		if (!soilProfile) {
@@ -326,12 +388,12 @@ export async function POST(request: Request, context: SoilRouteContext) {
 		return successResponse(
 			{
 				farmId: farm.id,
-				geocode: coordinates.geocode,
+				geocode,
 				soilClassification,
 				soilProfile,
 				soilAnalysis,
 				metadata: {
-					analysisBasis: hasManualNpk ? "manual_npk" : "api_classification",
+					analysisBasis,
 				},
 			},
 			201,
