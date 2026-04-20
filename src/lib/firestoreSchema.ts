@@ -19,6 +19,7 @@ export const firestoreCollections = {
   weatherSnapshots: "weatherSnapshots",
   cropRecommendations: "cropRecommendations",
   yieldForecasts: "yieldForecasts",
+  marketSnapshots: "marketSnapshots",
 } as const;
 
 const usersCollection = firestore.collection(firestoreCollections.users);
@@ -34,6 +35,9 @@ const cropRecommendationsCollection = firestore.collection(
 );
 const yieldForecastsCollection = firestore.collection(
   firestoreCollections.yieldForecasts,
+);
+const marketSnapshotsCollection = firestore.collection(
+  firestoreCollections.marketSnapshots,
 );
 
 type TimestampLike = {
@@ -134,6 +138,20 @@ export type YieldForecast = {
   updatedAt: string | null;
 };
 
+export type MarketSnapshot = {
+  id: string;
+  uid: string;
+  farmId: string;
+  commodityName: string;
+  symbol: string;
+  price: number;
+  unit: string;
+  currency: string;
+  sourceDate: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 type EnsureUserScaffoldInput = {
   decodedToken: DecodedIdToken;
   requestedName?: string | null;
@@ -212,6 +230,15 @@ type YieldForecastCreateInput = {
   warningFlags: string[];
   generatedBy: "deterministic" | "openai" | "hybrid";
   forecastJson: DocumentData;
+};
+
+type MarketSnapshotCreateInput = {
+  commodityName: string;
+  symbol: string;
+  price: number;
+  unit: string;
+  currency: string;
+  sourceDate?: string | null;
 };
 
 function normalizeText(value: unknown, maxLength: number): string | null {
@@ -310,8 +337,10 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
           (item): item is SoilClassificationProbability =>
             typeof item === "object" &&
             item !== null &&
-            typeof (item as SoilClassificationProbability).className === "string" &&
-            typeof (item as SoilClassificationProbability).probability === "number",
+            typeof (item as SoilClassificationProbability).className ===
+              "string" &&
+            typeof (item as SoilClassificationProbability).probability ===
+              "number",
         ) as SoilClassificationProbability[])
       : [],
     pH: toNullableNumber(data.ph ?? data.pH),
@@ -326,7 +355,8 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
         ? data.soilSource
         : "unknown",
     classificationJson:
-      typeof data.classificationJson === "object" && data.classificationJson !== null
+      typeof data.classificationJson === "object" &&
+      data.classificationJson !== null
         ? data.classificationJson
         : null,
     analysisJson:
@@ -401,7 +431,8 @@ function toYieldForecast(id: string, data: DocumentData): YieldForecast {
     season: normalizeText(data.season, 40) ?? "",
     forecastPeriod: normalizeText(data.forecastPeriod, 60) ?? "",
     expectedYield:
-      typeof data.expectedYield === "number" && !Number.isNaN(data.expectedYield)
+      typeof data.expectedYield === "number" &&
+      !Number.isNaN(data.expectedYield)
         ? data.expectedYield
         : 0,
     unit: normalizeText(data.unit, 40) ?? "tons_per_hectare",
@@ -426,6 +457,25 @@ function toYieldForecast(id: string, data: DocumentData): YieldForecast {
       typeof data.forecastJson === "object" && data.forecastJson !== null
         ? data.forecastJson
         : null,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function toMarketSnapshot(id: string, data: DocumentData): MarketSnapshot {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    farmId: normalizeText(data.farmId, 128) ?? "",
+    commodityName: normalizeText(data.commodityName, 120) ?? "",
+    symbol: normalizeText(data.symbol, 40) ?? "",
+    price:
+      typeof data.price === "number" && Number.isFinite(data.price)
+        ? data.price
+        : 0,
+    unit: normalizeText(data.unit, 80) ?? "unit",
+    currency: normalizeText(data.currency, 16) ?? "USD",
+    sourceDate: normalizeText(data.sourceDate, 40),
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
@@ -1037,6 +1087,41 @@ export async function createYieldForecastForFarm(
   return toYieldForecast(createdSnapshot.id, createdSnapshot.data() ?? {});
 }
 
+export async function createMarketSnapshotForFarm(
+  uid: string,
+  farmId: string,
+  input: MarketSnapshotCreateInput,
+): Promise<MarketSnapshot | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const marketDocRef = marketSnapshotsCollection.doc();
+
+  await marketDocRef.set({
+    uid,
+    farmId,
+    commodityName: normalizeText(input.commodityName, 120),
+    symbol: normalizeText(input.symbol, 40),
+    price: input.price,
+    unit: normalizeText(input.unit, 80),
+    currency: normalizeText(input.currency, 16),
+    sourceDate: normalizeText(input.sourceDate, 40),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const createdSnapshot = await marketDocRef.get();
+
+  if (!createdSnapshot.exists) {
+    throw new Error("Failed to create market snapshot.");
+  }
+
+  return toMarketSnapshot(createdSnapshot.id, createdSnapshot.data() ?? {});
+}
+
 export async function getLatestSoilProfileForFarm(
   uid: string,
   farmId: string,
@@ -1448,6 +1533,80 @@ export async function getLatestYieldForecastForFarm(
   }
 
   return toYieldForecast(latestDataDoc.id, latestDataDoc.data());
+}
+
+export async function getLatestMarketSnapshotForFarm(
+  uid: string,
+  farmId: string,
+  symbol: string,
+): Promise<MarketSnapshot | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const normalizedSymbol = normalizeText(symbol, 40);
+
+  if (!normalizedSymbol) {
+    return null;
+  }
+
+  let latestDataDoc:
+    | (typeof marketSnapshotsCollection extends CollectionReference<infer T>
+        ? import("firebase-admin/firestore").QueryDocumentSnapshot<T>
+        : never)
+    | null = null;
+
+  try {
+    const indexedSnapshot = await marketSnapshotsCollection
+      .where("uid", "==", uid)
+      .where("farmId", "==", farmId)
+      .where("symbol", "==", normalizedSymbol)
+      .orderBy("createdAt", "desc")
+      .limit(10)
+      .get();
+
+    latestDataDoc =
+      indexedSnapshot.docs.find((doc) => doc.data().isSeedData !== true) ??
+      null;
+  } catch (error) {
+    if (!isMissingFirestoreIndexError(error)) {
+      throw error;
+    }
+
+    // Fallback path for environments where the composite index is not created yet.
+    const fallbackSnapshot = await marketSnapshotsCollection
+      .where("farmId", "==", farmId)
+      .get();
+
+    const candidateDocs = fallbackSnapshot.docs.filter((doc) => {
+      const data = doc.data();
+
+      return (
+        data.isSeedData !== true &&
+        normalizeText(data.uid, 128) === uid &&
+        normalizeText(data.symbol, 40) === normalizedSymbol
+      );
+    });
+
+    candidateDocs.sort((firstDoc, secondDoc) => {
+      const firstData = firstDoc.data();
+      const secondData = secondDoc.data();
+      const firstCreatedAt = toTimestampMillis(firstData.createdAt);
+      const secondCreatedAt = toTimestampMillis(secondData.createdAt);
+
+      return secondCreatedAt - firstCreatedAt;
+    });
+
+    latestDataDoc = candidateDocs[0] ?? null;
+  }
+
+  if (!latestDataDoc) {
+    return null;
+  }
+
+  return toMarketSnapshot(latestDataDoc.id, latestDataDoc.data());
 }
 
 export async function listRecentYieldForecastsForFarm(
