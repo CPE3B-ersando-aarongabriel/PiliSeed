@@ -19,6 +19,10 @@ const createSoilSchema = z.object({
   nitrogen: z.number().min(0),
   phosphorus: z.number().min(0),
   potassium: z.number().min(0),
+  moistureContent: z.number().min(0).max(100).optional(),
+  lightLevel: z.number().min(0).optional(),
+  temperatureC: z.number().min(-50).max(80).optional(),
+  humidity: z.number().min(0).max(100).optional(),
 });
 
 type FarmSoilContext = {
@@ -54,6 +58,24 @@ export async function POST(request: Request, context: FarmSoilContext) {
 
     if (normalizedBody.pH === undefined && normalizedBody.ph !== undefined) {
       normalizedBody.pH = normalizedBody.ph;
+    }
+
+    if (
+      normalizedBody.moistureContent === undefined &&
+      normalizedBody.moisture !== undefined
+    ) {
+      normalizedBody.moistureContent = normalizedBody.moisture;
+    }
+
+    if (normalizedBody.lightLevel === undefined && normalizedBody.light !== undefined) {
+      normalizedBody.lightLevel = normalizedBody.light;
+    }
+
+    if (
+      normalizedBody.temperatureC === undefined &&
+      normalizedBody.temperature !== undefined
+    ) {
+      normalizedBody.temperatureC = normalizedBody.temperature;
     }
 
     const validationResult = createSoilSchema.safeParse(normalizedBody);

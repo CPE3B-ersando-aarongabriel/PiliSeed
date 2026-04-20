@@ -22,6 +22,9 @@ export type NormalizedSoilSnapshot = {
   texture: string | null;
   phLevel: number | null;
   moistureContent: number | null;
+  lightLevel: number | null;
+  temperatureC: number | null;
+  humidity: number | null;
   nitrogen: number | null;
   phosphorus: number | null;
   potassium: number | null;
