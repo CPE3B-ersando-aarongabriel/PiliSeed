@@ -37,7 +37,7 @@ export const Carousel = (): JSX.Element => {
     <div className="flex flex-col w-full gap-8 sm:gap-12 px-4 sm:px-8 py-12 sm:py-24 relative sm:absolute sm:top-[2026px] sm:left-1/2 sm:-translate-x-1/2 bg-[#e3ebdc33]">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
         <div className="flex flex-col gap-2 sm:gap-0 w-full sm:w-auto">
-          <div className="flex flex-col max-w-xs">
+          <div className="flex flex-col max-w-full sm:max-w-xl">
             <div className="relative flex items-center w-fit mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#171d14] text-3xl sm:text-4xl tracking-[-1.80px] leading-8 sm:leading-10">
               Harvesting Innovation
             </div>

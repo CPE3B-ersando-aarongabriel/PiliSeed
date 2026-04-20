@@ -15,9 +15,9 @@ interface FooterProps {
   absolute?: boolean;
 }
 
-export const Footer = ({ absolute = true }: FooterProps): JSX.Element => {
+export const Footer = ({ absolute = false }: FooterProps): JSX.Element => {
   const positionClass = absolute
-    ? "absolute w-full top-[4598px] left-0"
+    ? "absolute w-full top-[4800px] left-0"
     : "relative w-full";
 
   return (

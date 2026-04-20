@@ -159,7 +159,7 @@ export default function Sidebar() {
         </div>
 
         <div className="px-4 pb-6 mt-auto">
-          <div className="w-full bg-white/50 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between border border-[#171D14]/5 shadow-sm">
+          <Link href="/profile" className="w-full bg-white/50 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between border border-[#171D14]/5 shadow-sm hover:bg-white/80 transition-all duration-200 cursor-pointer">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00450D] to-[#008822] flex items-center justify-center shadow-sm shrink-0">
                 <span className="text-white font-semibold text-sm">
@@ -177,7 +177,7 @@ export default function Sidebar() {
               alt="settings"
               className="w-5 h-5 cursor-pointer opacity-70 hover:opacity-100 transition shrink-0"
             />
-          </div>
+          </Link>
         </div>
       </div>
     </>

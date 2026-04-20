@@ -9,7 +9,7 @@ export default function Features() {
       <Navbar />
       <Hero_features />
       <Grid_features />
-      <Encouragement className="mt-20" />
+      <Encouragement className="mb-20" />
       <Footer absolute={false} />
     </div>
   );
