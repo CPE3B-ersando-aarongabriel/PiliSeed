@@ -44,7 +44,9 @@ export const Hero = (): JSX.Element => {
 
           <div className="mt-6 w-full max-w-2xl">
             <p className="[font-family:'Inter-Medium',Helvetica] text-white text-base sm:text-lg font-medium leading-relaxed tracking-[0]">
-              Transform your agricultural legacy with real-time soil analysis, hyper-local weather intelligence, and AI-powered yield predictions tailored for your soil&#39;s unique DNA.
+              Transform your agricultural legacy with real-time soil analysis,
+              hyper-local weather intelligence, and AI-powered yield predictions
+              tailored for your soil&#39;s unique DNA.
             </p>
           </div>
 

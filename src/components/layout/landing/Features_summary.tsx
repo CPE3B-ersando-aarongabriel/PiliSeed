@@ -40,7 +40,8 @@ export const Features_summary = (): JSX.Element => {
           </h2>
 
           <p className="[font-family:'Inter-Regular',Helvetica] text-[#41493e] text-sm sm:text-base font-normal tracking-[0] leading-6">
-            Unlock the full potential of your land with our suite of intelligent agricultural tools.
+            Unlock the full potential of your land with our suite of intelligent
+            agricultural tools.
           </p>
         </div>
 
@@ -53,7 +54,11 @@ export const Features_summary = (): JSX.Element => {
               <div
                 className={`flex h-14 w-14 items-center justify-center rounded-full ${item.iconWrapperBg}`}
               >
-                <img className={item.iconClassName} alt={item.iconAlt} src={item.iconSrc} />
+                <img
+                  className={item.iconClassName}
+                  alt={item.iconAlt}
+                  src={item.iconSrc}
+                />
               </div>
 
               <h3 className="mt-5 [font-family:'Manrope-Bold',Helvetica] text-[#171d14] text-xl sm:text-2xl font-bold leading-8 tracking-[0]">

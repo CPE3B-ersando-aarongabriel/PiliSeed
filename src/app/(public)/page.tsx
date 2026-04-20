@@ -1,13 +1,11 @@
-import { Carousel} from "@/components/layout/landing/Carousel";
+import { Carousel } from "@/components/layout/landing/Carousel";
 import { Encouragement } from "@/components/layout/Encouragement";
 import { Features_summary } from "@/components/layout/landing/Features_summary";
 import { Hero } from "@/components/layout/landing/Hero";
 import { Howitworks_summary } from "@/components/layout/landing/Howitworks_summary";
-import {Navbar} from "@/components/layout/Navbar";
+import { Navbar } from "@/components/layout/Navbar";
 import { Problem } from "@/components/layout/landing/Problem";
 import { Footer } from "@/components/layout/Footer";
-
-
 
 export default function Home() {
   return (

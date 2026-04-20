@@ -40,7 +40,8 @@ export const Howitworks_summary = (): JSX.Element => {
 
           <div className="max-w-md flex-1">
             <p className="[font-family:'Inter-Regular',Helvetica] text-[#a3f69cb2] text-base sm:text-lg font-normal leading-7">
-              Start your digital transformation in minutes. No complex hardware required, just your data and our engine.
+              Start your digital transformation in minutes. No complex hardware
+              required, just your data and our engine.
             </p>
           </div>
         </div>
@@ -59,7 +60,9 @@ export const Howitworks_summary = (): JSX.Element => {
                     <img className="h-6 w-6" alt={step.title} src={step.icon} />
                   </div>
                   <div className="absolute -left-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#a3f69c]">
-                    <span className="text-[#002204] text-sm font-semibold">{step.number}</span>
+                    <span className="text-[#002204] text-sm font-semibold">
+                      {step.number}
+                    </span>
                   </div>
                 </div>
 

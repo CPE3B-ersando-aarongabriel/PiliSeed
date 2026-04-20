@@ -31,14 +31,20 @@ export const Problem = (): JSX.Element => {
             <span className="text-[#171d14] tracking-[-1.2px] sm:tracking-[-1.6px] lg:tracking-[-1.8px]">
               Addressing the
             </span>{" "}
-            <span className="text-[#7a5649] tracking-[0] underline">Global Crisis</span>{" "}
+            <span className="text-[#7a5649] tracking-[0] underline">
+              Global Crisis
+            </span>{" "}
             <span className="text-[#171d14] tracking-[-1.2px] sm:tracking-[-1.6px] lg:tracking-[-1.8px]">
               of Food Security.
             </span>
           </h2>
 
           <p className="[font-family:'Inter-Regular',Helvetica] text-[#41493e] text-base sm:text-lg lg:text-xl font-normal leading-7 sm:leading-8 tracking-[0] max-w-2xl">
-            By 2050, the world will need to produce 70% more food. Traditional farming methods are struggling against climate change. PiliSeed aligns with UN Sustainable Development Goals (SDG 2: Zero Hunger and SDG 12: Responsible Consumption) to revolutionize how we nourish the planet.
+            By 2050, the world will need to produce 70% more food. Traditional
+            farming methods are struggling against climate change. PiliSeed
+            aligns with UN Sustainable Development Goals (SDG 2: Zero Hunger and
+            SDG 12: Responsible Consumption) to revolutionize how we nourish the
+            planet.
           </p>
 
           <div className="grid w-full grid-cols-1 gap-4 pt-2 sm:grid-cols-2 sm:gap-6 lg:pt-4">
