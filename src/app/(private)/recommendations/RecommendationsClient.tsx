@@ -95,6 +95,10 @@ export default function RecommendationsClient() {
 	const [farmError, setFarmError] = useState("");
 	const [dataError, setDataError] = useState("");
 	const [sortBy, setSortBy] = useState("Suitability Score");
+	const [selectedCrop, setSelectedCrop] = useState("");
+	const [confirmedCrop, setConfirmedCrop] = useState<string | null>(null);
+	const [showCropPrompt, setShowCropPrompt] = useState(false);
+	const [cropPromptError, setCropPromptError] = useState("");
 
 	const sortOptions = ["Suitability Score", "Alphabetical", "Recently Added"];
 
@@ -226,6 +230,33 @@ export default function RecommendationsClient() {
 		});
 	}, [selectedRecommendation, sortBy]);
 
+	useEffect(() => {
+		if (!selectedFarmId || recommendedCrops.length === 0) {
+			setSelectedCrop("");
+			setConfirmedCrop(null);
+			setShowCropPrompt(false);
+			return;
+		}
+
+		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		const storedSelection = typeof window !== "undefined"
+			? window.localStorage.getItem(storageKey)
+			: null;
+		const defaultCrop = recommendedCrops[0]?.crop ?? "";
+
+		if (storedSelection) {
+			setSelectedCrop(storedSelection);
+			setConfirmedCrop(storedSelection);
+			setShowCropPrompt(false);
+			return;
+		}
+
+		setSelectedCrop(defaultCrop);
+		setConfirmedCrop(null);
+		setShowCropPrompt(true);
+		setCropPromptError("");
+	}, [recommendedCrops, selectedFarmId]);
+
 	function handleFarmChange(farmId: string) {
 		setSelectedFarmId(farmId);
 		setIsFarmDropdownOpen(false);
@@ -242,6 +273,27 @@ export default function RecommendationsClient() {
 		soilProfile?.temperatureC !== null && soilProfile?.temperatureC !== undefined
 			? `${Math.max(-10, Math.round(soilProfile.temperatureC - 3))}°C - ${Math.round(soilProfile.temperatureC + 3)}°C`
 			: "Contextual";
+
+	function handleConfirmCropSelection() {
+		if (!selectedCrop) {
+			setCropPromptError("Choose a crop to continue.");
+			return;
+		}
+
+		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		setConfirmedCrop(selectedCrop);
+		setShowCropPrompt(false);
+		setCropPromptError("");
+
+		if (typeof window !== "undefined") {
+			window.localStorage.setItem(storageKey, selectedCrop);
+		}
+	}
+
+	function handleChangeCropSelection() {
+		setShowCropPrompt(true);
+		setCropPromptError("");
+	}
 
 	return (
 		<div className="min-h-screen bg-[#EFF6E7]">
@@ -362,6 +414,68 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
+						<div className="mb-12 rounded-4xl border border-[#C0C9BB1A] bg-white px-6 py-6">
+							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+								<div>
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">
+										Planting decision
+									</p>
+									<h3 className="text-2xl font-bold text-[#171D14]">
+										Which crop will you plant?
+									</h3>
+									<p className="mt-2 text-sm text-[#41493E]">
+										Confirm your choice so we can tailor yield and market insights for this farm.
+									</p>
+								</div>
+								{confirmedCrop && !showCropPrompt && (
+									<div className="rounded-full bg-[#00450D]/10 px-4 py-2 text-xs font-semibold text-[#00450D]">
+										Selected: {confirmedCrop}
+									</div>
+								)}
+							</div>
+
+							{showCropPrompt ? (
+								<div className="mt-5 flex flex-col gap-4 md:flex-row md:items-center">
+									<div className="flex-1">
+										<label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#41493E]">
+											Select crop
+										</label>
+										<select
+											value={selectedCrop}
+											onChange={(event) => setSelectedCrop(event.target.value)}
+											className="mt-2 w-full rounded-full border border-[#C0C9BB] bg-white px-4 py-3 text-sm font-semibold text-[#171D14]"
+										>
+											{recommendedCrops.map((crop) => (
+												<option key={crop.crop} value={crop.crop}>
+													{crop.crop}
+												</option>
+											))}
+										</select>
+										{cropPromptError && (
+											<p className="mt-2 text-xs font-semibold text-[#9C4A00]">
+												{cropPromptError}
+											</p>
+										)}
+									</div>
+									<div className="flex items-center gap-3">
+										<button
+											onClick={handleConfirmCropSelection}
+											className="rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
+										>
+											Confirm crop
+										</button>
+									</div>
+								</div>
+							) : (
+								<button
+									onClick={handleChangeCropSelection}
+									className="mt-5 rounded-full border border-[#00450D] px-5 py-2 text-xs font-semibold text-[#00450D]"
+								>
+									Change selection
+								</button>
+							)}
+						</div>
+
 						<div className="grid grid-cols-1 gap-6 mb-12">
 							<FeaturedCropCard
 								cropName={featuredCrop.crop}
