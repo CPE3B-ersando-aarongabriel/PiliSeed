@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { JSX } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
-  type User,
+  type User as FirebaseUser,
 } from "firebase/auth";
 import {
   getClientAuth,
@@ -57,9 +58,8 @@ export const LoginSection = (): JSX.Element => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  async function completeLogin(user: User, fallbackName = "") {
+  async function completeLogin(user: FirebaseUser, fallbackName = "") {
     const idToken = await user.getIdToken();
     const loginPayload = fallbackName ? { name: fallbackName } : {};
 
@@ -84,14 +84,23 @@ export const LoginSection = (): JSX.Element => {
     event.preventDefault();
 
     if (!hasFirebaseConfig) {
-      setError(
+      toast.error(
         `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
       );
       return;
     }
 
+    if (!email.trim()) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+
+    if (!password) {
+      toast.error("Please enter your password.");
+      return;
+    }
+
     setLoading(true);
-    setError("");
 
     try {
       const clientAuth = getClientAuth();
@@ -103,9 +112,21 @@ export const LoginSection = (): JSX.Element => {
 
       await completeLogin(credential.user);
     } catch (caughtError) {
+      const firebaseCode =
+        typeof caughtError === "object" && caughtError !== null && "code" in caughtError
+          ? String((caughtError as { code: unknown }).code)
+          : "";
+
       const message =
-        caughtError instanceof Error ? caughtError.message : "Login failed.";
-      setError(message);
+        firebaseCode === "auth/invalid-email"
+          ? "Please enter a valid email address."
+          : firebaseCode === "auth/user-not-found" ||
+              firebaseCode === "auth/wrong-password" ||
+              firebaseCode === "auth/invalid-credential"
+            ? "No matching account found or password is incorrect."
+            : firebaseCode === "auth/too-many-requests"
+              ? "Too many login attempts. Please try again in a moment."
+              : "Login failed. Please check your credentials and try again.";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -114,14 +135,13 @@ export const LoginSection = (): JSX.Element => {
 
   async function handleGoogleLogin() {
     if (!hasFirebaseConfig) {
-      setError(
+      toast.error(
         `Missing Firebase client env vars: ${missingFirebaseEnvVars.join(", ")}`,
       );
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const clientAuth = getClientAuth();
@@ -133,11 +153,17 @@ export const LoginSection = (): JSX.Element => {
 
       await completeLogin(credential.user, credential.user.displayName ?? "");
     } catch (caughtError) {
+      const firebaseCode =
+        typeof caughtError === "object" && caughtError !== null && "code" in caughtError
+          ? String((caughtError as { code: unknown }).code)
+          : "";
+
       const message =
-        caughtError instanceof Error
-          ? caughtError.message
-          : "Google login failed.";
-      setError(message);
+        firebaseCode === "auth/popup-closed-by-user"
+          ? "Google login was cancelled."
+          : firebaseCode === "auth/popup-blocked"
+            ? "Popup was blocked by the browser. Please allow popups and try again."
+            : "Google login failed. Please try again.";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -146,8 +172,8 @@ export const LoginSection = (): JSX.Element => {
 
 
   return (
-    <section className="relative w-full pt-20 pb-20">
-      <div className="relative w-full overflow-hidden bg-[#eff6e7] flex flex-col lg:flex-row lg:h-[860px]">
+    <section className="relative w-full pt-12 sm:pt-16 lg:pt-20 pb-12 sm:pb-16 lg:pb-20">
+      <div className="relative w-full overflow-hidden bg-[#eff6e7] flex flex-col lg:flex-row lg:min-h-[860px]">
         <motion.div 
           className="hidden lg:flex absolute inset-y-0 left-0 w-1/2 overflow-hidden"
           initial={{ opacity: 0 }}
@@ -192,13 +218,14 @@ export const LoginSection = (): JSX.Element => {
         </motion.div>
 
         <motion.div 
-          className="absolute inset-y-0 right-0 flex w-full lg:w-1/2 items-start justify-center px-4 sm:px-16 pt-20 lg:pt-28 bg-[#eff6e7] lg:bg-transparent"
+          className="relative lg:absolute lg:inset-y-0 lg:right-0 flex w-full lg:w-1/2 items-start justify-center px-4 sm:px-8 lg:px-16 pt-12 sm:pt-16 lg:pt-28 pb-10 sm:pb-12 lg:pb-0 bg-[#eff6e7] lg:bg-transparent"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
         >
           <form
             onSubmit={handleSubmit}
+            autoComplete="off"
             className="flex w-full max-w-md flex-col items-start gap-10"
           >
             <motion.header 
@@ -222,13 +249,13 @@ export const LoginSection = (): JSX.Element => {
             </motion.header>
 
             <motion.div 
-              className="relative self-stretch w-full h-[190px]"
+              className="flex flex-col self-stretch w-full gap-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="flex flex-col w-full items-end gap-2 absolute top-0 left-0">
-              <div className="flex flex-col w-[444px] items-start relative flex-[0_0_auto]">
+              <div className="flex flex-col w-full items-end gap-2">
+              <div className="flex flex-col w-full items-start relative flex-[0_0_auto]">
                 <label
                   className="relative flex items-center w-[96.34px] h-5 mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5 whitespace-nowrap"
                   htmlFor="input-1"
@@ -246,24 +273,26 @@ export const LoginSection = (): JSX.Element => {
               >
                 <div className="pl-12 pr-4 py-[18px] flex items-start justify-center relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden transition-all hover:bg-[#d9e1d0]">
                   <input
-                    className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none"
+                    className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none"
                     id="input-1"
+                    name="login-email"
                     placeholder="john@piliseed.com"
                     type="email"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4 text-[#8b9587]">
-                  <svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M2 2H18V14H2V2Z" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M2 3L10 9L18 3" stroke="currentColor" strokeWidth="1.5"/>
-                  </svg>
+                  <Mail className="h-4 w-5" aria-hidden="true" />
                 </div>
               </motion.div>
               </div>
-              <div className="flex flex-col w-full items-end gap-2 absolute top-[107px] left-0">
-              <div className="flex flex-col w-[444px] items-start relative flex-[0_0_auto]">
+              <div className="flex flex-col w-full items-end gap-2">
+              <div className="flex flex-col w-full items-start relative flex-[0_0_auto]">
                 <label
                   className="relative flex items-center w-[66.39px] h-5 mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5 whitespace-nowrap"
                   htmlFor="input-2"
@@ -280,19 +309,18 @@ export const LoginSection = (): JSX.Element => {
               >
                 <div className="px-12 py-[18px] flex items-start justify-center relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden transition-all hover:bg-[#d9e1d0]">
                   <input
-                    className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none"
+                    className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none"
                     id="input-2"
+                    name="login-password"
                     placeholder="••••••••"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
                 <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4 text-[#8b9587]">
-                  <svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect x="2" y="9" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M5 9V6.5C5 4.84 6.34 3.5 8 3.5C9.66 3.5 11 4.84 11 6.5V9" stroke="currentColor" strokeWidth="1.5"/>
-                  </svg>
+                  <Lock className="h-[21px] w-4" aria-hidden="true" />
                 </div>
                 <button
                   type="button"
@@ -301,10 +329,11 @@ export const LoginSection = (): JSX.Element => {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   <div className="inline-flex items-start justify-center relative flex-[0_0_auto]">
-                    <svg width="22" height="15" viewBox="0 0 22 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#8b9587]" aria-hidden="true">
-                      <path d="M1 7.5C2.8 4.2 6.3 2 11 2C15.7 2 19.2 4.2 21 7.5C19.2 10.8 15.7 13 11 13C6.3 13 2.8 10.8 1 7.5Z" stroke="currentColor" strokeWidth="1.5"/>
-                      <circle cx="11" cy="7.5" r="2.5" fill="currentColor"/>
-                    </svg>
+                    {showPassword ? (
+                      <EyeOff className="h-[15px] w-[22px] text-[#8b9587]" aria-hidden="true" />
+                    ) : (
+                      <Eye className="h-[15px] w-[22px] text-[#8b9587]" aria-hidden="true" />
+                    )}
                   </div>
                 </button>
               </motion.div>
@@ -353,7 +382,7 @@ export const LoginSection = (): JSX.Element => {
             </motion.div>
 
             <motion.div 
-              className="grid grid-cols-2 grid-rows-[50px] h-fit gap-4 self-stretch w-full"
+              className="grid grid-cols-1 grid-rows-[50px] h-fit gap-4 self-stretch w-full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.6 }}
@@ -368,30 +397,14 @@ export const LoginSection = (): JSX.Element => {
               >
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
                   <img
-                    className="relative w-5 h-5"
-                    alt="Google"
                     src="/signup/Google.svg"
+                    alt="Google"
+                    className="relative h-5 w-5"
                   />
                 </div>
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
                   <div className="justify-center w-[48.23px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
                     {loading ? "Processing..." : "Google"}
-                  </div>
-                </div>
-              </motion.button>
-
-              <motion.button
-                type="button"
-                className="all-[unset] box-border row-[1_/_2] col-[2_/_3] w-full h-fit inline-flex gap-[7.99px] px-[71.19px] py-3 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer transition-all"
-                whileHover={{ scale: 1.05, borderColor: "#a3f69c" }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <img className="relative w-4 h-2.5" alt="Apple" src="/signup/Apple.svg" />
-                </div>
-                <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <div className="justify-center w-[39.61px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
-                    Apple
                   </div>
                 </div>
               </motion.button>
@@ -415,16 +428,6 @@ export const LoginSection = (): JSX.Element => {
             </motion.div>
           </form>
 
-          {error ? (
-            <motion.p 
-              style={{ color: "#b00020", marginTop: "1rem" }}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {error}
-            </motion.p>
-          ) : null}
         </motion.div>
       </div>
     </section>

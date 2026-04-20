@@ -1,4 +1,5 @@
 import { JSX } from "react";
+import { Leaf } from "lucide-react";
 
 const stats = [
   {
@@ -75,10 +76,9 @@ export const Problem = (): JSX.Element => {
 
             <div className="absolute -bottom-5 left-1/2 flex w-[min(92%,360px)] -translate-x-1/2 items-center gap-3 rounded-[28px] bg-white p-4 shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] sm:-bottom-6 sm:gap-4 sm:rounded-[32px] sm:p-5 lg:left-8 lg:translate-x-0">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#ffdbcf] sm:h-12 sm:w-12">
-                <img
-                  className="h-4 w-4 sm:h-[17px] sm:w-[17px]"
-                  alt="Leaf icon"
-                  src="/landing/leaf.svg"
+                <Leaf
+                  className="h-4 w-4 text-[#7a5649] sm:h-[17px] sm:w-[17px]"
+                  aria-label="Leaf icon"
                 />
               </div>
 

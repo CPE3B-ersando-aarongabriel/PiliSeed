@@ -17,7 +17,7 @@ export default function Home() {
         <Carousel />
         <Features_summary />
         <Howitworks_summary />
-        <Encouragement />
+        <Encouragement className="mt-20 mb-20" />
         <Footer />
       </main>
     </div>
