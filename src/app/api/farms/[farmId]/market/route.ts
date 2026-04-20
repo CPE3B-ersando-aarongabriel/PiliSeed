@@ -51,6 +51,61 @@ const commodityDisplayNameMap: Record<string, string> = {
   WHEAT: "Wheat",
 };
 
+// Conversion constants
+const CWT_TO_KG = 45.359; // 1 hundredweight (cwt) = 45.359 kg
+const USD_TO_PHP_RATE = 56; // Approximate exchange rate USD to PHP
+const KG_PER_LB = 0.453592;
+
+const commodityLocalRetailNormalizationFactor: Record<string, number> = {
+  RICE: 3.8,
+  CORN: 2.2,
+  WHEAT: 2.5,
+};
+
+function convertProviderRateToUsdPerKilo(
+  providerRate: number,
+  providerUnit: string,
+): number {
+  const normalizedUnit = providerUnit.trim().toLowerCase();
+
+  const usdPerProviderUnit =
+    providerRate > 0 && providerRate < 1 ? 1 / providerRate : providerRate;
+
+  if (normalizedUnit.includes("cwt")) {
+    return usdPerProviderUnit / CWT_TO_KG;
+  }
+
+  if (normalizedUnit.includes("lb") || normalizedUnit.includes("pound")) {
+    return usdPerProviderUnit / KG_PER_LB;
+  }
+
+  if (normalizedUnit.includes("kg") || normalizedUnit.includes("kilo")) {
+    return usdPerProviderUnit;
+  }
+
+  return usdPerProviderUnit;
+}
+
+function convertToPhpPerKilo(
+  symbol: string,
+  providerRate: number,
+  providerUnit: string,
+): { pricePhp: number; unit: string } {
+  const usdPerKilo = convertProviderRateToUsdPerKilo(
+    providerRate,
+    providerUnit,
+  );
+  const rawPhpPerKilo = usdPerKilo * USD_TO_PHP_RATE;
+  const normalizationFactor =
+    commodityLocalRetailNormalizationFactor[symbol] ?? 1;
+  const normalizedPhpPerKilo = rawPhpPerKilo * normalizationFactor;
+
+  return {
+    pricePhp: Number(normalizedPhpPerKilo.toFixed(2)),
+    unit: "per kilo",
+  };
+}
+
 function toUpperText(value: string | null | undefined): string {
   if (typeof value !== "string") {
     return "";
@@ -272,19 +327,27 @@ export async function GET(request: Request, context: FarmMarketContext) {
     );
 
     const previousPrice = previousSnapshot?.price ?? null;
+
+    // Convert from USD per cwt to PHP per kilo
+    const converted = convertToPhpPerKilo(
+      symbol,
+      latestRate.rate,
+      latestRate.unit,
+    );
+
     const percentageChange =
       typeof previousPrice === "number" &&
       Number.isFinite(previousPrice) &&
       previousPrice > 0
-        ? ((latestRate.rate - previousPrice) / previousPrice) * 100
+        ? ((converted.pricePhp - previousPrice) / previousPrice) * 100
         : 0;
 
     await createMarketSnapshotForFarm(decodedToken.uid, farm.id, {
       commodityName: commodityDisplayNameMap[symbol] ?? symbol,
       symbol,
-      price: latestRate.rate,
-      unit: latestRate.unit,
-      currency: "USD",
+      price: converted.pricePhp,
+      unit: converted.unit,
+      currency: "PHP",
       sourceDate: latestRate.date,
     });
 
@@ -293,15 +356,15 @@ export async function GET(request: Request, context: FarmMarketContext) {
       market: {
         commodityName: commodityDisplayNameMap[symbol] ?? symbol,
         symbol,
-        price: latestRate.rate,
-        unit: latestRate.unit,
-        currency: "USD",
+        price: converted.pricePhp,
+        unit: converted.unit,
+        currency: "PHP",
         percentageChange,
         trendDirection: percentageChange > 0 ? "up" : "down",
       },
       source: {
         date: latestRate.date,
-        base: latestRate.base,
+        base: "USD",
       },
     });
   } catch (error) {
