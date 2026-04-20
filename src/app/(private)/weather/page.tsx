@@ -26,6 +26,7 @@ interface WeatherData {
     pressure: number;
   };
   forecast: Array<{
+    date?: string;
     day: string;
     high: number;
     low: number;
@@ -138,6 +139,74 @@ const mockWeatherData: WeatherData = {
     satelliteImage: undefined,
   },
 };
+
+type WeatherCacheRecord = {
+  storedAt: string;
+  data: WeatherData;
+  warnings: string[];
+};
+
+const WEATHER_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
+
+function toUtcDateKey(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
+function getWeatherCacheKey(farmId: string) {
+  return `piliSeed.weatherCache.${farmId}`;
+}
+
+function readWeatherCache(farmId: string): WeatherCacheRecord | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(getWeatherCacheKey(farmId));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as WeatherCacheRecord;
+    const storedAt = new Date(parsed.storedAt);
+
+    if (Number.isNaN(storedAt.getTime())) {
+      return null;
+    }
+
+    const todayKey = toUtcDateKey(new Date());
+    const storedKey = toUtcDateKey(storedAt);
+
+    if (todayKey !== storedKey) {
+      return null;
+    }
+
+    const ageMs = Date.now() - storedAt.getTime();
+
+    if (ageMs > WEATHER_CACHE_TTL_MS) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeWeatherCache(farmId: string, data: WeatherData, warnings: string[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const payload: WeatherCacheRecord = {
+    storedAt: new Date().toISOString(),
+    data,
+    warnings,
+  };
+
+  window.localStorage.setItem(getWeatherCacheKey(farmId), JSON.stringify(payload));
+}
 
 export default function WeatherAnalysis() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -271,6 +340,7 @@ export default function WeatherAnalysis() {
     });
 
     const forecast = timeline.map((entry) => ({
+      date: entry.date,
       day: entry.day,
       high: entry.high,
       low: entry.low,
@@ -309,6 +379,16 @@ export default function WeatherAnalysis() {
   const fetchWeatherData = async (mode: "initial" | "refresh" = "initial") => {
     if (!currentUser || !selectedFarmId) {
       return;
+    }
+
+    if (mode === "initial") {
+      const cached = readWeatherCache(selectedFarmId);
+
+      if (cached) {
+        setData(cached.data);
+        setWarnings(cached.warnings);
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -386,13 +466,24 @@ export default function WeatherAnalysis() {
         },
       };
 
-      setWarnings(forecastData.warnings ?? []);
-      setData(mapForecastToUi(payload));
+      const nextWarnings = forecastData.warnings ?? [];
+      const mappedData = mapForecastToUi(payload);
+
+      setWarnings(nextWarnings);
+      setData(mappedData);
+      writeWeatherCache(selectedFarmId, mappedData, nextWarnings);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to load weather data right now.";
-      setStatusMessage(message);
-      setData(mockWeatherData);
+      const cached = readWeatherCache(selectedFarmId);
+
+      if (cached) {
+        setData(cached.data);
+        setWarnings(cached.warnings);
+      } else {
+        setStatusMessage(message);
+        setData(mockWeatherData);
+      }
     } finally {
       setIsLoading(false);
     }
