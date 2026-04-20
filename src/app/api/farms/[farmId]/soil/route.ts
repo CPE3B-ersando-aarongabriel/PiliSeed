@@ -93,7 +93,10 @@ export async function POST(request: Request, context: FarmSoilContext) {
     const soilProfile = await createSoilProfileForFarm(
       decodedToken.uid,
       farmIdResult.data.farmId,
-      validationResult.data,
+      {
+        ...validationResult.data,
+        soilSource: "manual",
+      },
     );
 
     if (!soilProfile) {

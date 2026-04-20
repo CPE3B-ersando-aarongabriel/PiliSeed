@@ -185,14 +185,15 @@ type FarmUpdateInput = {
 };
 
 type SoilProfileCreateInput = {
-  pH: number;
-  nitrogen: number;
-  phosphorus: number;
-  potassium: number;
+  pH?: number | null;
+  nitrogen?: number | null;
+  phosphorus?: number | null;
+  potassium?: number | null;
   moistureContent?: number | null;
   lightLevel?: number | null;
   temperatureC?: number | null;
   humidity?: number | null;
+  soilSource?: "manual" | "api" | "mixed";
 };
 
 type SoilAnalysisCreateInput = {
@@ -934,11 +935,16 @@ export async function createSoilProfileForFarm(
   await soilDocRef.set({
     uid,
     farmId,
-    ph: input.pH,
-    pH: input.pH,
-    nitrogen: input.nitrogen,
-    phosphorus: input.phosphorus,
-    potassium: input.potassium,
+    ph: input.pH ?? null,
+    pH: input.pH ?? null,
+    nitrogen: input.nitrogen ?? null,
+    phosphorus: input.phosphorus ?? null,
+    potassium: input.potassium ?? null,
+    moistureContent: input.moistureContent ?? null,
+    lightLevel: input.lightLevel ?? null,
+    temperatureC: input.temperatureC ?? null,
+    humidity: input.humidity ?? null,
+    soilSource: input.soilSource ?? "unknown",
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });

@@ -33,6 +33,21 @@ type DeviceNotice = {
 	collectedAt?: string | null;
 };
 
+type SoilProfileData = {
+	soilProfile?: {
+		moistureContent?: number | null;
+		pH?: number | null;
+		lightLevel?: number | null;
+		temperatureC?: number | null;
+		humidity?: number | null;
+		nitrogen?: number | null;
+		phosphorus?: number | null;
+		potassium?: number | null;
+		createdAt?: string | null;
+		updatedAt?: string | null;
+	};
+};
+
 const initialValues: SoilInputValues = {
 	nitrogen: "",
 	phosphorus: "",
@@ -78,6 +93,34 @@ function formatSyncTimestamp(value: string) {
 	}
 
 	return `${date.toISOString().replace("T", " ").slice(0, 19)} UTC`;
+}
+
+function applySoilProfileToForm(
+	soilProfile: NonNullable<SoilProfileData["soilProfile"]>,
+) {
+	return {
+		moistureContent:
+			typeof soilProfile.moistureContent === "number"
+				? String(soilProfile.moistureContent)
+				: "",
+		pH: typeof soilProfile.pH === "number" ? String(soilProfile.pH) : "",
+		lightLevel:
+			typeof soilProfile.lightLevel === "number"
+				? String(soilProfile.lightLevel)
+				: "",
+		temperatureC:
+			typeof soilProfile.temperatureC === "number"
+				? String(soilProfile.temperatureC)
+				: "",
+		humidity:
+			typeof soilProfile.humidity === "number"
+				? String(soilProfile.humidity)
+				: "",
+	};
+}
+
+async function waitFor(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function getResponseMessage(body: unknown, fallbackMessage: string) {
@@ -181,16 +224,39 @@ export default function SoilInputForm({
 		setDeviceNotice({ kind: "idle", message: "" });
 
 		try {
-			const response = await fetchJsonWithAuth(
+			const latestBaselineResponse = await fetchJsonWithAuth(
 				currentUser,
-				`/api/farms/${farm.id}/soil/device`,
+				`/api/farms/${farm.id}/soil/latest`,
 			);
-			const responseBody: unknown = await response.json().catch(() => null);
+			const latestBaselineBody: unknown = await latestBaselineResponse.json().catch(
+				() => null,
+			);
+			const latestBaselineData =
+				typeof latestBaselineBody === "object" &&
+				latestBaselineBody !== null &&
+				"data" in latestBaselineBody
+					? ((latestBaselineBody as {
+						data?: SoilProfileData;
+					}).data ?? null)
+					: null;
+			const baselineTimestamp =
+				latestBaselineData?.soilProfile?.updatedAt ??
+				latestBaselineData?.soilProfile?.createdAt ??
+				"";
 
-			if (!response.ok) {
-				const errorCode = getResponseCode(responseBody);
+			const activationResponse = await fetchJsonWithAuth(
+				currentUser,
+				`/api/farms/${farm.id}/soil/device/activate`,
+				{
+					method: "POST",
+				},
+			);
+			const activationBody: unknown = await activationResponse.json().catch(() => null);
 
-				if (errorCode === "DEVICE_NOT_CONNECTED" || response.status === 404) {
+			if (!activationResponse.ok) {
+				const errorCode = getResponseCode(activationBody);
+
+				if (errorCode === "DEVICE_NOT_CONNECTED") {
 					setDeviceNotice({
 						kind: "info",
 						message:
@@ -201,67 +267,73 @@ export default function SoilInputForm({
 
 				throw new Error(
 					getResponseMessage(
-						responseBody,
-						"Unable to fetch device readings right now.",
+						activationBody,
+						"Unable to activate the device right now.",
 					),
 				);
 			}
 
-			const data =
-				typeof responseBody === "object" &&
-				responseBody !== null &&
-				"data" in responseBody
-					? ((responseBody as {
-						data?: {
-							readings?: {
-								moistureContent?: number;
-								pH?: number;
-								lightLevel?: number;
-								temperatureC?: number;
-								humidity?: number;
-							};
-							collectedAt?: string | null;
-						};
-					}).data ?? null)
-					: null;
+			setDeviceNotice({
+				kind: "info",
+				message:
+					"Device activation queued. Waiting for the ESP32 to send sensor readings...",
+			});
 
-			if (!data?.readings) {
-				throw new Error("Device response did not include readings.");
+			for (let attempt = 0; attempt < 12; attempt += 1) {
+				await waitFor(3000);
+
+				const latestResponse = await fetchJsonWithAuth(
+					currentUser,
+					`/api/farms/${farm.id}/soil/latest`,
+				);
+				const latestBody: unknown = await latestResponse.json().catch(() => null);
+
+				if (!latestResponse.ok) {
+					continue;
+				}
+
+				const latestData =
+					typeof latestBody === "object" &&
+					latestBody !== null &&
+					"data" in latestBody
+						? ((latestBody as {
+							data?: SoilProfileData;
+						}).data ?? null)
+						: null;
+				const soilProfile = latestData?.soilProfile;
+
+				if (!soilProfile) {
+					continue;
+				}
+
+				const currentTimestamp = soilProfile.updatedAt ?? soilProfile.createdAt ?? "";
+
+				if (!currentTimestamp || currentTimestamp === baselineTimestamp) {
+					continue;
+				}
+
+				setValues((previousValues) => ({
+					...previousValues,
+					...applySoilProfileToForm(soilProfile),
+				}));
+				setDeviceNotice({
+					kind: "success",
+					message: "Device readings loaded for the selected farm.",
+					collectedAt: currentTimestamp,
+				});
+				return;
 			}
 
-			const readings = data.readings;
-
-			setValues((previousValues) => ({
-				...previousValues,
-				moistureContent:
-					typeof readings.moistureContent === "number"
-						? String(readings.moistureContent)
-						: "",
-				pH: typeof readings.pH === "number" ? String(readings.pH) : "",
-				lightLevel:
-					typeof readings.lightLevel === "number"
-						? String(readings.lightLevel)
-						: "",
-				temperatureC:
-					typeof readings.temperatureC === "number"
-						? String(readings.temperatureC)
-						: "",
-				humidity:
-					typeof readings.humidity === "number"
-						? String(readings.humidity)
-						: "",
-			}));
-
 			setDeviceNotice({
-				kind: "success",
-				message: "Device readings loaded for the selected farm.",
-				collectedAt: data.collectedAt ?? null,
+				kind: "info",
+				message:
+					"Device activation was queued, but no new reading arrived before the timeout expired.",
 			});
 		} catch (error) {
 			const message =
 				error instanceof Error
 					? error.message
-					: "Unable to fetch device readings right now.";
+					: "Unable to activate the device right now.";
 
 			setDeviceNotice({
 				kind: "error",
