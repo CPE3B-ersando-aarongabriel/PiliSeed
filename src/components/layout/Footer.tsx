@@ -25,7 +25,12 @@ export const Footer = ({ absolute = false }: FooterProps): JSX.Element => {
       <div className="grid mt-[81px] pb-20 h-auto max-w-full w-full px-4 sm:px-8 mx-auto grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 lg:gap-20 max-w-7xl">
         <div className="w-full h-fit flex flex-col items-start gap-[23.1px]">
           <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-            <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-2xl tracking-[0] leading-8">
+            <div className="relative flex items-center gap-2 self-stretch mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-2xl tracking-[0] leading-8">
+              <img
+                src="/Pili-logo-main.png"
+                alt="PiliSeed logo"
+                className="w-9 h-9 object-contain"
+              />
               PiliSeed
             </div>
           </div>

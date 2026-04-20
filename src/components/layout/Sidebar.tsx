@@ -90,7 +90,14 @@ export default function Sidebar() {
       >
         <div className="px-6 pt-8 pb-6 border-gray-100 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-[#00450D]">PiliSeed</h1>
+            <div className="flex items-center gap-2">
+              <img
+                src="/Pili-logo-main.png"
+                alt="PiliSeed logo"
+                className="w-8 h-8 object-contain"
+              />
+              <h1 className="text-2xl font-bold text-[#00450D]">PiliSeed</h1>
+            </div>
             <p className="text-[#171D14]/60 text-sm font-medium mt-0.5">
               Digital Greenhouse
             </p>
