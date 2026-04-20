@@ -64,7 +64,9 @@ function ensureFirebaseClientConfig() {
 
 function ensureBrowserContext() {
   if (typeof window === "undefined") {
-    throw new Error("Firebase client SDK can only be used in a browser context.");
+    throw new Error(
+      "Firebase client SDK can only be used in a browser context.",
+    );
   }
 }
 

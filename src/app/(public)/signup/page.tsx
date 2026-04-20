@@ -138,8 +138,9 @@ export default function SignupPage() {
       <p>Create an account in Firebase Auth and sync it to backend signup.</p>
       {!hasFirebaseConfig ? (
         <p style={{ color: "#b00020" }}>
-          Firebase client env configuration is incomplete. Add the missing values
-          in .env.local and restart dev server: {missingFirebaseEnvVars.join(", ")}
+          Firebase client env configuration is incomplete. Add the missing
+          values in .env.local and restart dev server:{" "}
+          {missingFirebaseEnvVars.join(", ")}
         </p>
       ) : null}
 
