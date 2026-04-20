@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { Cloud, CloudRain, CloudSun, Sun } from "lucide-react";
 
 interface ForecastData {
   day: string;
@@ -14,13 +14,21 @@ interface ForecastCardProps {
 }
 
 const getWeatherIcon = (condition: string) => {
-  const icons: Record<string, string> = {
-    "sunny": "/weather/sunny.svg",
-    "cloudy": "/weather/cloudy.svg",
-    "rainy": "/weather/rainy.svg",
-    "partly-cloudy": "/weather/partly.svg",
-  };
-  return icons[condition];
+  const normalizedCondition = condition.toLowerCase();
+
+  if (normalizedCondition.includes("rain")) {
+    return CloudRain;
+  }
+
+  if (normalizedCondition.includes("partly")) {
+    return CloudSun;
+  }
+
+  if (normalizedCondition.includes("cloud") || normalizedCondition.includes("overcast")) {
+    return Cloud;
+  }
+
+  return Sun;
 };
 
 export default function ForecastCard({ data }: ForecastCardProps) {
@@ -30,6 +38,7 @@ export default function ForecastCard({ data }: ForecastCardProps) {
       <div className="grid grid-cols-7 gap-4">
         {data.map((day, idx) => {
           const isHighlighted = idx === 2;
+          const WeatherIcon = getWeatherIcon(day.condition);
           return (
             <div
               key={day.day}
@@ -42,11 +51,7 @@ export default function ForecastCard({ data }: ForecastCardProps) {
               <span className={`text-[10px] font-semibold mb-4 ${isHighlighted ? 'text-[#00450D]' : 'text-[#41493e]'}`}>
                 {day.day}
               </span>
-              <img
-                src={getWeatherIcon(day.condition)}
-                alt={day.condition}
-                className="w-8 h-8 mb-4"
-              />
+              <WeatherIcon className="w-8 h-8 mb-4 text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
               <span className={`text-2xl font-bold mb-1 ${isHighlighted ? 'text-[#00450D]' : 'text-[#171d14]'}`}>
                 {day.high}°
               </span>

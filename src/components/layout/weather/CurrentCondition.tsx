@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { Cloud, CloudRain, CloudSun, Sun } from "lucide-react";
 
 interface CurrentConditionCardProps {
   condition: string;
@@ -11,19 +11,21 @@ interface CurrentConditionCardProps {
 }
 
 const getWeatherIcon = (condition: string) => {
-  const icons: Record<string, string> = {
-    "sunny": "/weather/sunny.svg",
-    "cloudy": "/weather/cloudy.svg",
-    "rainy": "/weather/rainy.svg",
-    "partly-cloudy": "/weather/partly.svg",
-    "Partly Cloudy": "/weather/partly.svg",
-    "Cloudy": "/weather/cloudy.svg",
-    "Sunny": "/weather/sunny.svg",
-    "Rainy": "/weather/rainy.svg",
-    "Clear": "/weather/sunny.svg",
-    "Overcast": "/weather/cloudy.svg",
-  };
-  return icons[condition] || "/weather/default.svg";
+  const normalizedCondition = condition.toLowerCase();
+
+  if (normalizedCondition.includes("rain")) {
+    return CloudRain;
+  }
+
+  if (normalizedCondition.includes("partly")) {
+    return CloudSun;
+  }
+
+  if (normalizedCondition.includes("cloud") || normalizedCondition.includes("overcast")) {
+    return Cloud;
+  }
+
+  return Sun;
 };
 
 export default function CurrentConditionCard({
@@ -33,6 +35,8 @@ export default function CurrentConditionCard({
   humidity,
   uvIndex,
 }: CurrentConditionCardProps) {
+  const WeatherIcon = getWeatherIcon(condition);
+
   return (
     <div className="col-span-4">
       <div className="p-8 bg-white rounded-[48px] shadow-sm">
@@ -41,11 +45,7 @@ export default function CurrentConditionCard({
             <span className="text-sm font-medium text-[#41493E]">Current Condition</span>
             <h3 className="text-lg font-semibold mt-1">{condition}</h3>
           </div>
-          <img
-            src={getWeatherIcon(condition)}
-            alt={condition}
-            className="w-12 h-12"
-          />
+          <WeatherIcon className="w-12 h-12 text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
         </div>
 
         <div className="flex items-baseline gap-2 mb-8">

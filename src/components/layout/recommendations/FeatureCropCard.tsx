@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Calendar, Droplets, Thermometer } from "lucide-react";
 
 interface FeaturedCropCardProps {
   cropName: string;
@@ -46,13 +47,7 @@ export default function FeaturedCropCard({
         <div className="absolute bottom-5 left-5 text-white">
           <h2 className="text-3xl font-bold mb-2">{cropName}</h2>
           <div className="flex items-center gap-2">
-            <Image
-              src="/recommendations/calendar.svg"
-              alt="Calendar"
-              width={16}
-              height={16}
-              className="opacity-90"
-            />
+            <Calendar className="w-4 h-4 opacity-90" strokeWidth={1.75} aria-hidden="true" />
             <p className="text-sm opacity-90">Optimal Planting: Next 14 Days</p>
           </div>
         </div>
@@ -74,13 +69,7 @@ export default function FeaturedCropCard({
           <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-4 h-4 flex items-center justify-center">
-                <Image
-                  src="/recommendations/moisture.svg"
-                  alt="Moisture"
-                  width={16}
-                  height={16}
-                  className="w-full h-full object-contain"
-                />
+                <Droplets className="w-4 h-4 text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
               </div>
               <p className="text-xs text-[#41493E] font-semibold">
                 MOISTURE NEED
@@ -94,13 +83,7 @@ export default function FeaturedCropCard({
           <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-4 h-4 flex items-center justify-center">
-                <Image
-                  src="/recommendations/temp.svg"
-                  alt="Temperature"
-                  width={16}
-                  height={16}
-                  className="w-full h-full object-contain"
-                />
+                <Thermometer className="w-4 h-4 text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
               </div>
               <p className="text-xs text-[#41493E] font-semibold">TEMP RANGE</p>
             </div>

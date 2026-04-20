@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { Droplets, FlaskConical, ScanSearch } from "lucide-react";
 
 type FarmOption = {
 	id: string;
@@ -433,11 +434,7 @@ export default function SoilInputForm({
 						disabled={isSubmitting || !currentUser || !hasFarmLocation}
 						className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#00450D] py-5 shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
 					>
-						<img
-							src="/soil/analyze.svg"
-							alt="Analyze"
-							className="h-4.5 w-4.5"
-						/>
+						<ScanSearch className="h-4.5 w-4.5 text-white" strokeWidth={2} aria-hidden="true" />
 						<span className="text-base font-semibold text-white">
 							{isSubmitting ? "Analyzing Soil..." : "Get Crop Reccomendation"}
 						</span>
@@ -459,11 +456,7 @@ export default function SoilInputForm({
 				<div className="border-t border-[#C0C9BB1A] pt-6">
 					<div className="flex items-center justify-between gap-4">
 						<div className="flex items-center gap-3">
-							<img
-								src="/soil/chemical-comp.svg"
-								alt="NPK"
-								className="h-[13.5px] w-[13.54px]"
-							/>
+							<FlaskConical className="h-[13.5px] w-[13.54px] text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
 							<span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
 								CHEMICAL COMPOSITION (NPK)
 							</span>
@@ -492,11 +485,7 @@ export default function SoilInputForm({
 				<div className="border-t border-[#C0C9BB1A] pt-6">
 					<div className="flex items-center justify-between gap-4">
 						<div className="flex items-center gap-3">
-							<img
-								src="/soil/moisture.svg"
-								alt="Sensor"
-								className="h-[13.5px] w-[13.54px]"
-							/>
+							<Droplets className="h-[13.5px] w-[13.54px] text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
 							<span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
 								ENVIRONMENTAL READINGS
 							</span>
@@ -565,11 +554,7 @@ export default function SoilInputForm({
 						disabled={isSubmitting || !currentUser || !hasFarmLocation}
 						className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#00450D] py-5 shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
 					>
-						<img
-							src="/soil/analyze.svg"
-							alt="Analyze"
-							className="h-4.5 w-4.5"
-						/>
+						<ScanSearch className="h-4.5 w-4.5 text-white" strokeWidth={2} aria-hidden="true" />
 						<span className="text-base font-semibold text-white">
 							{isSubmitting ? "Analyzing Soil..." : "Get Crop Reccomendation"}
 						</span>

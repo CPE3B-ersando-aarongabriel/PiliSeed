@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useSpring, useTransform, type Variants } from "framer-motion";
 import { JSX, useRef } from "react";
+import { ArrowRight, Bot, Droplets, LocateFixed, Mountain, Sprout, TrendingUp } from "lucide-react";
 
 const sectionReveal: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -21,18 +22,18 @@ const soilFields = [
 
 const recommendationCards = [
   {
-    icon: "/how-it-works/HIW3.svg",
+    icon: Sprout,
     iconBg: "bg-[#00450d]",
-    iconClass: "relative w-[17px] h-[16.99px]",
+    iconClass: "relative w-[17px] h-[16.99px] text-[#a3f69c]",
     title: "Crop Selection",
     titleWidth: "w-[113.77px]",
     desc: "Optimal yield predictions for 50+ crops.",
     descWidth: "w-[261.86px]",
   },
   {
-    icon: "/how-it-works/HIW4.svg",
+    icon: Droplets,
     iconBg: "bg-[#003e63]",
-    iconClass: "relative w-4 h-5",
+    iconClass: "relative w-4 h-5 text-[#b5ddff]",
     title: "Irrigation Cycles",
     titleWidth: "w-[126.91px]",
     desc: "Precision scheduling based on evapotranspiration.",
@@ -42,8 +43,8 @@ const recommendationCards = [
 
 const forecastCards = [
   {
-    icon: "/how-it-works/HIW.svg",
-    iconClass: "relative w-10 h-6",
+    icon: TrendingUp,
+    iconClass: "relative w-10 h-6 text-[#00450d]",
     iconBg: "bg-[#a3f69c4c]",
     title: "Growth Forecast",
     titleWidth: "w-[127.62px]",
@@ -52,8 +53,8 @@ const forecastCards = [
     colClass: "col-[1_/_2] w-[336.66px]",
   },
   {
-    icon: "/how-it-works/HIW2.svg",
-    iconClass: "relative w-[38.02px] h-10",
+    icon: Bot,
+    iconClass: "relative w-[38.02px] h-10 text-[#7a5649]",
     iconBg: "bg-[#fdcdbc4c]",
     title: "AI Recommendation",
     titleWidth: "w-[155.47px]",
@@ -169,10 +170,7 @@ export const HIW_Body = (): JSX.Element => {
             <div className="flex flex-col items-start gap-4 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto]">
               <div className="flex items-start gap-3 relative self-stretch w-full flex-[0_0_auto]">
                 <div className="inline-flex flex-col items-start pt-1 pb-0 px-0 relative flex-[0_0_auto]">
-                  <img className="relative w-4 h-5" 
-                  alt="Icon" 
-                  src="/how-it-works/HIW6.svg" 
-                  />
+                  <LocateFixed className="relative w-4 h-5 text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <p className="w-[343px] h-6 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d14] text-base tracking-[0] leading-6 relative flex items-center whitespace-nowrap">
                   Precision geolocation up to 1 meter accuracy.
@@ -180,11 +178,7 @@ export const HIW_Body = (): JSX.Element => {
               </div>
               <div className="flex items-start gap-3 relative self-stretch w-full flex-[0_0_auto]">
                 <div className="inline-flex flex-col items-start pt-1 pb-0 px-0 relative flex-[0_0_auto]">
-                  <img
-                    className="relative w-[18px] h-[19.05px]"
-                    alt="Icon"
-                    src="/how-it-works/HIW7.svg"
-                  />
+                  <Mountain className="relative w-[18px] h-[19.05px] text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <div className="w-[303.25px] h-6 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d14] text-base tracking-[0] leading-6 relative flex items-center whitespace-nowrap">
                   Automatic regional topography analysis.
@@ -251,11 +245,7 @@ export const HIW_Body = (): JSX.Element => {
                   Analyze Soil Health
                 </div>
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <img
-                    className="relative w-[18px] h-[18px]"
-                    alt="Icon"
-                    src="/how-it-works/HIW5.svg"
-                  />
+                  <ArrowRight className="relative w-[18px] h-[18px] text-white" strokeWidth={1.75} aria-hidden="true" />
                 </div>
               </button>
             </div>
@@ -340,6 +330,9 @@ export const HIW_Body = (): JSX.Element => {
             </div>
             <div className="flex flex-col items-start gap-4 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto]">
               {recommendationCards.map((card, index) => (
+                (() => {
+                  const CardIcon = card.icon;
+                  return (
                 <motion.div
                   key={card.title}
                   className="flex items-center gap-4 p-4 relative self-stretch w-full flex-[0_0_auto] bg-[#dee5d6] rounded-[32px]"
@@ -352,11 +345,7 @@ export const HIW_Body = (): JSX.Element => {
                     className={`${card.iconBg} flex w-12 h-12 items-center justify-center relative rounded-full shadow-[0px_1px_2px_#0000000d]`}
                   >
                     <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                      <img
-                        className={card.iconClass}
-                        alt="Icon"
-                        src={card.icon}
-                      />
+                      <CardIcon className={card.iconClass} strokeWidth={1.75} aria-hidden="true" />
                     </div>
                   </div>
                   <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
@@ -376,11 +365,16 @@ export const HIW_Body = (): JSX.Element => {
                     </div>
                   </div>
                 </motion.div>
+                  );
+                })()
               ))}
             </div>
           </div>
           <div className="grid grid-cols-2 grid-rows-[238px] h-fit gap-4 relative row-[1_/_2] col-[6_/_13] self-center w-full">
             {forecastCards.map((card) => (
+              (() => {
+                const ForecastIcon = card.icon;
+                return (
               <div
                 key={card.title}
                 className={`${card.colClass} relative row-[1_/_2] h-[238px] bg-white rounded-[48px] border border-solid border-[#00450d0d]`}
@@ -390,11 +384,7 @@ export const HIW_Body = (): JSX.Element => {
                   className={`flex w-[calc(100%_-_50px)] h-32 items-center justify-center absolute top-[25px] left-[25px] ${card.iconBg} rounded-[32px]`}
                 >
                   <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                    <img
-                      className={card.iconClass}
-                      alt="Icon"
-                      src={card.icon}
-                    />
+                    <ForecastIcon className={card.iconClass} strokeWidth={1.75} aria-hidden="true" />
                   </div>
                 </div>
                 <div className="w-[calc(100%_-_50px)] absolute top-[169px] left-[25px] flex flex-col items-start">
@@ -412,6 +402,8 @@ export const HIW_Body = (): JSX.Element => {
                   </div>
                 </div>
               </div>
+                );
+              })()
             ))}
           </div>
         </motion.div>

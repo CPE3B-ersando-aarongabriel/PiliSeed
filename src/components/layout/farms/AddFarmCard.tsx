@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Plus } from "lucide-react";
 
 interface AddFarmCardProps {
   onAdd: (farmName: string, location: string) => void;
@@ -57,11 +58,7 @@ export default function AddFarmCard({
       >
         <div className="inline-flex pt-0 pb-6 px-0 relative flex-[0_0_auto] flex-col items-start">
           <div className="inline-flex flex-col items-center p-6 relative flex-[0_0_auto] bg-[#FFFFFF1a] rounded-full">
-            <img
-              className="relative w-[21px] h-[21px]"
-              alt="add farm icon"
-              src="/farms/add-farm.svg"
-            />
+                <Plus className="relative w-[21px] h-[21px] text-[#00450D]" strokeWidth={2} aria-hidden="true" />
           </div>
         </div>
 

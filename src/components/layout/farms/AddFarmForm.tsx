@@ -1,4 +1,5 @@
 "use client";
+import { MapPin } from "lucide-react";
 
 interface AddFarmFormProps {
   farmName: string;
@@ -56,12 +57,8 @@ export default function AddFarmForm({
               />
             </div>
 
-            <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] right-4">
-              <img
-                className="relative w-[18px] h-[18px]"
-                alt="Location search icon"
-                src="/farms/coordinates.svg"
-              />
+              <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] right-4">
+                <MapPin className="relative w-[18px] h-[18px] text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
             </div>
           </div>
         </div>

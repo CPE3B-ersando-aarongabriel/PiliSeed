@@ -2,6 +2,7 @@
 
 import { motion, type Variants } from "framer-motion";
 import { JSX } from "react";
+import { Leaf, Sprout } from "lucide-react";
 
 const sectionReveal: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -14,18 +15,15 @@ const sectionReveal: Variants = {
 
 const missionPoints = [
   {
-    icon: "/about/About.svg",
-    alt: "Icon",
+    icon: Leaf,
     text: "Reducing water waste by 30% through precision sensing.",
   },
   {
-    icon: "/about/About.svg",
-    alt: "Icon",
+    icon: Leaf,
     text: "Predicting soil nutrient depletion before it happens.",
   },
   {
-    icon: "/about/About.svg",
-    alt: "Icon",
+    icon: Leaf,
     text: "Creating climate-resilient farming communities.",
   },
 ];
@@ -33,7 +31,7 @@ const missionPoints = [
 const teamMembers = [
   {
     name: "Francine Nicole Navarro",
-    bgImage: null,
+    bgImage: "/about/About_Francine.png",
     leftOffset: 0,
     gap: "gap-[15.5px]",
     nameWidth: "w-[206px]",
@@ -119,11 +117,7 @@ export const About_Body = (): JSX.Element => {
               src="/about/About.png"
             />
             <div className="flex flex-col items-start gap-[15.25px] relative self-stretch w-full flex-[0_0_auto]">
-              <img
-                className="relative w-[25.49px] h-[25.49px]"
-                alt="Icon"
-                src="/about/About_2.svg"
-              />
+              <Sprout className="relative w-[25.49px] h-[25.49px] text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
               <div className="flex flex-col items-start pt-0 pb-[0.75px] px-0 relative self-stretch w-full flex-[0_0_auto]">
                 <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#00450d] text-lg tracking-[0] leading-[22.5px]">
                   Empowering 10,000+ farmers with
@@ -171,23 +165,22 @@ export const About_Body = (): JSX.Element => {
                 </p>
               </div>
               <div className="flex flex-col items-start gap-4 relative self-stretch w-full flex-[0_0_auto]">
-                {missionPoints.map((point, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 relative self-stretch w-full flex-[0_0_auto]"
-                  >
-                    <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                      <img
-                        className="relative w-5 h-5"
-                        alt={point.alt}
-                        src={point.icon}
-                      />
+                {missionPoints.map((point, index) => {
+                  const PointIcon = point.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 relative self-stretch w-full flex-[0_0_auto]"
+                    >
+                      <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
+                        <PointIcon className="relative w-5 h-5 text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
+                      </div>
+                      <p className="mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-[#00450d] text-base tracking-[0] leading-6 relative flex items-center">
+                        {point.text}
+                      </p>
                     </div>
-                    <p className="mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-[#00450d] text-base tracking-[0] leading-6 relative flex items-center">
-                      {point.text}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             <div className="relative self-stretch w-full h-px bg-[#c0c9bb4c]" />

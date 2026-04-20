@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -77,7 +78,7 @@ export default function TemperatureChart({ data }: TemperatureChartProps) {
         </div>
 
         <div className="flex items-center gap-2 text-sm text-[#41493E] mt-2">
-          <img src="/weather/info.svg" alt="info" className="w-4 h-4" />
+          <Info className="w-4 h-4 text-[#41493E]" strokeWidth={1.75} aria-hidden="true" />
           <p>Average temperature is 2.4°C higher than the seasonal baseline.</p>
         </div>
       </div>

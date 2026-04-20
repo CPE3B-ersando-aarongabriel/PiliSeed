@@ -10,6 +10,7 @@ import FeaturedCropCard from "@/components/layout/recommendations/FeatureCropCar
 import CropRecommendationCard from "@/components/layout/recommendations/CropRecommendationCard";
 import DiversificationCard from "@/components/layout/recommendations/Diversification";
 import { getClientAuth } from "@/lib/firebaseClient";
+import { ChevronDown } from "lucide-react";
 
 type FarmOption = {
 	id: string;
@@ -270,11 +271,7 @@ export default function CropRecommendations() {
 									<span className="font-semibold text-[#00450D] text-sm truncate max-w-37.5 text-left">
 										{selectedFarm?.name ?? (isLoading ? "Loading farms..." : "Select a farm")}
 									</span>
-									<img
-										src="/soil/dropdown.svg"
-										alt="Dropdown"
-										className="w-3 h-2 object-contain"
-									/>
+									<ChevronDown className="w-4 h-4 text-[#00450D]" strokeWidth={2} aria-hidden="true" />
 								</button>
 
 								{isFarmDropdownOpen && farms.length > 0 && (
@@ -320,7 +317,7 @@ export default function CropRecommendations() {
 									className="w-42.5 h-10 bg-white rounded-full shadow-sm flex items-center justify-between px-5 border border-gray-200"
 								>
 									<span className="font-semibold text-[#00450D] text-sm">{sortBy}</span>
-									<img src="/soil/dropdown.svg" alt="Dropdown" className="w-3 h-2" />
+									<ChevronDown className="w-4 h-4 text-[#00450D]" strokeWidth={2} aria-hidden="true" />
 								</button>
 								{isSortDropdownOpen && (
 									<>

@@ -1,24 +1,25 @@
 "use client";
 import { JSX } from "react";
+import { FlaskConical, Lightbulb, MapPinned } from "lucide-react";
 
 const steps = [
   {
     number: "1",
-    icon: "/landing/Hiw_1.svg",
+    icon: MapPinned,
     title: "Enter Location",
     descLine1: "Define your plot boundaries using our high-",
     descLine2: "resolution satellite mapping tool.",
   },
   {
     number: "2",
-    icon: "/landing/Hiw_2.svg",
+    icon: FlaskConical,
     title: "Log Soil Data",
     descLine1: "Input your latest laboratory results or sync with",
     descLine2: "your existing field sensors.",
   },
   {
     number: "3",
-    icon: "/landing/Hiw_3.svg",
+    icon: Lightbulb,
     title: "Get Recommendations",
     descLine1: "Receive an actionable harvest roadmap within",
     descLine2: "seconds of data processing.",
@@ -53,7 +54,9 @@ export const Howitworks_summary = (): JSX.Element => {
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.2)] to-transparent" />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
-            {steps.map((step, index) => (
+            {steps.map((step, index) => {
+              const StepIcon = step.icon;
+              return (
               <div
                 key={index}
                 className="flex flex-col items-center text-center pt-12"
@@ -61,11 +64,7 @@ export const Howitworks_summary = (): JSX.Element => {
                 {/* Icon Circle with Badge */}
                 <div className="relative mb-8">
                   <div className="flex w-20 h-20 items-center justify-center rounded-full bg-[#ffffff1a] border border-[#ffffff33] backdrop-blur-md">
-                    <img
-                      className="w-6 h-6"
-                      alt={step.title}
-                      src={step.icon}
-                    />
+                    <StepIcon className="w-6 h-6 text-[#a3f69c]" aria-hidden="true" />
                   </div>
                   {/* Number Badge */}
                   <div className="flex w-8 h-8 items-center justify-center absolute -top-2 -left-2 bg-[#a3f69c] rounded-full">
@@ -87,7 +86,8 @@ export const Howitworks_summary = (): JSX.Element => {
                   {step.descLine2}
                 </p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

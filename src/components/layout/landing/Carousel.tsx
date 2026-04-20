@@ -1,24 +1,25 @@
 "use client";
 import { JSX, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const slides = [
   {
     id: 1,
-    image: "/landing/carousel.svg",
-    alt: "Drone flying over a precision mapped vineyard",
-    title: "Tech in the Field",
+    image: "/landing/Carousel_3.png",
+    alt: "Farmer reviewing live soil health insights on a digital dashboard",
+    title: "See Your Soil Clearly",
   },
   {
     id: 2,
-    image: "/landing/carousel.svg",
-    alt: "Drone flying over a precision mapped vineyard",
-    title: "Tech in the Field",
+    image: "/landing/Carousel.png",
+    alt: "Weather risk alerts shown over a farm map before a storm",
+    title: "Anticipate Weather Shifts",
   },
   {
     id: 3,
-    image: "/landing/carousel.svg" ,
-    alt: "Drone flying over a precision mapped vineyard",
-    title: "Tech in the Field",
+    image: "/landing/Carousel_2.png",
+    alt: "Farmer applying AI crop recommendations to improve yield and reduce waste",
+    title: "Plant With Precision",
   },
 ];
 
@@ -56,47 +57,19 @@ export const Carousel = (): JSX.Element => {
             aria-label="Previous slide"
             className="w-[27px] h-[27px] rounded-full border border-[#41493e] flex items-center justify-center bg-white hover:bg-[#f0f4ed] transition-colors"
           >
-            <svg
-              width="8"
-              height="12"
-              viewBox="0 0 8 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6.5 1L1.5 6L6.5 11"
-                stroke="#41493e"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronLeft className="w-3 h-3 text-[#41493e]" strokeWidth={2} />
           </button>
           <button
             onClick={handleNext}
             aria-label="Next slide"
             className="w-[27px] h-[27px] rounded-full border border-[#41493e] flex items-center justify-center bg-white hover:bg-[#f0f4ed] transition-colors"
           >
-            <svg
-              width="8"
-              height="12"
-              viewBox="0 0 8 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1.5 1L6.5 6L1.5 11"
-                stroke="#41493e"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ChevronRight className="w-3 h-3 text-[#41493e]" strokeWidth={2} />
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col w-full items-start relative flex-[0_0_auto] rounded-[32px] overflow-hidden">
+      <div className="flex flex-col w-full max-w-[1200px] mx-auto items-start relative flex-[0_0_auto] rounded-[32px] overflow-hidden">
         <div
           className="flex items-start relative flex-[0_0_auto] transition-transform duration-500 ease-in-out"
           style={{
@@ -109,14 +82,14 @@ export const Carousel = (): JSX.Element => {
               key={slide.id}
               className="inline-flex flex-col min-w-full items-start px-0 py-0 relative self-stretch flex-[0_0_auto]"
             >
-              <div className="inline-flex flex-col h-[400px] items-start justify-center relative rounded-[32px] overflow-hidden w-full">
+              <div className="inline-flex flex-col h-[360px] sm:h-[460px] lg:h-[560px] items-start justify-center relative rounded-[32px] overflow-hidden w-full">
                 <img
-                  className="relative flex-1 self-stretch w-full grow object-cover"
+                  className="relative w-full h-full object-cover object-center"
                   alt={slide.alt}
                   src={slide.image}
                 />
 
-                <div className="flex w-full h-full items-end p-12 absolute top-0 left-0 bg-[linear-gradient(0deg,rgba(0,0,0,0.6)_0%,rgba(0,0,0,0)_100%)]">
+                <div className="flex w-full h-full items-end p-12 absolute top-0 left-0 bg-[linear-gradient(0deg,rgba(0,0,0,0.38)_0%,rgba(0,0,0,0.05)_45%,rgba(0,0,0,0)_100%)]">
                   <div className="inline-flex flex-[0_0_auto] relative flex-col items-start">
                     <div className="relative flex items-center w-[234px] h-9 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-3xl tracking-[0] leading-9 whitespace-nowrap">
                       {slide.title}

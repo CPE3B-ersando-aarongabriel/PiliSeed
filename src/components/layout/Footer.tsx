@@ -3,6 +3,7 @@
 
 import { JSX } from "react";
 import Link from "next/link";
+import { Link2 } from "lucide-react";
 
 const platformLinks = [
   { label: "Home", href: "/" },
@@ -52,7 +53,7 @@ export const Footer = ({ absolute = false }: FooterProps): JSX.Element => {
               aria-label="Copy website link"
               title="Copy link to clipboard"
             >
-              <img src="/Footer_2.svg" alt="Copy link" className="w-5 h-5" />
+              <Link2 className="w-5 h-5 text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
             </button>
           </div>
         </div>

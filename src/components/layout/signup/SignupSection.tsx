@@ -14,6 +14,7 @@ import {
   getClientGoogleProvider,
   getMissingFirebaseClientEnvVars,
 } from "@/lib/firebaseClient";
+import { ArrowRight, Eye, EyeOff, Leaf, Lock, Mail, User as UserIcon } from "lucide-react";
 
 type EndpointResult = {
   status: number;
@@ -176,11 +177,7 @@ export const SignupSection = (): JSX.Element => {
           whileHover={{ scale: 1.05 }}
         >
           <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-            <img
-              className="relative w-[17px] h-[16.99px]"
-              alt="Icon"
-              src="/signup/Signup.svg"
-            />
+            <Leaf className="relative w-[17px] h-[16.99px] text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
           </div>
           <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
             <div className="w-[141.84px] h-6 [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-base tracking-[-0.40px] leading-6 relative flex items-center mt-[-1.00px] whitespace-nowrap">
@@ -251,7 +248,7 @@ export const SignupSection = (): JSX.Element => {
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
-                    <img className="relative w-4 h-4" alt="Icon" src= "/signup/Signup2.svg" />
+                    <UserIcon className="relative w-4 h-4 text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
                   </div>
                 </motion.div>
               </div>
@@ -282,7 +279,7 @@ export const SignupSection = (): JSX.Element => {
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
-                    <img className="relative w-5 h-4" alt="Icon" src="/signup/Signup3.svg" />
+                    <Mail className="relative w-5 h-4 text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
                   </div>
                 </motion.div>
               </div>
@@ -313,11 +310,7 @@ export const SignupSection = (): JSX.Element => {
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
-                    <img
-                      className="relative w-4 h-[21px]"
-                      alt="Icon"
-                        src="/signup/Signup4.svg"
-                    />
+                    <Lock className="relative w-4 h-[21px] text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
                   </div>
                   <button
                     type="button"
@@ -328,11 +321,11 @@ export const SignupSection = (): JSX.Element => {
                     }
                   >
                     <div className="inline-flex items-start justify-center relative flex-[0_0_auto]">
-                      <img
-                        className="relative w-[22px] h-[15px]"
-                        alt="Icon"
-                        src="/signup/Signup5.svg"
-                      />
+                      {showPassword ? (
+                        <EyeOff className="relative w-[22px] h-[15px] text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
+                      ) : (
+                        <Eye className="relative w-[22px] h-[15px] text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
+                      )}
                     </div>
                   </button>
                 </motion.div>
@@ -354,11 +347,7 @@ export const SignupSection = (): JSX.Element => {
                 </div>
               </div>
               <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                <img
-                  className="relative w-[12.75px] h-[12.74px]"
-                  alt="Icon"
-                  src="/signup/Signup6.svg"
-                />
+                <ArrowRight className="relative w-[12.75px] h-[12.74px] text-white" strokeWidth={1.75} aria-hidden="true" />
               </div>
             </motion.button>
             <motion.div 
@@ -395,7 +384,7 @@ export const SignupSection = (): JSX.Element => {
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
                   <img
                     className="relative w-5 h-5"
-                    alt="Icon"
+                    alt="Google"
                     src="/signup/Google.svg"
                   />
                 </div>

@@ -15,6 +15,7 @@ import {
   getClientGoogleProvider,
   getMissingFirebaseClientEnvVars,
 } from "@/lib/firebaseClient";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 
 type EndpointResult = {
   status: number;
@@ -255,10 +256,7 @@ export const LoginSection = (): JSX.Element => {
                   />
                 </div>
                 <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4 text-[#8b9587]">
-                  <svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path d="M2 2H18V14H2V2Z" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M2 3L10 9L18 3" stroke="currentColor" strokeWidth="1.5"/>
-                  </svg>
+                  <Mail className="w-5 h-4 text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
                 </div>
               </motion.div>
               </div>
@@ -289,10 +287,7 @@ export const LoginSection = (): JSX.Element => {
                   />
                 </div>
                 <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4 text-[#8b9587]">
-                  <svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect x="2" y="9" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M5 9V6.5C5 4.84 6.34 3.5 8 3.5C9.66 3.5 11 4.84 11 6.5V9" stroke="currentColor" strokeWidth="1.5"/>
-                  </svg>
+                  <Lock className="w-4 h-[21px] text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
                 </div>
                 <button
                   type="button"
@@ -301,10 +296,11 @@ export const LoginSection = (): JSX.Element => {
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   <div className="inline-flex items-start justify-center relative flex-[0_0_auto]">
-                    <svg width="22" height="15" viewBox="0 0 22 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-[#8b9587]" aria-hidden="true">
-                      <path d="M1 7.5C2.8 4.2 6.3 2 11 2C15.7 2 19.2 4.2 21 7.5C19.2 10.8 15.7 13 11 13C6.3 13 2.8 10.8 1 7.5Z" stroke="currentColor" strokeWidth="1.5"/>
-                      <circle cx="11" cy="7.5" r="2.5" fill="currentColor"/>
-                    </svg>
+                    {showPassword ? (
+                      <EyeOff className="w-[22px] h-[15px] text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
+                    ) : (
+                      <Eye className="w-[22px] h-[15px] text-[#8b9587]" strokeWidth={1.75} aria-hidden="true" />
+                    )}
                   </div>
                 </button>
               </motion.div>

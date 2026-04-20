@@ -1,12 +1,10 @@
 import { JSX } from "react";
+import { CloudSun, Sparkles, Sprout } from "lucide-react";
 
 const highlights = [
   {
-    iconSrc: "/landing/features_1.svg",
-    iconAlt: "Icon",
+    icon: <Sprout className="w-6 h-6 text-[#00450d]" aria-hidden="true" />,
     iconWrapperBg: "bg-[#00450d1a]",
-    iconWidth: "w-[22.57px]",
-    iconHeight: "h-[22.5px]",
     title: "Precision Soil Analysis",
     titleWidth: "w-[260.36px]",
     titleHeight: "h-8",
@@ -26,11 +24,8 @@ const highlights = [
     ),
   },
   {
-    iconSrc: "/landing/features_2.svg",
-    iconAlt: "Icon",
+    icon: <CloudSun className="w-6 h-6 text-[#003e63]" aria-hidden="true" />,
     iconWrapperBg: "bg-[#003e631a]",
-    iconWidth: "w-[25px]",
-    iconHeight: "h-[26.25px]",
     title: "Real-time Weather Alerts",
     titleWidth: "w-[292.91px]",
     titleHeight: "h-8",
@@ -50,11 +45,8 @@ const highlights = [
     ),
   },
   {
-    iconSrc: "/landing/features_3.svg",
-    iconAlt: "Icon",
+    icon: <Sparkles className="w-6 h-6 text-[#7a5649]" aria-hidden="true" />,
     iconWrapperBg: "bg-[#7a56491a]",
-    iconWidth: "w-[23.76px]",
-    iconHeight: "h-[25px]",
     title: (
       <>
         AI-Driven
@@ -106,11 +98,7 @@ export const Features_summary = (): JSX.Element => {
               className={`flex w-14 h-14 items-center justify-center absolute top-[33px] left-[33px] ${item.iconWrapperBg} rounded-[48px]`}
             >
               <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                <img
-                  className={`relative ${item.iconWidth} ${item.iconHeight}`}
-                  alt={item.iconAlt}
-                  src={item.iconSrc}
-                />
+                {item.icon}
               </div>
             </div>
 

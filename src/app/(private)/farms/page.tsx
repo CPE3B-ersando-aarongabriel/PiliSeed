@@ -12,7 +12,6 @@ const initialFarms = [
     name: "Emerald\nValley",
     location: "Sonoma County, CA",
     isActive: true,
-    locationIcon: "/farms/add-farm.svg",
     bgColor: "#e9f0e1",
   },
   {
@@ -20,7 +19,6 @@ const initialFarms = [
     name: "Highland\nRidge",
     location: "Asheville, NC",
     isActive: false,
-    locationIcon: "/farms/location.svg",
     bgColor: "#e9f0e1",
   },
 ];
@@ -69,7 +67,6 @@ export default function FarmsPage() {
       name: name,
       location: location,
       isActive: false,
-      locationIcon: "/farms/location.svg",
       bgColor: "#e9f0e1",
     };
 
@@ -95,7 +92,6 @@ export default function FarmsPage() {
       name: farmName,
       location: locationCoords,
       isActive: false,
-      locationIcon: "/farms/location.svg",
       bgColor: "#e9f0e1",
     };
 

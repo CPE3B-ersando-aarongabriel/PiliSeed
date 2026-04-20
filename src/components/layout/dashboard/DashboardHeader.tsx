@@ -1,4 +1,5 @@
 "use client";
+import { Menu, Sprout } from "lucide-react";
 
 export interface FarmData {
   id: string;
@@ -33,11 +34,7 @@ export default function DashboardHeader({
               onClick={onMenuClick}
               className="lg:hidden bg-[#00450D] p-2 rounded-lg shadow flex-shrink-0"
             >
-              <img
-                src="/sidebar/menu.svg"
-                alt="menu"
-                className="w-5 h-5 invert"
-              />
+              <Menu className="w-5 h-5 text-white" strokeWidth={2} aria-hidden="true" />
             </button>
           )}
           
@@ -50,11 +47,7 @@ export default function DashboardHeader({
         {/* Active Farm Badge */}
         <div className="border-2 border-[#41493E]/20 bg-[#E3EBDC] rounded-full px-3 sm:px-4 lg:px-5 py-1 flex items-center w-fit">
           <div className="w-8 h-8 sm:w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-[#00450D] flex items-center justify-center -ml-2 mr-2">
-            <img
-              src="/dashboard/active-farm.svg"
-              alt="active farm icon"
-              className="w-4 h-4 sm:w-4 h-4 lg:w-5 lg:h-5"
-            />
+            <Sprout className="w-4 h-4 lg:w-5 lg:h-5 text-white" strokeWidth={1.75} aria-hidden="true" />
           </div>
 
           <div>

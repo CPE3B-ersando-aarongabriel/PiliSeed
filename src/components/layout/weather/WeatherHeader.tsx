@@ -1,4 +1,5 @@
 "use client";
+import { ChevronDown, RefreshCw } from "lucide-react";
 
 interface WeatherHeaderProps {
   selectedFarm: string;
@@ -46,11 +47,7 @@ export default function WeatherHeader({
               <span className="font-semibold text-[#00450D] text-sm">
                 {selectedFarm}
               </span>
-              <img
-                src="/soil/dropdown.svg"
-                alt="Dropdown"
-                className="w-3 h-2 object-contain"
-              />
+              <ChevronDown className="w-4 h-4 text-[#00450D]" strokeWidth={2} aria-hidden="true" />
             </button>
 
             {isFarmDropdownOpen && (
@@ -87,11 +84,7 @@ export default function WeatherHeader({
           disabled={isLoading}
           className="flex items-center justify-center gap-2 w-[140px] h-[42px] bg-[#00450D] text-white rounded-full hover:bg-[#00380A] transition-colors disabled:opacity-50 whitespace-nowrap"
         >
-          <img
-            src="/weather/refresh.svg"
-            alt="refresh"
-            className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-          />
+          <RefreshCw className={`w-4 h-4 text-white ${isLoading ? "animate-spin" : ""}`} strokeWidth={2} aria-hidden="true" />
           <span className="font-semibold text-sm">Refresh Data</span>
         </button>
       </div>

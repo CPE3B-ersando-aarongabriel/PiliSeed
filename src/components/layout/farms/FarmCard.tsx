@@ -1,12 +1,12 @@
 "use client";
 import FarmToggle from "@/components/layout/farms/FarmToggle";
+import { MapPin } from "lucide-react";
 
 interface FarmCardProps {
   id: number;
   name: string;
   location: string;
   isActive: boolean;
-  locationIcon: string;
   bgColor: string;
   onToggle: (id: number) => void;
 }
@@ -16,7 +16,6 @@ export default function FarmCard({
   name,
   location,
   isActive,
-  locationIcon,
   bgColor,
   onToggle,
 }: FarmCardProps) {
@@ -46,11 +45,7 @@ export default function FarmCard({
             </div>
 
             <div className="flex items-center gap-2">
-              <img
-                src="/farms/location.svg"
-                alt="location icon"
-                className="w-3.5 h-3.5 shrink-0"
-              />
+              <MapPin className="w-3.5 h-3.5 shrink-0 text-[#00450D]" strokeWidth={1.75} aria-hidden="true" />
 
               <span className="text-[#41493E] text-sm font-normal leading-5">
                 {location}

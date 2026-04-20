@@ -1,4 +1,5 @@
 "use client";
+import { BadgeDollarSign, TrendingUp } from "lucide-react";
 
 interface EstimatedRevenueCardProps {
   revenue: string;
@@ -20,12 +21,7 @@ export default function EstimatedRevenueCard({
           <span className="font-semibold text-white/80 text-xs tracking-[1.20px]">
             ESTIMATED REVENUE
           </span>
-          <img
-            src="/yield/revenue.svg"
-            width={22}
-            height={22}
-            alt="revenue"
-          />
+          <BadgeDollarSign className="w-[22px] h-[22px] text-white" strokeWidth={1.75} aria-hidden="true" />
         </div>
 
         <div className="font-extrabold text-white text-5xl tracking-[-2.40px] mb-4">
@@ -33,7 +29,7 @@ export default function EstimatedRevenueCard({
         </div>
 
         <div className="flex items-center gap-2 mb-6">
-          <img src="/yield/graph.svg" width={20} height={20} alt="graph" />
+          <TrendingUp className="w-5 h-5 text-[#86D881]" strokeWidth={1.75} aria-hidden="true" />
           <p className="text-white">
             {percentageIncrease} increase from last season
           </p>

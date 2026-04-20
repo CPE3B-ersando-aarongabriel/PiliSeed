@@ -92,11 +92,7 @@ export const GlobalFoodCrisisSection = (): JSX.Element => {
 
             <div className="flex w-12 h-12 items-center justify-center relative bg-[#ffdbcf] rounded-full">
               <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                <img
-                  className="relative w-[17px] h-[16.99px]"
-                  alt="Icon"
-                  src="/landing/leaf.svg"
-                />
+                <Leaf className="relative w-[17px] h-[16.99px] text-[#7a5649]" strokeWidth={2} aria-hidden="true" />
               </div>
             </div>
 
@@ -121,6 +117,7 @@ export const GlobalFoodCrisisSection = (): JSX.Element => {
 };
 
 import { JSX } from "react";
+import { Leaf } from "lucide-react";
 
 export const Problem = (): JSX.Element => {
   const stats = [
@@ -214,12 +211,7 @@ export const Problem = (): JSX.Element => {
             <div className="absolute w-full h-full top-0 left-0 bg-[#ffffff01] rounded-[48px] shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a]" />
 
             <div className="flex w-12 h-12 items-center justify-center relative bg-[#ffdbcf] rounded-full">
-              <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                <img
-                  className="relative w-[17px] h-[16.99px]"
-                  alt="Icon"
-                  src="/landing/leaf.svg"
-                />
+                        <Leaf className="relative w-[17px] h-[16.99px] text-[#7a5649]" strokeWidth={2} aria-hidden="true" />
               </div>
             </div>
 
@@ -239,6 +231,6 @@ export const Problem = (): JSX.Element => {
           </div>
         </div>
       </div>
-    </div>
+    
   );
 };

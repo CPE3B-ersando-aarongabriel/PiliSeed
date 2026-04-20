@@ -2,6 +2,7 @@
 
 import { motion, type Variants } from "framer-motion";
 import { JSX } from "react";
+import { AlertTriangle, Bot, CloudSun, Droplets, MapPinned, Sprout } from "lucide-react";
 
 const gridContainer: Variants = {
   hidden: {},
@@ -35,11 +36,7 @@ export const Grid_features = (): JSX.Element => {
         <div className="relative self-stretch w-full h-[204px]">
           <div className="flex w-14 h-14 items-center justify-center absolute top-0 left-0 bg-[#7955481a] rounded-2xl">
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-              <img
-                className="relative w-[22.57px] h-[22.5px]"
-                alt="Icon"
-                src="/features/Grid_icon_2.svg"
-              />
+              <Sprout className="relative w-[22.57px] h-[22.5px] text-[#7a5649]" strokeWidth={1.75} aria-hidden="true" />
             </div>
           </div>
 
@@ -86,11 +83,7 @@ export const Grid_features = (): JSX.Element => {
       <motion.div className="relative row-[2_/_3] col-[1_/_5] w-full h-[452px] bg-[#e3ebdc] rounded-[48px]" variants={cardReveal}>
         <div className="w-14 h-14 justify-center absolute top-8 left-8 bg-[#065f18] flex items-center rounded-2xl">
           <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-            <img
-              className="relative w-[23.76px] h-[25px]"
-              alt="Icon"
-              src="/features/Grid_icon_6.svg"
-            />
+            <Bot className="relative w-[23.76px] h-[25px] text-[#a3f69c]" strokeWidth={1.75} aria-hidden="true" />
           </div>
         </div>
 
@@ -115,11 +108,7 @@ export const Grid_features = (): JSX.Element => {
         <div className="flex flex-col w-[calc(100%_-_64px)] items-start gap-3 absolute top-[296px] left-8">
           <div className="gap-4 p-4 relative self-stretch w-full flex-[0_0_auto] bg-white shadow-[0px_1px_2px_#0000000d] flex items-center rounded-2xl">
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-              <img
-                className="relative w-[17px] h-[16.99px]"
-                alt="Icon"
-                src="/features/Grid_icon_2.svg"
-              />
+              <Sprout className="relative w-[17px] h-[16.99px] text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
             </div>
 
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
@@ -131,11 +120,7 @@ export const Grid_features = (): JSX.Element => {
 
           <div className="flex items-center gap-4 p-4 relative self-stretch w-full flex-[0_0_auto] bg-[#ffffff80] rounded-2xl">
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-              <img
-                className="relative w-[17px] h-[16.99px]"
-                alt="Icon"
-                src="/features/Grid_icon_5.svg"
-              />
+              <AlertTriangle className="relative w-[17px] h-[16.99px] text-[#7a5649]" strokeWidth={1.75} aria-hidden="true" />
             </div>
 
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
@@ -156,11 +141,7 @@ export const Grid_features = (): JSX.Element => {
           <div className="relative self-stretch w-full h-[257px]">
             <div className="flex w-14 h-14 items-center justify-center absolute top-0 left-0 bg-[#00450d1a] rounded-2xl">
               <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                <img
-                  className="relative w-[22.5px] h-[22.5px]"
-                  alt="Icon"
-                  src="/features/Grid_icon_1.svg"
-                />
+                <MapPinned className="relative w-[22.5px] h-[22.5px] text-[#00450d]" strokeWidth={1.75} aria-hidden="true" />
               </div>
             </div>
 
@@ -199,11 +180,7 @@ export const Grid_features = (): JSX.Element => {
         <div className="absolute w-[calc(100%_-_465px)] top-[83px] left-20 h-[286px] flex flex-col">
           <div className="w-14 h-14 relative justify-center bg-[#003e63] flex items-center rounded-2xl">
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-              <img
-                className="relative w-[27.5px] h-[25px]"
-                alt="Icon"
-                src="/features/Grid_icon_3.svg"
-              />
+              <CloudSun className="relative w-[27.5px] h-[25px] text-[#b5ddff]" strokeWidth={1.75} aria-hidden="true" />
             </div>
           </div>
 
@@ -245,11 +222,7 @@ export const Grid_features = (): JSX.Element => {
             </div>
 
             <div className="inline-flex flex-col items-start relative self-stretch flex-[0_0_auto]">
-              <img 
-                className="relative w-6 h-[30px]" 
-                alt="Icon" 
-                src="/features/Grid_icon_4.svg" 
-                />
+              <Droplets className="relative w-6 h-[30px] text-[#003e63]" strokeWidth={1.75} aria-hidden="true" />
             </div>
           </div>
 

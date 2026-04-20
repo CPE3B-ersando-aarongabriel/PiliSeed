@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight, Sprout } from "lucide-react";
 
 interface CropRecommendationData {
   name: string;
@@ -17,11 +18,7 @@ export default function CropRecommendationCard({
     <div className="w-full bg-[#00450D] rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-md flex flex-col h-full">
       <div className="flex items-center gap-2 sm:gap-3 mb-4">
         <div className="rounded-xl sm:rounded-2xl bg-[#065F18] p-1.5 sm:p-2 w-fit">
-          <img
-            src="/dashboard/crop-recommendation.svg"
-            alt="crop recommendation icon"
-            className="w-8 h-8 sm:w-10 sm:h-10"
-          />
+                <Sprout className="w-8 h-8 sm:w-10 sm:h-10 text-white" strokeWidth={1.75} aria-hidden="true" />
         </div>
         <h2 className="text-lg sm:text-xl font-bold text-white">
           Crop <br /> Recommendation
@@ -53,17 +50,13 @@ export default function CropRecommendationCard({
 
       <div className="flex-1"></div>
 
-      <Link
-        href="/crop-recommendations"
-        className="text-[#00450D] text-xs sm:text-sm font-semibold bg-white rounded-full px-3 sm:px-4 py-1.5 sm:py-2 inline-block text-center hover:bg-white/90 transition flex items-center justify-center gap-2"
-      >
-        <span>View Full Analysis</span>
-        <img
-          src="/dashboard/arrow.svg"
-          alt="arrow right"
-          className="w-3 h-3 inline"
-        />
-      </Link>
+            <Link
+              href="/recommendations"
+              className="text-white text-sm font-semibold hover:text-green-200 transition"
+            >
+              View Full Recommendation
+              <ArrowRight className="w-3 h-3 ml-2 inline text-white" strokeWidth={2} aria-hidden="true" />
+            </Link>
     </div>
   );
 }

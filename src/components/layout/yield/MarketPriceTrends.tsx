@@ -1,4 +1,5 @@
 "use client";
+import { ArrowDown, ArrowUp, ChartNoAxesCombined } from "lucide-react";
 
 interface MarketPrice {
   label: string;
@@ -19,7 +20,7 @@ export default function MarketPriceTrendsCard({ prices }: MarketPriceTrendsCardP
         <span className="font-semibold text-[#795548] text-xs tracking-[1.20px]">
           MARKET PRICE TRENDS
         </span>
-        <img src="/yield/market-trend.svg" width={22} height={22} alt="market trend" />
+        <ChartNoAxesCombined className="w-[22px] h-[22px] text-[#795548]" strokeWidth={1.75} aria-hidden="true" />
       </div>
 
       <div className="flex-1 flex flex-col gap-4">
@@ -33,11 +34,11 @@ export default function MarketPriceTrendsCard({ prices }: MarketPriceTrendsCardP
                 {item.price}
               </span>
               <div className="flex items-center gap-1">
-                <img
-                  src={item.isPositive ? "/yield/up.svg" : "/yield/down.svg"}
-                  alt="trend icon"
-                  className="w-4 h-4"
-                />
+                {item.isPositive ? (
+                  <ArrowUp className="w-4 h-4 text-[#2D7A46]" strokeWidth={2} aria-hidden="true" />
+                ) : (
+                  <ArrowDown className="w-4 h-4 text-[#AA5649]" strokeWidth={2} aria-hidden="true" />
+                )}
                 <span className={`font-semibold text-xs ${item.changeColor}`}>
                   {item.change}
                 </span>
