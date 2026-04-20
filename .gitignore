@@ -47,3 +47,5 @@ Desktop.ini
 # IDE/editor
 .vscode/
 .idea/
+
+firmware/

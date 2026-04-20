@@ -84,6 +84,9 @@ export type SoilProfile = {
   soilClassProbabilities: SoilClassificationProbability[];
   pH: number | null;
   moistureContent: number | null;
+  lightLevel: number | null;
+  temperatureC: number | null;
+  humidity: number | null;
   nitrogen: number | null;
   phosphorus: number | null;
   potassium: number | null;
@@ -186,12 +189,19 @@ type SoilProfileCreateInput = {
   nitrogen: number;
   phosphorus: number;
   potassium: number;
+  moistureContent?: number | null;
+  lightLevel?: number | null;
+  temperatureC?: number | null;
+  humidity?: number | null;
 };
 
 type SoilAnalysisCreateInput = {
   texture?: string | null;
   pH: number | null;
   moistureContent: number | null;
+  lightLevel: number | null;
+  temperatureC: number | null;
+  humidity: number | null;
   nitrogen: number | null;
   phosphorus: number | null;
   potassium: number | null;
@@ -345,6 +355,9 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
       : [],
     pH: toNullableNumber(data.ph ?? data.pH),
     moistureContent: toNullableNumber(data.moistureContent ?? data.moisture),
+        lightLevel: toNullableNumber(data.lightLevel ?? data.light),
+        temperatureC: toNullableNumber(data.temperatureC ?? data.temperature),
+        humidity: toNullableNumber(data.humidity),
     nitrogen: toNullableNumber(data.nitrogen),
     phosphorus: toNullableNumber(data.phosphorus),
     potassium: toNullableNumber(data.potassium),
@@ -639,6 +652,10 @@ async function initializeRelatedCollections(uid: string, farmId: string) {
     ph: null,
     pH: null,
     moisture: null,
+    moistureContent: null,
+    lightLevel: null,
+    temperatureC: null,
+    humidity: null,
     nitrogen: null,
     phosphorus: null,
     potassium: null,
@@ -959,6 +976,9 @@ export async function createSoilAnalysisForFarm(
     ph: input.pH,
     pH: input.pH,
     moistureContent: input.moistureContent,
+    lightLevel: input.lightLevel,
+    temperatureC: input.temperatureC,
+    humidity: input.humidity,
     nitrogen: input.nitrogen,
     phosphorus: input.phosphorus,
     potassium: input.potassium,
