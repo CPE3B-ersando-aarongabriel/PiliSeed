@@ -10,7 +10,14 @@ import {
 	createSoilAnalysisForFarm,
 	getFarmByIdForUser,
 } from "../../../../../../lib/firestoreSchema";
-import { scoreSoilClassification } from "../../../../../../lib/analysisService";
+import {
+	type AnalysisResult,
+	type NormalizedSoilSnapshot,
+} from "../../../../../../lib/analysisContracts";
+import {
+	scoreSoilClassification,
+	scoreSoilSnapshot,
+} from "../../../../../../lib/analysisService";
 import { createGeocodingService } from "../../../../../../lib/geocodingService";
 import { createSoilService } from "../../../../../../lib/soilService";
 
@@ -26,6 +33,9 @@ const soilAnalyzeRequestSchema = z
 		longitude: z.number().min(-180).max(180).optional(),
 		locationText: z.string().trim().min(1).max(180).optional(),
 		numberClasses: z.number().int().min(1).max(10).optional(),
+		nitrogen: z.number().min(0).optional(),
+		phosphorus: z.number().min(0).optional(),
+		potassium: z.number().min(0).optional(),
 	})
 	.refine(
 		(data) =>
@@ -34,6 +44,24 @@ const soilAnalyzeRequestSchema = z
 		{
 			message: "latitude and longitude must be provided together.",
 			path: ["latitude"],
+		},
+	)
+	.refine(
+		(data) => {
+			const hasNitrogen = data.nitrogen !== undefined;
+			const hasPhosphorus = data.phosphorus !== undefined;
+			const hasPotassium = data.potassium !== undefined;
+
+			const providedCount = [hasNitrogen, hasPhosphorus, hasPotassium].filter(
+				Boolean,
+			).length;
+
+			return providedCount === 0 || providedCount === 3;
+		},
+		{
+			message:
+				"Provide all NPK values together (nitrogen, phosphorus, potassium) or omit all three.",
+			path: ["nitrogen"],
 		},
 	);
 
@@ -45,6 +73,18 @@ type SoilRouteContext = {
 
 const geocodingService = createGeocodingService();
 const soilService = createSoilService();
+
+function normalizeOptionalNumericInput(value: unknown) {
+	if (value === null || value === undefined) {
+		return undefined;
+	}
+
+	if (typeof value === "string" && value.trim().length === 0) {
+		return undefined;
+	}
+
+	return value;
+}
 
 async function resolveCoordinates(
 	farmLocation: string | null,
@@ -104,15 +144,29 @@ function toFirestoreClassificationPayload(
 	};
 }
 
-function toFirestoreAnalysisPayload(
-	analysis: ReturnType<typeof scoreSoilClassification>,
-) {
+function toFirestoreAnalysisPayload(analysis: AnalysisResult) {
 	return {
 		score: analysis.score,
 		summary: analysis.summary,
 		flags: analysis.flags,
 		nextSteps: analysis.nextSteps,
 		explanation: analysis.explanation,
+	};
+}
+
+function toManualNpkSnapshot(input: SoilAnalyzeRequest): NormalizedSoilSnapshot {
+	return {
+		texture: null,
+		phLevel: null,
+		moistureContent: null,
+		nitrogen: input.nitrogen ?? null,
+		phosphorus: input.phosphorus ?? null,
+		potassium: input.potassium ?? null,
+		soilSource: "manual",
+		analysis: {
+			inputMode: "manual-npk",
+		},
+		source: "soil-analyze-manual-npk",
 	};
 }
 
@@ -153,6 +207,19 @@ export async function POST(request: Request, context: SoilRouteContext) {
 			...(requestBody as Record<string, unknown>),
 		};
 
+		normalizedBody.nitrogen = normalizeOptionalNumericInput(
+			normalizedBody.nitrogen,
+		);
+		normalizedBody.phosphorus = normalizeOptionalNumericInput(
+			normalizedBody.phosphorus,
+		);
+		normalizedBody.potassium = normalizeOptionalNumericInput(
+			normalizedBody.potassium,
+		);
+		normalizedBody.n = normalizeOptionalNumericInput(normalizedBody.n);
+		normalizedBody.p = normalizeOptionalNumericInput(normalizedBody.p);
+		normalizedBody.k = normalizeOptionalNumericInput(normalizedBody.k);
+
 		if (normalizedBody.latitude === undefined && normalizedBody.lat !== undefined) {
 			normalizedBody.latitude = normalizedBody.lat;
 		}
@@ -168,6 +235,21 @@ export async function POST(request: Request, context: SoilRouteContext) {
 			normalizedBody.numberClasses = normalizedBody.number_classes;
 		}
 
+		if (normalizedBody.nitrogen === undefined && normalizedBody.n !== undefined) {
+			normalizedBody.nitrogen = normalizedBody.n;
+		}
+
+		if (
+			normalizedBody.phosphorus === undefined &&
+			normalizedBody.p !== undefined
+		) {
+			normalizedBody.phosphorus = normalizedBody.p;
+		}
+
+		if (normalizedBody.potassium === undefined && normalizedBody.k !== undefined) {
+			normalizedBody.potassium = normalizedBody.k;
+		}
+
 		const validationResult = soilAnalyzeRequestSchema.safeParse(normalizedBody);
 
 		if (!validationResult.success) {
@@ -179,6 +261,11 @@ export async function POST(request: Request, context: SoilRouteContext) {
 			);
 		}
 
+		const hasManualNpk =
+			validationResult.data.nitrogen !== undefined &&
+			validationResult.data.phosphorus !== undefined &&
+			validationResult.data.potassium !== undefined;
+
 		const coordinates = await resolveCoordinates(farm.location, validationResult.data);
 
 		if (!coordinates) {
@@ -189,26 +276,46 @@ export async function POST(request: Request, context: SoilRouteContext) {
 			);
 		}
 
-		const soilClassification = await soilService.fetchSoilClassification({
-			latitude: coordinates.latitude,
-			longitude: coordinates.longitude,
-			numberClasses: validationResult.data.numberClasses,
-		});
+		let soilClassification: Awaited<
+			ReturnType<ReturnType<typeof createSoilService>["fetchSoilClassification"]>
+		> | null = null;
+		let soilAnalysis: AnalysisResult;
+		let soilSource: "manual" | "api" = "api";
 
-		const soilAnalysis = scoreSoilClassification(soilClassification);
+		if (hasManualNpk) {
+			soilSource = "manual";
+			soilAnalysis = scoreSoilSnapshot(toManualNpkSnapshot(validationResult.data));
+		} else {
+			soilClassification = await soilService.fetchSoilClassification({
+				latitude: coordinates.latitude,
+				longitude: coordinates.longitude,
+				numberClasses: validationResult.data.numberClasses,
+			});
+
+			soilAnalysis = scoreSoilClassification(soilClassification);
+		}
+
 		const soilProfile = await createSoilAnalysisForFarm(decodedToken.uid, farm.id, {
-			texture: soilClassification.dominantClass,
+			texture: soilClassification?.dominantClass ?? null,
 			pH: null,
 			moistureContent: null,
-			nitrogen: null,
-			phosphorus: null,
-			potassium: null,
-			soilSource: "api",
-			soilClass: soilClassification.dominantClass,
-			soilClassValue: soilClassification.dominantClassValue,
-			soilClassProbability: soilClassification.dominantClassProbability,
-			soilClassProbabilities: soilClassification.classProbabilities,
-			classificationJson: toFirestoreClassificationPayload(soilClassification),
+			nitrogen: validationResult.data.nitrogen ?? null,
+			phosphorus: validationResult.data.phosphorus ?? null,
+			potassium: validationResult.data.potassium ?? null,
+			soilSource,
+			soilClass: soilClassification?.dominantClass ?? null,
+			soilClassValue: soilClassification?.dominantClassValue ?? null,
+			soilClassProbability: soilClassification?.dominantClassProbability ?? null,
+			soilClassProbabilities: soilClassification?.classProbabilities ?? [],
+			classificationJson: soilClassification
+				? toFirestoreClassificationPayload(soilClassification)
+				: {
+					inputMode: "manual-npk",
+					nitrogen: validationResult.data.nitrogen ?? null,
+					phosphorus: validationResult.data.phosphorus ?? null,
+					potassium: validationResult.data.potassium ?? null,
+					source: "manual",
+				},
 			analysisJson: toFirestoreAnalysisPayload(soilAnalysis),
 		});
 
@@ -223,6 +330,9 @@ export async function POST(request: Request, context: SoilRouteContext) {
 				soilClassification,
 				soilProfile,
 				soilAnalysis,
+				metadata: {
+					analysisBasis: hasManualNpk ? "manual_npk" : "api_classification",
+				},
 			},
 			201,
 		);

@@ -23,7 +23,6 @@ import {
 } from "../../../../../../lib/firestoreSchema";
 import { createOpenAIService } from "../../../../../../lib/openaiService";
 import {
-  AnalysisConfigurationError,
   AnalysisExternalServiceError,
 } from "../../../../../../lib/analysisErrors";
 
