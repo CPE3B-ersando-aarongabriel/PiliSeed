@@ -16,7 +16,7 @@ const slides = [
   },
   {
     id: 3,
-    image: "/landing/carousel.svg" ,
+    image: "/landing/carousel.svg",
     alt: "Drone flying over a precision mapped vineyard",
     title: "Tech in the Field",
   },
@@ -34,100 +34,92 @@ export const Carousel = (): JSX.Element => {
   };
 
   return (
-    <div className="flex flex-col w-full gap-8 sm:gap-12 px-4 sm:px-8 py-12 sm:py-24 relative sm:absolute sm:top-[2026px] sm:left-1/2 sm:-translate-x-1/2 bg-[#e3ebdc33]">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
-        <div className="flex flex-col gap-2 sm:gap-0 w-full sm:w-auto">
-          <div className="flex flex-col max-w-full sm:max-w-xl">
-            <div className="relative flex items-center w-fit mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#171d14] text-3xl sm:text-4xl tracking-[-1.80px] leading-8 sm:leading-10">
+    <section className="w-full bg-[#e3ebdc33]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-14 sm:gap-10 sm:px-8 sm:py-20 lg:gap-12 lg:py-24">
+        <div className="flex w-full flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+          <div className="flex w-full max-w-2xl flex-col gap-2 sm:gap-3">
+            <h2 className="[font-family:'Inter-ExtraBold',Helvetica] text-[#171d14] text-3xl sm:text-4xl font-extrabold tracking-[-1.2px] sm:tracking-[-1.8px] leading-tight">
               Harvesting Innovation
-            </div>
-          </div>
-
-          <div className="flex flex-col max-w-xs">
-            <p className="relative flex items-center w-full h-auto mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-sm sm:text-base tracking-[0] leading-5 sm:leading-6">
+            </h2>
+            <p className="[font-family:'Inter-Regular',Helvetica] text-[#41493e] text-sm sm:text-base font-normal tracking-[0] leading-6">
               Real stories from the digital frontier of agriculture.
             </p>
           </div>
-        </div>
 
-        <div className="w-[59px] h-[30px] flex items-center justify-between flex-shrink-0">
-          <button
-            onClick={handlePrev}
-            aria-label="Previous slide"
-            className="w-[27px] h-[27px] rounded-full border border-[#41493e] flex items-center justify-center bg-white hover:bg-[#f0f4ed] transition-colors"
-          >
-            <svg
-              width="8"
-              height="12"
-              viewBox="0 0 8 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+          <div className="flex h-[34px] w-[76px] shrink-0 items-center justify-between">
+            <button
+              onClick={handlePrev}
+              aria-label="Previous slide"
+              className="h-8 w-8 rounded-full border border-[#41493e] bg-white flex items-center justify-center hover:bg-[#f0f4ed] transition-colors"
             >
-              <path
-                d="M6.5 1L1.5 6L6.5 11"
-                stroke="#41493e"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={handleNext}
-            aria-label="Next slide"
-            className="w-[27px] h-[27px] rounded-full border border-[#41493e] flex items-center justify-center bg-white hover:bg-[#f0f4ed] transition-colors"
-          >
-            <svg
-              width="8"
-              height="12"
-              viewBox="0 0 8 12"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1.5 1L6.5 6L1.5 11"
-                stroke="#41493e"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex flex-col w-full items-start relative flex-[0_0_auto] rounded-[32px] overflow-hidden">
-        <div
-          className="flex items-start relative flex-[0_0_auto] transition-transform duration-500 ease-in-out"
-          style={{
-            width: `${slides.length * 100}%`,
-            transform: `translateX(-${currentIndex * 100}%)`,
-          }}
-        >
-          {slides.map((slide) => (
-            <div
-              key={slide.id}
-              className="inline-flex flex-col min-w-full items-start px-0 py-0 relative self-stretch flex-[0_0_auto]"
-            >
-              <div className="inline-flex flex-col h-[400px] items-start justify-center relative rounded-[32px] overflow-hidden w-full">
-                <img
-                  className="relative flex-1 self-stretch w-full grow object-cover"
-                  alt={slide.alt}
-                  src={slide.image}
+              <svg
+                width="8"
+                height="12"
+                viewBox="0 0 8 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M6.5 1L1.5 6L6.5 11"
+                  stroke="#41493e"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
+              </svg>
+            </button>
+            <button
+              onClick={handleNext}
+              aria-label="Next slide"
+              className="h-8 w-8 rounded-full border border-[#41493e] bg-white flex items-center justify-center hover:bg-[#f0f4ed] transition-colors"
+            >
+              <svg
+                width="8"
+                height="12"
+                viewBox="0 0 8 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M1.5 1L6.5 6L1.5 11"
+                  stroke="#41493e"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
 
-                <div className="flex w-full h-full items-end p-12 absolute top-0 left-0 bg-[linear-gradient(0deg,rgba(0,0,0,0.6)_0%,rgba(0,0,0,0)_100%)]">
-                  <div className="inline-flex flex-[0_0_auto] relative flex-col items-start">
-                    <div className="relative flex items-center w-[234px] h-9 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-3xl tracking-[0] leading-9 whitespace-nowrap">
+        <div className="w-full overflow-hidden rounded-[24px] sm:rounded-[32px]">
+          <div
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{
+              width: `${slides.length * 100}%`,
+              transform: `translateX(-${currentIndex * 100}%)`,
+            }}
+          >
+            {slides.map((slide) => (
+              <div key={slide.id} className="w-full min-w-full">
+                <div className="relative h-[280px] sm:h-[360px] lg:h-[420px] overflow-hidden rounded-[24px] sm:rounded-[32px]">
+                  <img
+                    className="h-full w-full object-cover"
+                    alt={slide.alt}
+                    src={slide.image}
+                  />
+
+                  <div className="absolute inset-0 flex items-end p-5 sm:p-8 lg:p-12 bg-[linear-gradient(0deg,rgba(0,0,0,0.6)_0%,rgba(0,0,0,0)_100%)]">
+                    <div className="[font-family:'Manrope-Bold',Helvetica] text-white text-2xl sm:text-3xl font-bold leading-tight tracking-[0]">
                       {slide.title}
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

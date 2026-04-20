@@ -1,101 +1,84 @@
 "use client";
 import { JSX } from "react";
 import Link from "next/link";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 
 export const Hero = (): JSX.Element => {
-  const { scrollYProgress } = useScroll();
-  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, 80]);
-  const bgScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.08]);
-
   return (
-    <motion.div
-      className="absolute w-full top-20 left-0 h-[1235px]"
-      style={{ y: heroY }}
+    <motion.section
+      className="relative w-full min-h-[calc(100svh-5rem)] overflow-hidden"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
-      <motion.div
-        className="absolute top-[29px] left-0 w-full h-[1176px] opacity-90 bg-[url(/landing/Hero.png)] bg-cover bg-[50%_50%]"
-        style={{ scale: bgScale }}
-      />
+      <div className="absolute inset-0 opacity-90 bg-[url(/landing/Hero.png)] bg-cover bg-[50%_50%]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,69,13,0.15)_0%,rgba(0,69,13,0.5)_55%,rgba(0,69,13,0.82)_100%)]" />
 
       <motion.div
-        className="absolute w-[calc(100%_-_32px)] top-[calc(50.00%_-_392px)] left-4 h-[572px] flex"
+        className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center px-4 pt-16 pb-14 sm:px-8 sm:pt-20 sm:pb-20 lg:items-start lg:pt-24"
         initial={{ opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.4 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="mt-[-0.1px] h-[572px] ml-8 mr-[648px] flex-1 flex flex-col">
-          <div className="inline-flex w-[246.42px] h-9 relative items-start px-4 py-2 bg-[#a3f69c] rounded-full">
-            <div className="relative flex items-center w-[214.42px] h-5 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#002204] text-sm tracking-[1.40px] leading-5 whitespace-nowrap">
+        <div className="flex w-full max-w-3xl flex-col items-center text-center lg:items-start lg:text-left">
+          <div className="inline-flex h-9 items-center rounded-full bg-[#a3f69c] px-4 py-2">
+            <div className="[font-family:'Manrope-Bold',Helvetica] text-xs sm:text-sm font-bold tracking-[1.2px] sm:tracking-[1.4px] leading-5 text-[#002204] whitespace-nowrap">
               DIGITAL GREENHOUSE V2.0
             </div>
           </div>
 
-          <div className="flex flex-1 max-h-[390px] relative mt-6 flex-col w-full max-w-2xl items-start px-4 sm:px-0">
-            <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-transparent text-5xl sm:text-6xl lg:text-7xl leading-tight sm:leading-[60px] lg:leading-[72px]">
-              <span className="text-[#171d14] tracking-[-2.59px]">
-                Empowering
-                <br />
-                Farmers with
-                <br />
-              </span>
-
+          <div className="mt-6 w-full">
+            <p className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-tight sm:leading-[1.08] lg:leading-[72px] text-transparent">
+              <span className="text-[#171d14] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
+                Empowering Farmers with
+              </span>{" "}
               <span className="text-[#00450d] tracking-[0]">
-                Smarter Data-
-                <br />
-                Driven
-              </span>
-
-              <span className="text-[#171d14] tracking-[-2.59px]">
-                {" "}
+                Smarter Data-Driven
+              </span>{" "}
+              <span className="text-[#171d14] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
                 Decisions.
               </span>
             </p>
           </div>
 
-          <div className="flex flex-1 max-h-24 relative mt-[26.1px] flex-col max-w-lg w-full items-start pt-2 pb-0 px-4 sm:px-0">
-            <p className="relative w-full h-auto mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-white text-base sm:text-lg tracking-[0] leading-relaxed">
-              Transform your agricultural legacy with real-time soil
-              <br />
-              analysis, hyper-local weather intelligence, and AI-powered
-              <br />
-              yield predictions tailored for your soil&#39;s unique DNA.
+          <div className="mt-6 w-full max-w-2xl">
+            <p className="[font-family:'Inter-Medium',Helvetica] text-white text-base sm:text-lg font-medium leading-relaxed tracking-[0]">
+              Transform your agricultural legacy with real-time soil analysis,
+              hyper-local weather intelligence, and AI-powered yield predictions
+              tailored for your soil&#39;s unique DNA.
             </p>
+          </div>
+
+          <div className="mt-8 flex w-full flex-wrap items-center justify-center gap-3 sm:gap-4 lg:justify-start">
+            <Link href="/signup" className="w-full sm:w-auto">
+              <motion.button
+                className="all-[unset] box-border inline-flex w-full sm:w-auto items-center justify-center rounded-full border-2 border-solid border-[#00450d1a] bg-white px-8 py-3.5 cursor-pointer"
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 360, damping: 20 }}
+              >
+                <div className="[font-family:'Manrope-Bold',Helvetica] text-[#00450d] text-base sm:text-lg font-bold text-center leading-7 whitespace-nowrap">
+                  Get Started
+                </div>
+              </motion.button>
+            </Link>
+
+            <Link href="/how-it-works" className="w-full sm:w-auto">
+              <motion.button
+                className="all-[unset] box-border inline-flex w-full sm:w-auto items-center justify-center rounded-full border-2 border-solid border-[#00450d1a] bg-white px-8 py-3.5 cursor-pointer"
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 360, damping: 20 }}
+              >
+                <div className="[font-family:'Manrope-Bold',Helvetica] text-[#00450d] text-base sm:text-lg font-bold text-center leading-7 whitespace-nowrap">
+                  How It Works
+                </div>
+              </motion.button>
+            </Link>
           </div>
         </div>
       </motion.div>
-
-      <div className="flex w-full sm:w-auto h-auto sm:h-20 items-start gap-4 pt-4 pb-0 px-4 sm:px-0 sm:absolute sm:top-[840px] sm:left-12 flex-wrap sm:flex-nowrap">
-        <Link href="/signup">
-          <motion.button
-            className="all-[unset] box-border px-10 py-4 bg-white rounded-full border-2 border-solid border-[#00450d1a] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 360, damping: 20 }}
-          >
-            <div className="relative flex items-center justify-center w-[80.91px] h-7 [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-lg text-center tracking-[0] leading-7 whitespace-nowrap">
-              Get Started
-            </div>
-          </motion.button>
-        </Link>
-
-        <Link href="/how-it-works">
-          <motion.button
-            className="all-[unset] box-border px-10 py-4 bg-white rounded-full border-2 border-solid border-[#00450d1a] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 360, damping: 20 }}
-          >
-            <div className="relative flex items-center justify-center w-[80.91px] h-7 [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-lg text-center tracking-[0] leading-7 whitespace-nowrap">
-              How It Works
-            </div>
-          </motion.button>
-        </Link>
-      </div>
-    </motion.div>
+    </motion.section>
   );
 };
