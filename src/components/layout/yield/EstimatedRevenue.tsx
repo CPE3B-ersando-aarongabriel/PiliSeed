@@ -42,7 +42,8 @@ export default function EstimatedRevenueCard({
         <div className="mt-auto">
           <div className="w-full h-1 bg-white/20 rounded-full mb-2">
             <div
-              className={`w-[${progressWidth}] h-full bg-[#86D881] rounded-full`}
+              className="h-full bg-[#86D881] rounded-full"
+              style={{ width: progressWidth }}
             />
           </div>
           <p className="font-normal text-white/70 text-[10px]">

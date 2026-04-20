@@ -95,6 +95,11 @@ export default function RecommendationsClient() {
 	const [farmError, setFarmError] = useState("");
 	const [dataError, setDataError] = useState("");
 	const [sortBy, setSortBy] = useState("Suitability Score");
+	const [selectedCrop, setSelectedCrop] = useState("");
+	const [confirmedCrop, setConfirmedCrop] = useState<string | null>(null);
+	const [showCropPrompt, setShowCropPrompt] = useState(false);
+	const [cropPromptError, setCropPromptError] = useState("");
+	const [isRequestingMore, setIsRequestingMore] = useState(false);
 
 	const sortOptions = ["Suitability Score", "Alphabetical", "Recently Added"];
 
@@ -207,24 +212,60 @@ export default function RecommendationsClient() {
 	const selectedFarm = farms.find((farm) => farm.id === selectedFarmId) ?? null;
 	const selectedRecommendation = recommendations[0] ?? null;
 	const recommendedCrops = useMemo(() => {
-		const crops = selectedRecommendation?.recommendedCrops ?? [];
+		const seen = new Set<string>();
+		const combined = recommendations.flatMap((record) => record.recommendedCrops);
+		const unique = combined.filter((crop) => {
+			const key = crop.crop.trim().toLowerCase();
+			if (seen.has(key)) {
+				return false;
+			}
+			seen.add(key);
+			return true;
+		});
 
 		if (sortBy === "Alphabetical") {
-			return [...crops].sort((first, second) => first.crop.localeCompare(second.crop));
+			return [...unique].sort((first, second) => first.crop.localeCompare(second.crop));
 		}
 
 		if (sortBy === "Recently Added") {
-			return crops;
+			return unique;
 		}
 
-		return [...crops].sort((first, second) => {
+		return [...unique].sort((first, second) => {
 			if (second.score !== first.score) {
 				return second.score - first.score;
 			}
 
 			return first.crop.localeCompare(second.crop);
 		});
-	}, [selectedRecommendation, sortBy]);
+	}, [recommendations, sortBy]);
+
+	useEffect(() => {
+		if (!selectedFarmId || recommendedCrops.length === 0) {
+			setSelectedCrop("");
+			setConfirmedCrop(null);
+			setShowCropPrompt(false);
+			return;
+		}
+
+		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		const storedSelection = typeof window !== "undefined"
+			? window.localStorage.getItem(storageKey)
+			: null;
+		const defaultCrop = recommendedCrops[0]?.crop ?? "";
+
+		if (storedSelection) {
+			setSelectedCrop(storedSelection);
+			setConfirmedCrop(storedSelection);
+			setShowCropPrompt(false);
+			return;
+		}
+
+		setSelectedCrop(defaultCrop);
+		setConfirmedCrop(null);
+		setShowCropPrompt(true);
+		setCropPromptError("");
+	}, [recommendedCrops, selectedFarmId]);
 
 	function handleFarmChange(farmId: string) {
 		setSelectedFarmId(farmId);
@@ -237,11 +278,128 @@ export default function RecommendationsClient() {
 	const moistureNeed =
 		soilProfile?.moistureContent !== null && soilProfile?.moistureContent !== undefined
 			? `${soilProfile.moistureContent}%`
-			: "Contextual";
+			: null;
 	const tempRange =
 		soilProfile?.temperatureC !== null && soilProfile?.temperatureC !== undefined
 			? `${Math.max(-10, Math.round(soilProfile.temperatureC - 3))}°C - ${Math.round(soilProfile.temperatureC + 3)}°C`
-			: "Contextual";
+			: null;
+
+	function handleConfirmCropSelection() {
+		if (!selectedCrop) {
+			setCropPromptError("Choose a crop to continue.");
+			return;
+		}
+
+		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		setConfirmedCrop(selectedCrop);
+		setShowCropPrompt(false);
+		setCropPromptError("");
+
+		if (typeof window !== "undefined") {
+			window.localStorage.setItem(storageKey, selectedCrop);
+		}
+	}
+
+	function handleChangeCropSelection() {
+		setShowCropPrompt(true);
+		setCropPromptError("");
+	}
+
+	async function handleRecommendMore() {
+		if (!currentUser || !selectedFarmId) {
+			setDataError("Select a farm and sign in before requesting more recommendations.");
+			return;
+		}
+
+		setIsRequestingMore(true);
+		setDataError("");
+
+		try {
+			const token = await currentUser.getIdToken();
+			const response = await fetch(
+				`/api/farms/${selectedFarmId}/recommendations/more`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({}),
+				},
+			);
+			const responseBody: unknown = await response.json().catch(() => null);
+
+			if (!response.ok) {
+				throw new Error(
+					getErrorMessage(
+						responseBody,
+						"Unable to request more recommendations right now.",
+					),
+				);
+			}
+
+			const responseData =
+				typeof responseBody === "object" &&
+				responseBody !== null &&
+				"data" in responseBody &&
+				typeof (responseBody as { data?: unknown }).data === "object"
+					? ((responseBody as { data?: {
+						recommendation?: CropRecommendationRecord;
+						recommendationRecord?: { id?: string };
+						metadata?: { generatedBy?: "deterministic" | "openai" | "hybrid" };
+					} }).data ?? null)
+					: null;
+
+			if (responseData?.recommendation) {
+				const nowIso = new Date().toISOString();
+				const newRecord: CropRecommendationRecord = {
+					id: responseData.recommendationRecord?.id ?? `rec-${nowIso}`,
+					recommendedCrops: responseData.recommendation.recommendedCrops,
+					analysisText: responseData.recommendation.analysisText,
+					warningFlags: responseData.recommendation.warningFlags ?? [],
+					generatedBy: responseData.metadata?.generatedBy ?? "openai",
+					createdAt: nowIso,
+					updatedAt: nowIso,
+				};
+
+				setRecommendations((previous) => [newRecord, ...previous]);
+				return;
+			}
+
+			const refreshed = await fetch(
+				`/api/farms/${selectedFarmId}/recommendations?limit=10`,
+				{ headers: { Authorization: `Bearer ${token}` } },
+			);
+			const refreshedBody: unknown = await refreshed.json().catch(() => null);
+
+			if (!refreshed.ok) {
+				throw new Error(
+					getErrorMessage(
+						refreshedBody,
+						"Unable to refresh recommendations right now.",
+					),
+				);
+			}
+
+			const refreshedList =
+				typeof refreshedBody === "object" &&
+				refreshedBody !== null &&
+				"data" in refreshedBody &&
+				typeof (refreshedBody as { data?: unknown }).data === "object"
+					? (((refreshedBody as { data?: RecommendationsPayload }).data?.recommendations ?? []) as CropRecommendationRecord[])
+					: [];
+
+			setRecommendations(refreshedList);
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "Unable to request more recommendations right now.";
+			setDataError(message);
+		} finally {
+			setIsRequestingMore(false);
+		}
+	}
 
 	return (
 		<div className="min-h-screen bg-[#EFF6E7]">
@@ -362,14 +520,76 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
+						<div className="mb-12 rounded-4xl border border-[#C0C9BB1A] bg-white px-6 py-6">
+							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+								<div>
+									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">
+										Planting decision
+									</p>
+									<h3 className="text-2xl font-bold text-[#171D14]">
+										Which crop will you plant?
+									</h3>
+									<p className="mt-2 text-sm text-[#41493E]">
+										Confirm your choice so we can tailor yield and market insights for this farm.
+									</p>
+								</div>
+								{confirmedCrop && !showCropPrompt && (
+									<div className="rounded-full bg-[#00450D]/10 px-4 py-2 text-xs font-semibold text-[#00450D]">
+										Selected: {confirmedCrop}
+									</div>
+								)}
+							</div>
+
+							{showCropPrompt ? (
+								<div className="mt-5 flex flex-col gap-4 md:flex-row md:items-center">
+									<div className="flex-1">
+										<label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#41493E]">
+											Select crop
+										</label>
+										<select
+											value={selectedCrop}
+											onChange={(event) => setSelectedCrop(event.target.value)}
+											className="mt-2 w-full rounded-full border border-[#C0C9BB] bg-white px-4 py-3 text-sm font-semibold text-[#171D14]"
+										>
+											{recommendedCrops.map((crop) => (
+												<option key={crop.crop} value={crop.crop}>
+													{crop.crop}
+												</option>
+											))}
+										</select>
+										{cropPromptError && (
+											<p className="mt-2 text-xs font-semibold text-[#9C4A00]">
+												{cropPromptError}
+											</p>
+										)}
+									</div>
+									<div className="flex items-center gap-3">
+										<button
+											onClick={handleConfirmCropSelection}
+											className="rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
+										>
+											Confirm crop
+										</button>
+									</div>
+								</div>
+							) : (
+								<button
+									onClick={handleChangeCropSelection}
+									className="mt-5 rounded-full border border-[#00450D] px-5 py-2 text-xs font-semibold text-[#00450D]"
+								>
+									Change selection
+								</button>
+							)}
+						</div>
+
 						<div className="grid grid-cols-1 gap-6 mb-12">
 							<FeaturedCropCard
 								cropName={featuredCrop.crop}
 								description={featuredCrop.reason || selectedRecommendation.analysisText}
 								match={formatScore(featuredCrop.score)}
 								imageUrl={cropImageFor(featuredCrop.crop)}
-								moistureNeed={moistureNeed}
-								tempRange={tempRange}
+								{...(moistureNeed ? { moistureNeed } : {})}
+								{...(tempRange ? { tempRange } : {})}
 							/>
 						</div>
 
@@ -398,16 +618,16 @@ export default function RecommendationsClient() {
 							})}
 						</div>
 
-						{selectedRecommendation.warningFlags.length > 0 && (
-							<div className="mb-12 rounded-4xl border border-[#C0C9BB1A] bg-[#E3EBDC] px-6 py-5">
-								<h2 className="text-lg font-bold text-[#171D14] mb-3">Context Notes</h2>
-								<ul className="space-y-2 text-sm text-[#41493E] list-disc pl-5">
-									{selectedRecommendation.warningFlags.map((flag) => (
-										<li key={flag}>{flag}</li>
-									))}
-								</ul>
-							</div>
-						)}
+
+						<div className="mb-12 flex justify-center">
+							<button
+								onClick={handleRecommendMore}
+								disabled={isRequestingMore || !currentUser || !selectedFarmId}
+								className="rounded-full border border-[#00450D] px-8 py-3 text-sm font-semibold text-[#00450D] transition-colors hover:bg-[#00450D] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+							>
+								{isRequestingMore ? "Fetching more..." : "Recommend more"}
+							</button>
+						</div>
 					</>
 				) : (
 					<div className="rounded-4xl border border-[#C0C9BB1A] bg-white px-6 py-10 text-[#41493E]">

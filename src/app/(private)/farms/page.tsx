@@ -1,58 +1,168 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import type { User } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+
 import FarmCard from "@/components/layout/farms/FarmCard";
 import AddFarmCard from "@/components/layout/farms/AddFarmCard";
 import AddFarmForm from "@/components/layout/farms/AddFarmForm";
+import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
+import { getClientAuth } from "@/lib/firebaseClient";
 
 const MAX_FARMS = 5;
+const FARM_CARD_BG = "#e9f0e1";
 
-const initialFarms = [
-  {
-    id: 1,
-    name: "Emerald\nValley",
-    location: "Sonoma County, CA",
-    isActive: true,
-    locationIcon: "/farms/add-farm.svg",
-    bgColor: "#e9f0e1",
-  },
-  {
-    id: 2,
-    name: "Highland\nRidge",
-    location: "Asheville, NC",
-    isActive: false,
-    locationIcon: "/farms/location.svg",
-    bgColor: "#e9f0e1",
-  },
-];
+type FarmRecord = {
+  id: string;
+  name: string;
+  location: string | null;
+  isActive: boolean;
+};
 
 export default function FarmsPage() {
-  const [farms, setFarms] = useState(initialFarms);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [farms, setFarms] = useState<FarmRecord[]>([]);
   const [farmName, setFarmName] = useState("");
-  const [locationCoords, setLocationCoords] = useState("");
+  const [locationText, setLocationText] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [pageError, setPageError] = useState("");
 
-  const handleToggle = (id: number) => {
-    setFarms((prevFarms) =>
-      prevFarms.map((farm) => ({
-        ...farm,
-        isActive: farm.id === id
-      }))
-    );
+  useEffect(() => {
+    const auth = getClientAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+
+      if (!user) {
+        setFarms([]);
+        setIsLoading(false);
+        setPageError("Sign in to manage farms.");
+        return;
+      }
+
+      setIsLoading(true);
+      setPageError("");
+
+      try {
+        const { response, body } = await fetchWithAuth(user, "/api/farms");
+
+        if (!response.ok) {
+          throw new Error(
+            getApiErrorMessage(body, "Unable to load farms right now."),
+          );
+        }
+
+        const data = extractApiData<{ farms: FarmRecord[] }>(body);
+        setFarms(data?.farms ?? []);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to load farms right now.";
+        setPageError(message);
+        setFarms([]);
+      } finally {
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleToggle = async (id: string) => {
+    if (!currentUser) {
+      setPageError("Sign in to update farms.");
+      return;
+    }
+
+    setIsSaving(true);
+    setPageError("");
+
+    try {
+      const { response, body } = await fetchWithAuth(
+        currentUser,
+        `/api/farms/${id}/activate`,
+        { method: "POST" },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          getApiErrorMessage(body, "Unable to update the active farm."),
+        );
+      }
+
+      const data = extractApiData<{ farm: FarmRecord }>(body);
+
+      if (!data?.farm) {
+        throw new Error("Active farm response did not include farm data.");
+      }
+
+      setFarms((prevFarms) =>
+        prevFarms.map((farm) => ({
+          ...farm,
+          isActive: farm.id === data.farm.id,
+        })),
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update the active farm.";
+      setPageError(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const isDuplicateFarm = (name: string, location: string) => {
     const normalizedName = name.toLowerCase().trim();
     const normalizedLocation = location.toLowerCase().trim();
-    
-    return farms.some(
-      (farm) => {
-        const farmName = farm.name.replace(/\n/g, ' ').toLowerCase().trim();
-        const farmLocation = farm.location.toLowerCase().trim();
-        return farmName === normalizedName || farmLocation === normalizedLocation;
-      }
-    );
+
+    return farms.some((farm) => {
+      const farmName = farm.name.toLowerCase().trim();
+      const farmLocation = (farm.location ?? "").toLowerCase().trim();
+      return farmName === normalizedName || farmLocation === normalizedLocation;
+    });
   };
 
- 
+  const createFarm = async (name: string, location: string) => {
+    if (!currentUser) {
+      setPageError("Sign in to add farms.");
+      return;
+    }
+
+    setIsSaving(true);
+    setPageError("");
+
+    try {
+      const payload = {
+        name: name.trim(),
+        location: location.trim() || null,
+      };
+      const { response, body } = await fetchWithAuth(currentUser, "/api/farms", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          getApiErrorMessage(body, "Unable to add the farm right now."),
+        );
+      }
+
+      const data = extractApiData<{ farm: FarmRecord }>(body);
+
+      if (!data?.farm) {
+        throw new Error("Farm response did not include farm data.");
+      }
+
+      setFarms((prevFarms) => [...prevFarms, data.farm]);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to add the farm right now.";
+      setPageError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleAddFarmFromModal = (name: string, location: string) => {
     if (farms.length >= MAX_FARMS) {
       alert(`Maximum ${MAX_FARMS} farms allowed`);
@@ -64,44 +174,25 @@ export default function FarmsPage() {
       return;
     }
 
-    const newFarm = {
-      id: Date.now(),
-      name: name,
-      location: location,
-      isActive: false,
-      locationIcon: "/farms/location.svg",
-      bgColor: "#e9f0e1",
-    };
-
-    setFarms((prevFarms) => [...prevFarms, newFarm]);
+    createFarm(name, location);
   };
 
- 
   const handleAddFarmFromForm = () => {
     if (farms.length >= MAX_FARMS) {
       alert(`Maximum ${MAX_FARMS} farms allowed`);
       return;
     }
 
-    if (!farmName.trim() || !locationCoords.trim()) return;
+    if (!farmName.trim()) return;
 
-    if (isDuplicateFarm(farmName, locationCoords)) {
+    if (isDuplicateFarm(farmName, locationText)) {
       alert("A farm with this name or location already exists");
       return;
     }
 
-    const newFarm = {
-      id: Date.now(),
-      name: farmName,
-      location: locationCoords,
-      isActive: false,
-      locationIcon: "/farms/location.svg",
-      bgColor: "#e9f0e1",
-    };
-
-    setFarms((prevFarms) => [...prevFarms, newFarm]);
+    createFarm(farmName, locationText);
     setFarmName("");
-    setLocationCoords("");
+    setLocationText("");
   };
 
   return (
@@ -117,6 +208,15 @@ export default function FarmsPage() {
         </div>
       </div>
 
+      {(isLoading || isSaving) && (
+        <p className="text-sm font-semibold text-[#00450D]">
+          {isLoading ? "Loading farms..." : "Updating farms..."}
+        </p>
+      )}
+      {pageError && (
+        <p className="text-sm font-semibold text-[#9C4A00]">{pageError}</p>
+      )}
+
       <div className="flex flex-row flex-wrap gap-8">
     
         <AddFarmCard 
@@ -129,7 +229,12 @@ export default function FarmsPage() {
         {farms.map((farm) => (
           <FarmCard
             key={farm.id}
-            {...farm}
+            id={farm.id}
+            name={farm.name}
+            location={farm.location}
+            isActive={farm.isActive}
+            locationIcon="/farms/location.svg"
+            bgColor={FARM_CARD_BG}
             onToggle={handleToggle}
           />
         ))}
@@ -154,9 +259,9 @@ export default function FarmsPage() {
 
           <AddFarmForm
             farmName={farmName}
-            locationCoords={locationCoords}
+            locationCoords={locationText}
             onFarmNameChange={setFarmName}
-            onLocationChange={setLocationCoords}
+            onLocationChange={setLocationText}
             onSubmit={handleAddFarmFromForm}
           />
         </div>

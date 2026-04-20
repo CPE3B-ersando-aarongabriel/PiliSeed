@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
-
 type FarmOption = {
 	id: string;
 	name: string;
@@ -25,6 +24,10 @@ type SoilInputValues = {
 	lightLevel: string;
 	temperatureC: string;
 	humidity: string;
+	landSize: string;
+	plantingDuration: string;
+	budget: string;
+	goal: string;
 };
 
 type DeviceNotice = {
@@ -42,6 +45,10 @@ const initialValues: SoilInputValues = {
 	lightLevel: "",
 	temperatureC: "",
 	humidity: "",
+	landSize: "",
+	plantingDuration: "",
+	budget: "",
+	goal: "",
 };
 
 const npkFields = [
@@ -57,6 +64,47 @@ const environmentalFields = [
 	{ id: "temperatureC", label: "Temperature", name: "temperatureC" as const, placeholder: "°C" },
 	{ id: "humidity", label: "Humidity", name: "humidity" as const, placeholder: "%" },
 ];
+
+const planningFields = [
+	{ id: "landSize", label: "Land Size (hectares)", name: "landSize" as const, placeholder: "e.g., 2.5 hectares" },
+	{ id: "plantingDuration", label: "Planting Duration", name: "plantingDuration" as const, placeholder: "e.g., 90 days" },
+	{ id: "goal", label: "Primary Goal", name: "goal" as const, placeholder: "e.g., maximize profit" },
+];
+
+function getSoilInputCacheKey(farmId: string) {
+	return `piliSeed.soilInput.${farmId}`;
+}
+
+function readSoilInputCache(farmId: string): SoilInputValues | null {
+	if (typeof window === "undefined") {
+		return null;
+	}
+
+	const raw = window.localStorage.getItem(getSoilInputCacheKey(farmId));
+
+	if (!raw) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(raw) as Partial<SoilInputValues>;
+
+		return {
+			...initialValues,
+			...parsed,
+		};
+	} catch {
+		return null;
+	}
+}
+
+function writeSoilInputCache(farmId: string, values: SoilInputValues) {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	window.localStorage.setItem(getSoilInputCacheKey(farmId), JSON.stringify(values));
+}
 
 function parseOptionalNumber(value: string) {
 	const trimmedValue = value.trim();
@@ -155,10 +203,27 @@ export default function SoilInputForm({
 		values.potassium.trim().length > 0;
 
 	useEffect(() => {
-		setValues(initialValues);
+		if (!farm?.id) {
+			setValues(initialValues);
+			setSubmitError("");
+			setDeviceNotice({ kind: "idle", message: "" });
+			return;
+		}
+
+		const cached = readSoilInputCache(farm.id);
+
+		setValues(cached ?? initialValues);
 		setSubmitError("");
 		setDeviceNotice({ kind: "idle", message: "" });
 	}, [farm?.id]);
+
+	useEffect(() => {
+		if (!farm?.id) {
+			return;
+		}
+
+		writeSoilInputCache(farm.id, values);
+	}, [farm?.id, values]);
 
 	function handleFieldChange(field: keyof SoilInputValues, value: string) {
 		setValues((previousValues) => ({
@@ -348,12 +413,23 @@ export default function SoilInputForm({
 				);
 			}
 
+			const recommendationPayload = {
+				...(values.landSize.trim() ? { landSize: values.landSize.trim() } : {}),
+				...(values.plantingDuration.trim()
+					? { plantingDuration: values.plantingDuration.trim() }
+					: {}),
+				...(values.goal.trim() ? { goal: values.goal.trim() } : {}),
+				...(values.budget.trim() ? { budget: values.budget.trim() } : {}),
+			};
+			const hasPersonalizationInput =
+				Object.keys(recommendationPayload).length > 0;
+
 			const recommendationResponse = await fetchJsonWithAuth(
 				currentUser,
 				`/api/farms/${farm.id}/recommendations/generate`,
 				{
 					method: "POST",
-					body: JSON.stringify({}),
+					body: JSON.stringify(recommendationPayload),
 				},
 			);
 			const recommendationBody: unknown = await recommendationResponse.json().catch(
@@ -367,6 +443,28 @@ export default function SoilInputForm({
 						"Unable to generate crop recommendation right now.",
 					),
 				);
+			}
+
+			if (hasPersonalizationInput) {
+				const personalizeResponse = await fetchJsonWithAuth(
+					currentUser,
+					`/api/farms/${farm.id}/recommendations/personalize`,
+					{
+						method: "POST",
+						body: JSON.stringify(recommendationPayload),
+					},
+				);
+				const personalizeBody: unknown =
+					await personalizeResponse.json().catch(() => null);
+
+				if (!personalizeResponse.ok) {
+					throw new Error(
+						getResponseMessage(
+							personalizeBody,
+							"Unable to personalize recommendations right now.",
+						),
+					);
+				}
 			}
 
 			router.push(`/recommendations?farmId=${farm.id}`);
@@ -425,6 +523,53 @@ export default function SoilInputForm({
 						</p>
 					)}
 				</div>
+				<div className="border-t border-[#C0C9BB1A] pt-6">
+					<div className="flex items-center gap-3">
+						<img
+							src="/soil/npk.svg"
+							alt="Planning"
+							className="h-[13.5px] w-[13.54px]"
+						/>
+						<span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
+							PLANTING PLAN INPUTS
+						</span>
+					</div>
+
+					<div className="mt-6 grid gap-5">
+						{planningFields.map((field) => (
+							<div key={field.id} className="flex flex-col gap-2">
+								<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+									{field.label}
+								</label>
+								<input
+									type="text"
+									name={field.name}
+									value={values[field.name]}
+									onChange={(event) => handleFieldChange(field.name, event.target.value)}
+									placeholder={field.placeholder}
+									className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+								/>
+							</div>
+						))}
+
+						<div className="flex flex-col gap-2">
+							<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+								Budget
+							</label>
+							<select
+								name="budget"
+								value={values.budget}
+								onChange={(event) => handleFieldChange("budget", event.target.value)}
+								className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none"
+							>
+								<option value="">Select budget level</option>
+								<option value="low">Low</option>
+								<option value="medium">Medium</option>
+								<option value="high">High</option>
+							</select>
+						</div>
+					</div>
+				</div>
 
 				<div className="border-t border-[#C0C9BB1A] pt-6">
 					<button
@@ -457,99 +602,121 @@ export default function SoilInputForm({
 				</div>
 
 				<div className="border-t border-[#C0C9BB1A] pt-6">
-					<div className="flex items-center justify-between gap-4">
-						<div className="flex items-center gap-3">
-							<img
-								src="/soil/chemical-comp.svg"
-								alt="NPK"
-								className="h-[13.5px] w-[13.54px]"
-							/>
+					<details className="group">
+						<summary className="flex cursor-pointer items-center justify-between gap-4 list-none">
 							<span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
-								CHEMICAL COMPOSITION (NPK)
+								CHEMICAL COMPOSITION
 							</span>
-						</div>
-					</div>
+							<span className="text-xl font-semibold text-[#00450D] transition-transform group-open:rotate-45">
+								+
+							</span>
+						</summary>
 
-					<div className="mt-6 flex flex-col gap-6">
-						{npkFields.map((field) => (
-							<div key={field.id} className="flex flex-col gap-2">
-								<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
-									{field.label}
-								</label>
-								<input
-									type="number"
-									name={field.name}
-									value={values[field.name]}
-									onChange={(event) => handleFieldChange(field.name, event.target.value)}
-									placeholder={field.placeholder}
-									className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+						<div className="mt-6 flex flex-col gap-6">
+							<div className="flex items-center gap-3">
+								<img
+									src="/soil/chemical-comp.svg"
+									alt="NPK"
+									className="h-[13.5px] w-[13.54px]"
 								/>
+								<span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+									NPK inputs
+								</span>
 							</div>
-						))}
-					</div>
+
+							{npkFields.map((field) => (
+								<div key={field.id} className="flex flex-col gap-2">
+									<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+										{field.label}
+									</label>
+									<input
+										type="number"
+										name={field.name}
+										value={values[field.name]}
+										onChange={(event) => handleFieldChange(field.name, event.target.value)}
+										placeholder={field.placeholder}
+										className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+									/>
+								</div>
+							))}
+						</div>
+					</details>
 				</div>
 
 				<div className="border-t border-[#C0C9BB1A] pt-6">
-					<div className="flex items-center justify-between gap-4">
-						<div className="flex items-center gap-3">
-							<img
-								src="/soil/moisture.svg"
-								alt="Sensor"
-								className="h-[13.5px] w-[13.54px]"
-							/>
+					<details className="group">
+						<summary className="flex cursor-pointer items-center justify-between gap-4 list-none">
 							<span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
 								ENVIRONMENTAL READINGS
 							</span>
-						</div>
-						<button
-							type="button"
-							onClick={handleDeviceSync}
-							disabled={isFetchingDevice || !currentUser}
-							className="inline-flex items-center gap-2 rounded-full bg-[#00450D] px-4 py-2 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
-						>
-							{isFetchingDevice ? (
-								<>
-									<span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-									Fetching device data
-								</>
-							) : (
-								"Get Data from Device"
-							)}
-						</button>
-					</div>
+							<span className="text-xl font-semibold text-[#00450D] transition-transform group-open:rotate-45">
+								+
+							</span>
+						</summary>
 
-					<div className="mt-6 grid gap-5">
-						{environmentalFields.map((field) => (
-							<div key={field.id} className="flex flex-col gap-2">
-								<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
-									{field.label}
-								</label>
-								<input
-									type="number"
-									name={field.name}
-									value={values[field.name]}
-									onChange={(event) => handleFieldChange(field.name, event.target.value)}
-									placeholder={field.placeholder}
-									className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
-								/>
+						<div className="mt-6">
+							<div className="flex items-center justify-between gap-4">
+								<div className="flex items-center gap-3">
+									<img
+										src="/soil/moisture.svg"
+										alt="Sensor"
+										className="h-[13.5px] w-[13.54px]"
+									/>
+									<span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+										Sensor inputs
+									</span>
+								</div>
+								<button
+									type="button"
+									onClick={handleDeviceSync}
+									disabled={isFetchingDevice || !currentUser}
+									className="inline-flex items-center gap-2 rounded-full bg-[#00450D] px-4 py-2 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
+								>
+									{isFetchingDevice ? (
+										<>
+											<span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+											Fetching device data
+										</>
+									) : (
+										"Get Data from Device"
+									)}
+								</button>
 							</div>
-						))}
-					</div>
 
-					{deviceNotice.kind !== "idle" && deviceNotice.message && (
-						<p
-							className={`mt-4 text-xs font-semibold ${
-								deviceNotice.kind === "error"
-									? "text-[#9C4A00]"
-									: deviceNotice.kind === "success"
-										? "text-[#00450D]"
-										: "text-[#003E63]"
-							}`}
-						>
-							{deviceNotice.message}
-							{deviceNotice.collectedAt ? ` Last synced ${formatSyncTimestamp(deviceNotice.collectedAt)}.` : ""}
-						</p>
-					)}
+							<div className="mt-6 grid gap-5">
+								{environmentalFields.map((field) => (
+									<div key={field.id} className="flex flex-col gap-2">
+										<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+											{field.label}
+										</label>
+										<input
+											type="number"
+											name={field.name}
+											value={values[field.name]}
+											onChange={(event) => handleFieldChange(field.name, event.target.value)}
+											placeholder={field.placeholder}
+											className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+										/>
+									</div>
+								))}
+							</div>
+
+							{deviceNotice.kind !== "idle" && deviceNotice.message && (
+								<p
+									className={`mt-4 text-xs font-semibold ${
+										deviceNotice.kind === "error"
+											? "text-[#9C4A00]"
+											: deviceNotice.kind === "success"
+												? "text-[#00450D]"
+												: "text-[#003E63]"
+									}`}
+								>
+									{deviceNotice.message}
+									{deviceNotice.collectedAt ? ` Last synced ${formatSyncTimestamp(deviceNotice.collectedAt)}.` : ""}
+								</p>
+							)}
+						</div>
+					</details>
 				</div>
 
 				<div className="border-t border-[#C0C9BB1A] pt-6">

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getClientAuth } from "@/lib/firebaseClient";
 import { onAuthStateChanged, User } from "firebase/auth";
 import DashboardHeader from "@/components/layout/dashboard/DashboardHeader";
@@ -45,8 +45,14 @@ export interface YieldPreview {
   cropType: string;
   expectedYield: number;
   unit: string;
-  estimatedRevenuePhp: number;
+  estimatedRevenuePhp: number | null;
   updatedAt: string;
+}
+
+export interface MarketSnapshot {
+  price: number;
+  unit: string;
+  percentageChange: number;
 }
 
 export interface CropRecommendation {
@@ -65,6 +71,24 @@ export interface DashboardData {
   cropRecommendation: CropRecommendation | null;
   yieldHistory?: { month: string; value: number }[];
 }
+
+function formatCurrencyPhp(amount: number | null) {
+  if (amount === null || !Number.isFinite(amount)) {
+    return "PHP --";
+  }
+
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+function formatPercent(value: number) {
+  const signed = value >= 0 ? value : Math.abs(value) * -1;
+  return `${signed.toFixed(1)}%`;
+}
+
 
 async function fetchWithAuth(url: string, user: User) {
   const token = await user.getIdToken();
@@ -95,7 +119,29 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userName, setUserName] = useState<string>("Farmer");
+  const [marketSnapshot, setMarketSnapshot] = useState<MarketSnapshot | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const yieldPreview = data?.yieldPreview ?? null;
+
+  const revenueSource = useMemo(() => {
+    if (!yieldPreview) {
+      return null;
+    }
+
+    if (yieldPreview.estimatedRevenuePhp !== null &&
+      yieldPreview.estimatedRevenuePhp !== undefined) {
+      return yieldPreview.estimatedRevenuePhp;
+    }
+
+    if (!marketSnapshot) {
+      return null;
+    }
+
+    const fallbackRevenue = yieldPreview.expectedYield * 1000 * marketSnapshot.price;
+
+    return Number.isFinite(fallbackRevenue) ? fallbackRevenue : null;
+  }, [yieldPreview, marketSnapshot]);
 
   const handleMenuClick = () => {
     const sidebar = document.querySelector("aside");
@@ -132,6 +178,20 @@ export default function DashboardPage() {
           );
           console.log("API Data:", apiData);
 
+          let nextMarketSnapshot: MarketSnapshot | null = null;
+
+          if (apiData.activeFarm && apiData.yieldPreview) {
+            try {
+              const marketData = await fetchWithAuth(
+                `/api/farms/${apiData.activeFarm.id}/market`,
+                firebaseUser,
+              );
+              nextMarketSnapshot = marketData?.market ?? null;
+            } catch {
+              nextMarketSnapshot = null;
+            }
+          }
+
           const dashboardData: DashboardData = {
             ...apiData,
 
@@ -148,6 +208,7 @@ export default function DashboardPage() {
           };
 
           setData(dashboardData);
+          setMarketSnapshot(nextMarketSnapshot);
         } catch (err: any) {
           console.error("Dashboard error:", err);
           setError(err.message || "Something went wrong");
@@ -218,6 +279,14 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  const revenueValue = formatCurrencyPhp(revenueSource);
+  const progressPercent = yieldPreview?.expectedYield
+    ? `${Math.min(100, Math.max(20, (yieldPreview.expectedYield / 20) * 100)).toFixed(0)}%`
+    : "20%";
+  const percentageIncrease = marketSnapshot
+    ? `${formatPercent(marketSnapshot.percentageChange)} market shift`
+    : "Market data pending";
 
   return (
     <main className="min-h-screen bg-[#EFF6E7] lg:ml-0">
@@ -319,7 +388,12 @@ export default function DashboardPage() {
 
       <div className="px-4 sm:px-5 pb-6 sm:pb-8">
         {data.yieldPreview ? (
-          <DashboardYieldPred yieldHistory={data.yieldHistory} />
+          <DashboardYieldPred
+            yieldHistory={data.yieldHistory}
+            yieldPreview={data.yieldPreview}
+            revenueValue={revenueValue}
+            percentageIncrease={percentageIncrease}
+          />
         ) : (
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-md border border-[#41493E]/10 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0 mb-6">

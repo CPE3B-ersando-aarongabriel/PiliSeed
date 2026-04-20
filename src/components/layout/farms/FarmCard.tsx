@@ -2,13 +2,13 @@
 import FarmToggle from "@/components/layout/farms/FarmToggle";
 
 interface FarmCardProps {
-  id: number;
+  id: string;
   name: string;
-  location: string;
+  location: string | null;
   isActive: boolean;
   locationIcon: string;
   bgColor: string;
-  onToggle: (id: number) => void;
+  onToggle: (id: string) => void;
 }
 
 export default function FarmCard({
@@ -53,7 +53,7 @@ export default function FarmCard({
               />
 
               <span className="text-[#41493E] text-sm font-normal leading-5">
-                {location}
+                {location ?? "Location pending"}
               </span>
             </div>
           </div>

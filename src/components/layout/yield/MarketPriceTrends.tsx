@@ -23,28 +23,34 @@ export default function MarketPriceTrendsCard({ prices }: MarketPriceTrendsCardP
       </div>
 
       <div className="flex-1 flex flex-col gap-4">
-        {prices.map((item) => (
-          <div key={item.label} className="border-b border-[#795548]/10 pb-2">
-            <div className="text-xs font-semibold text-[#795548]/60 mb-1">
-              {item.label}
-            </div>
-            <div className="flex items-end justify-between">
-              <span className="font-bold text-[#795548] text-xl">
-                {item.price}
-              </span>
-              <div className="flex items-center gap-1">
-                <img
-                  src={item.isPositive ? "/yield/up.svg" : "/yield/down.svg"}
-                  alt="trend icon"
-                  className="w-4 h-4"
-                />
-                <span className={`font-semibold text-xs ${item.changeColor}`}>
-                  {item.change}
+        {prices.length === 0 ? (
+          <p className="text-sm font-semibold text-[#795548]/70">
+            Market pricing will appear once a forecast is available.
+          </p>
+        ) : (
+          prices.map((item) => (
+            <div key={item.label} className="border-b border-[#795548]/10 pb-2">
+              <div className="text-xs font-semibold text-[#795548]/60 mb-1">
+                {item.label}
+              </div>
+              <div className="flex items-end justify-between">
+                <span className="font-bold text-[#795548] text-xl">
+                  {item.price}
                 </span>
+                <div className="flex items-center gap-1">
+                  <img
+                    src={item.isPositive ? "/yield/up.svg" : "/yield/down.svg"}
+                    alt="trend icon"
+                    className="w-4 h-4"
+                  />
+                  <span className={`font-semibold text-xs ${item.changeColor}`}>
+                    {item.change}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       <p className="font-normal text-[#795548]/50 text-[10px] leading-[12.5px] mt-4">
