@@ -2,6 +2,7 @@
 
 import { motion, type Variants } from "framer-motion";
 import { JSX } from "react";
+import { BadgeCheck, Sprout } from "lucide-react";
 
 const sectionReveal: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -14,17 +15,17 @@ const sectionReveal: Variants = {
 
 const missionPoints = [
   {
-    icon: "/about/About.svg",
+    Icon: BadgeCheck,
     alt: "Icon",
     text: "Reducing water waste by 30% through precision sensing.",
   },
   {
-    icon: "/about/About.svg",
+    Icon: BadgeCheck,
     alt: "Icon",
     text: "Predicting soil nutrient depletion before it happens.",
   },
   {
-    icon: "/about/About.svg",
+    Icon: BadgeCheck,
     alt: "Icon",
     text: "Creating climate-resilient farming communities.",
   },
@@ -33,7 +34,7 @@ const missionPoints = [
 const teamMembers = [
   {
     name: "Francine Nicole Navarro",
-    bgImage: null,
+    bgImage: "/about/About_Francine.png",
     leftOffset: 0,
     gap: "gap-[15.5px]",
     nameWidth: "w-[206px]",
@@ -80,7 +81,76 @@ const teamMembers = [
 
 export const About_Body = (): JSX.Element => {
   return (
-    <div className="flex flex-col items-center gap-24 pt-32 pb-20 px-0 relative self-stretch w-full flex-[0_0_auto]">
+    <>
+    <div className="flex lg:hidden flex-col items-center gap-16 pt-24 pb-16 px-4 sm:px-8 w-full">
+      <motion.div
+        className="mx-auto w-full max-w-3xl space-y-5"
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.35 }}
+      >
+        <p className="[font-family:'Inter-SemiBold',Helvetica] text-xs font-semibold tracking-[1.4px] text-[#7a5649]">CULTIVATING TOMORROW</p>
+        <h1 className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl font-extrabold leading-tight text-[#00450d] sm:text-5xl">
+          Roots in data.
+          <br />
+          Growth in tech.
+        </h1>
+        <p className="[font-family:'Inter-Regular',Helvetica] text-base leading-7 text-[#41493e]">
+          At PiliSeed, we bridge ancestral farming wisdom with digital precision to help growers make better decisions every season.
+        </p>
+      </motion.div>
+
+      <motion.div
+        className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6"
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+      >
+        <div className="rounded-[28px] bg-[#eff6e7] p-6">
+          <h2 className="[font-family:'Inter-ExtraBold',Helvetica] text-2xl font-extrabold text-[#00450d]">Our Mission</h2>
+          <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#41493e]">
+            Democratize agricultural technology so every farm can optimize resources and increase sustainable growth.
+          </p>
+          <div className="mt-4 space-y-2">
+            {missionPoints.map((point, index) => (
+              <div key={index} className="flex items-start gap-2 text-sm text-[#00450d]">
+                <point.Icon className="mt-0.5 h-4 w-4" aria-label={point.alt} />
+                <span>{point.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[28px] bg-[#e3ebdc] p-6">
+          <h2 className="[font-family:'Inter-ExtraBold',Helvetica] text-2xl font-extrabold text-[#00450d]">Our Vision</h2>
+          <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#41493e]">
+            A future where intelligent, sustainable farming becomes the default and strengthens food systems globally.
+          </p>
+        </div>
+      </motion.div>
+
+      <motion.div
+        className="mx-auto w-full max-w-6xl"
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <h3 className="mb-6 text-center [font-family:'Manrope-ExtraBold',Helvetica] text-3xl font-extrabold text-[#00450d]">The Minds Behind the Seed</h3>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {teamMembers.map((member) => (
+            <div key={member.name} className="rounded-[24px] bg-white p-3 shadow-[0px_10px_24px_-12px_#00000040]">
+              <div className="h-40 w-full rounded-[20px] bg-cover bg-center" style={{ backgroundImage: `url(${member.bgImage})` }} />
+              <p className="mt-3 text-center [font-family:'Manrope-Bold',Helvetica] text-sm font-bold text-[#00450d]">{member.name}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+
+    <div className="hidden lg:flex flex-col items-center gap-24 pt-32 pb-20 px-0 relative self-stretch w-full flex-[0_0_auto]">
       <motion.div
         className="flex w-[1216px] items-end gap-12 relative flex-[0_0_auto]"
         variants={sectionReveal}
@@ -119,11 +189,7 @@ export const About_Body = (): JSX.Element => {
               src="/about/About.png"
             />
             <div className="flex flex-col items-start gap-[15.25px] relative self-stretch w-full flex-[0_0_auto]">
-              <img
-                className="relative w-[25.49px] h-[25.49px]"
-                alt="Icon"
-                src="/about/About_2.svg"
-              />
+              <Sprout className="relative h-[25.49px] w-[25.49px] text-[#00450d]" aria-hidden="true" />
               <div className="flex flex-col items-start pt-0 pb-[0.75px] px-0 relative self-stretch w-full flex-[0_0_auto]">
                 <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#00450d] text-lg tracking-[0] leading-[22.5px]">
                   Empowering 10,000+ farmers with
@@ -136,13 +202,13 @@ export const About_Body = (): JSX.Element => {
         </div>
       </motion.div>
       <motion.div
-        className="flex flex-col items-start px-8 py-24 self-stretch flex-[0_0_auto] bg-[#eff6e7] relative w-full"
+        className="flex flex-col items-center px-0 py-24 self-stretch flex-[0_0_auto] bg-[#eff6e7] relative w-full"
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
       >
-        <div className="grid w-full max-w-screen-xl grid-cols-2 grid-rows-[710px] items-stretch gap-20">
+        <div className="grid w-[1216px] grid-cols-2 grid-rows-[710px] items-stretch gap-20">
           <div className="relative row-[1_/_2] col-[1_/_2] self-stretch w-full h-full flex flex-col items-start bg-[#ffffff01] rounded-[48px] overflow-hidden shadow-[0px_25px_50px_-12px_#00000040]">
             <div className="relative self-stretch w-full aspect-[0.8] bg-[url(/about/About_2.png)] bg-cover bg-[50%_50%]" />
             <div className="flex flex-col w-[calc(100%_-_64px)] items-start p-6 absolute left-8 bottom-8 bg-[#ffffffcc] rounded-[32px] backdrop-blur-[6px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(6px)_brightness(100%)]">
@@ -177,11 +243,7 @@ export const About_Body = (): JSX.Element => {
                     className="flex items-center gap-3 relative self-stretch w-full flex-[0_0_auto]"
                   >
                     <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                      <img
-                        className="relative w-5 h-5"
-                        alt={point.alt}
-                        src={point.icon}
-                      />
+                      <point.Icon className="relative h-5 w-5 text-[#00450d]" aria-label={point.alt} />
                     </div>
                     <p className="mt-[-1.00px] [font-family:'Inter-Medium',Helvetica] font-medium text-[#00450d] text-base tracking-[0] leading-6 relative flex items-center">
                       {point.text}
@@ -261,5 +323,6 @@ export const About_Body = (): JSX.Element => {
         </div>
       </motion.div>
     </div>
+    </>
   );
 };

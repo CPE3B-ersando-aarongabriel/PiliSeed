@@ -7,8 +7,8 @@ interface FeaturedCropCardProps {
   description: string;
   match: string;
   imageUrl?: string;
-  moistureNeed: string;
-  tempRange: string;
+  moistureNeed?: string;
+  tempRange?: string;
 }
 
 export default function FeaturedCropCard({
@@ -19,6 +19,8 @@ export default function FeaturedCropCard({
   moistureNeed,
   tempRange,
 }: FeaturedCropCardProps) {
+  const hasSupplementaryInfo = Boolean(moistureNeed || tempRange);
+
   return (
     <div className="md:col-span-2 bg-white rounded-4xl overflow-hidden shadow">
  
@@ -58,55 +60,62 @@ export default function FeaturedCropCard({
         </div>
       </div>
 
-      <div className="p-6 grid md:grid-cols-2 gap-6">
+      <div
+        className={`p-6 grid gap-6 ${hasSupplementaryInfo ? "md:grid-cols-2" : "grid-cols-1"}`}
+      >
      
         <div>
           <p className="text-xs font-semibold text-[#41493E] mb-2 tracking-wider">
             WHY IT FITS
           </p>
-          <p className="text-[#171D14] leading-relaxed text-s text-justify">
+          <p className="text-[#171D14] leading-relaxed text-sm text-left">
             {description}
           </p>
         </div>
 
-        <div className="flex gap-4">
-      
-          <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-4 h-4 flex items-center justify-center">
-                <Image
-                  src="/recommendations/moisture.svg"
-                  alt="Moisture"
-                  width={16}
-                  height={16}
-                  className="w-full h-full object-contain"
-                />
+        {(moistureNeed || tempRange) && (
+          <div className="flex gap-4">
+            {moistureNeed && (
+              <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <Image
+                      src="/recommendations/moisture.svg"
+                      alt="Moisture"
+                      width={16}
+                      height={16}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-xs text-[#41493E] font-semibold">
+                    MOISTURE NEED
+                  </p>
+                </div>
+                <p className="font-semibold text-[#00450D] text-2xl">
+                  {moistureNeed}
+                </p>
               </div>
-              <p className="text-xs text-[#41493E] font-semibold">
-                MOISTURE NEED
-              </p>
-            </div>
-            <p className="font-semibold text-[#00450D] text-2xl">
-              {moistureNeed}
-            </p>
-          </div>
+            )}
 
-          <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-4 h-4 flex items-center justify-center">
-                <Image
-                  src="/recommendations/temp.svg"
-                  alt="Temperature"
-                  width={16}
-                  height={16}
-                  className="w-full h-full object-contain"
-                />
+            {tempRange && (
+              <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <Image
+                      src="/recommendations/temp.svg"
+                      alt="Temperature"
+                      width={16}
+                      height={16}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-xs text-[#41493E] font-semibold">TEMP RANGE</p>
+                </div>
+                <p className="font-semibold text-[#00450D] text-2xl">{tempRange}</p>
               </div>
-              <p className="text-xs text-[#41493E] font-semibold">TEMP RANGE</p>
-            </div>
-            <p className="font-semibold text-[#00450D] text-2xl">{tempRange}</p>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

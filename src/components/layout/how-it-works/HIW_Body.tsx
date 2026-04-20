@@ -2,6 +2,15 @@
 
 import { motion, useScroll, useSpring, useTransform, type Variants } from "framer-motion";
 import { JSX, useRef } from "react";
+import {
+  ArrowRight,
+  Bot,
+  Droplets,
+  MapPinned,
+  Mountain,
+  Sprout,
+  TrendingUp,
+} from "lucide-react";
 
 const sectionReveal: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -12,16 +21,23 @@ const sectionReveal: Variants = {
   },
 };
 
-const soilFields = [
-  { label: "Soil pH Level", value: "6.5" },
-  { label: "Nitrogen (N)", value: "Medium" },
-  { label: "Phosphorus (P)", value: "Low" },
-  { label: "Moisture Content", value: "24%" },
+const npkPreviewFields = [
+  { label: "Nitrogen (N)", value: "18", unit: "mg/kg" },
+  { label: "Phosphorus (P)", value: "9", unit: "mg/kg" },
+  { label: "Potassium (K)", value: "24", unit: "mg/kg" },
+];
+
+const environmentalPreviewFields = [
+  { label: "Soil Moisture", value: "24", unit: "%" },
+  { label: "Soil pH", value: "6.5", unit: "pH" },
+  { label: "Light Level", value: "16800", unit: "lux" },
+  { label: "Temperature", value: "29", unit: "°C" },
+  { label: "Humidity", value: "67", unit: "%" },
 ];
 
 const recommendationCards = [
   {
-    icon: "/how-it-works/HIW3.svg",
+    Icon: Sprout,
     iconBg: "bg-[#00450d]",
     iconClass: "relative w-[17px] h-[16.99px]",
     title: "Crop Selection",
@@ -30,7 +46,7 @@ const recommendationCards = [
     descWidth: "w-[261.86px]",
   },
   {
-    icon: "/how-it-works/HIW4.svg",
+    Icon: Droplets,
     iconBg: "bg-[#003e63]",
     iconClass: "relative w-4 h-5",
     title: "Irrigation Cycles",
@@ -42,7 +58,7 @@ const recommendationCards = [
 
 const forecastCards = [
   {
-    icon: "/how-it-works/HIW.svg",
+    Icon: TrendingUp,
     iconClass: "relative w-10 h-6",
     iconBg: "bg-[#a3f69c4c]",
     title: "Growth Forecast",
@@ -52,7 +68,7 @@ const forecastCards = [
     colClass: "col-[1_/_2] w-[336.66px]",
   },
   {
-    icon: "/how-it-works/HIW2.svg",
+    Icon: Bot,
     iconClass: "relative w-[38.02px] h-10",
     iconBg: "bg-[#fdcdbc4c]",
     title: "AI Recommendation",
@@ -76,7 +92,66 @@ export const HIW_Body = (): JSX.Element => {
   const heroImageY = useTransform(scrollYProgress, [0, 0.6], [0, -24]);
 
   return (
-    <div ref={sectionRef} className="flex flex-col items-center gap-24 pt-32 pb-24 px-0 relative self-stretch w-full flex-[0_0_auto]">
+    <>
+    <div className="flex lg:hidden flex-col gap-12 pt-24 pb-16 px-4 sm:px-8 bg-[#f5fced]">
+      <motion.div
+        className="mx-auto w-full max-w-3xl space-y-4"
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+      >
+        <span className="inline-flex rounded-full bg-[#a3f69c] px-3 py-1 text-xs font-semibold tracking-[0.35px] text-[#005312]">THE PILLISEED METHOD</span>
+        <h1 className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl font-extrabold leading-tight text-[#00450d] sm:text-5xl">
+          From Soil to Success
+          <br />
+          in Three Steps.
+        </h1>
+        <p className="[font-family:'Inter-Regular',Helvetica] text-base leading-7 text-[#41493e]">
+          A streamlined flow from farm setup, to soil input, to AI recommendations.
+        </p>
+      </motion.div>
+
+      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5">
+        <div className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]">
+          <h2 className="text-xl font-bold text-[#00450d]">1. Pinpoint Your Farm</h2>
+          <p className="mt-2 text-sm leading-6 text-[#41493e]">Select a farm and lock the location context before analysis.</p>
+          <div className="mt-3 space-y-2 text-sm text-[#171d14]">
+            <div className="flex items-center gap-2"><MapPinned className="h-4 w-4 text-[#00450d]" /> Precision farm selection</div>
+            <div className="flex items-center gap-2"><Mountain className="h-4 w-4 text-[#00450d]" /> Regional context applied</div>
+          </div>
+        </div>
+
+        <div className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]">
+          <h2 className="text-xl font-bold text-[#00450d]">2. Input Soil Data</h2>
+          <p className="mt-2 text-sm leading-6 text-[#41493e]">Fill NPK values and optional environmental readings manually or from device sync.</p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {npkPreviewFields.map((field) => (
+              <div key={field.label} className="rounded-xl bg-[#e3ebdc] px-3 py-2 text-sm text-[#171d14]">
+                <div className="font-semibold">{field.label}</div>
+                <div>{field.value} {field.unit}</div>
+              </div>
+            ))}
+          </div>
+          <button className="mt-4 inline-flex items-center rounded-full bg-[#00450d] px-4 py-2 text-xs font-semibold text-white">Get Data from Device</button>
+        </div>
+
+        <div className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]">
+          <h2 className="text-xl font-bold text-[#00450d]">3. Receive Recommendations</h2>
+          <p className="mt-2 text-sm leading-6 text-[#41493e]">PiliSeed suggests crop and irrigation strategies based on your farm profile and inputs.</p>
+          <div className="mt-3 space-y-2">
+            {recommendationCards.map((card) => (
+              <div key={card.title} className="flex items-center gap-3 rounded-xl bg-[#dee5d6] px-3 py-2 text-sm text-[#171d14]">
+                <card.Icon className="h-4 w-4 text-[#00450d]" />
+                <span className="font-semibold">{card.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div ref={sectionRef} className="hidden lg:flex flex-col items-center gap-24 pt-32 pb-24 px-0 relative self-stretch w-full flex-[0_0_auto]">
       <div className="fixed top-20 left-0 z-40 h-1 w-full bg-[#00450d1a] pointer-events-none">
         <motion.div className="h-full origin-left bg-[#00450d]" style={{ scaleX: progressScale }} />
       </div>
@@ -169,10 +244,7 @@ export const HIW_Body = (): JSX.Element => {
             <div className="flex flex-col items-start gap-4 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto]">
               <div className="flex items-start gap-3 relative self-stretch w-full flex-[0_0_auto]">
                 <div className="inline-flex flex-col items-start pt-1 pb-0 px-0 relative flex-[0_0_auto]">
-                  <img className="relative w-4 h-5" 
-                  alt="Icon" 
-                  src="/how-it-works/HIW6.svg" 
-                  />
+                  <MapPinned className="relative h-5 w-4 text-[#00450d]" aria-hidden="true" />
                 </div>
                 <p className="w-[343px] h-6 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d14] text-base tracking-[0] leading-6 relative flex items-center whitespace-nowrap">
                   Precision geolocation up to 1 meter accuracy.
@@ -180,11 +252,7 @@ export const HIW_Body = (): JSX.Element => {
               </div>
               <div className="flex items-start gap-3 relative self-stretch w-full flex-[0_0_auto]">
                 <div className="inline-flex flex-col items-start pt-1 pb-0 px-0 relative flex-[0_0_auto]">
-                  <img
-                    className="relative w-[18px] h-[19.05px]"
-                    alt="Icon"
-                    src="/how-it-works/HIW7.svg"
-                  />
+                  <Mountain className="relative h-[19.05px] w-[18px] text-[#00450d]" aria-hidden="true" />
                 </div>
                 <div className="w-[303.25px] h-6 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#171d14] text-base tracking-[0] leading-6 relative flex items-center whitespace-nowrap">
                   Automatic regional topography analysis.
@@ -219,43 +287,92 @@ export const HIW_Body = (): JSX.Element => {
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
-          <div className="grid grid-cols-12 grid-rows-[351.75px] w-[1216px] h-fit gap-12">
+          <div className="grid grid-cols-12 w-[1216px] h-fit gap-12">
             <div className="relative row-[1_/_2] col-[1_/_8] self-center w-full h-fit flex flex-col items-start gap-8 p-8 bg-white rounded-[48px] border border-solid border-[#c0c9bb1a]">
               <div className="absolute h-full top-0 left-0 rounded-[48px] shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] w-full bg-[#ffffff01]" />
-              <div className="grid w-full grid-cols-2 gap-6">
-                {soilFields.map((field, index) => {
-                  return (
-                    <motion.div
-                      key={field.label}
-                      className="flex flex-col gap-2"
-                      initial={{ opacity: 0, y: 12 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, amount: 0.2 }}
-                      transition={{ duration: 0.35, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                    >
-                      <div className="h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
-                        {field.label}
-                      </div>
-                      <div className="flex min-h-14 items-center px-6 py-4 bg-[#e3ebdc] rounded-md overflow-hidden">
-                        <div className="[font-family:'Inter-Regular',Helvetica] font-normal text-gray-500 text-base tracking-[0] leading-6">
-                          {field.value}
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+              <div className="w-full space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-8 items-center rounded-full bg-[#00450d1a] px-3 [font-family:'Inter-SemiBold',Helvetica] text-[10px] font-semibold tracking-[1.2px] text-[#00450d]">
+                      CHEMICAL COMPOSITION (NPK)
+                    </span>
+                  </div>
+                  <div className="grid w-full grid-cols-3 gap-4">
+                    {npkPreviewFields.map((field, index) => {
+                      return (
+                        <motion.div
+                          key={field.label}
+                          className="flex flex-col gap-2"
+                          initial={{ opacity: 0, y: 12 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true, amount: 0.2 }}
+                          transition={{ duration: 0.35, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          <div className="h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
+                            {field.label}
+                          </div>
+                          <div className="flex min-h-12 items-center justify-between px-4 py-3 bg-[#e3ebdc] rounded-md overflow-hidden">
+                            <div className="[font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-base tracking-[0] leading-6">
+                              {field.value}
+                            </div>
+                            <div className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#717a6d] text-xs tracking-[0] leading-4">
+                              {field.unit}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-3 border-t border-[#c0c9bb33] pt-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="inline-flex h-8 items-center rounded-full bg-[#003e631a] px-3 [font-family:'Inter-SemiBold',Helvetica] text-[10px] font-semibold tracking-[1.2px] text-[#003e63]">
+                      ENVIRONMENTAL READINGS
+                    </span>
+                    <button className="all-[unset] box-border inline-flex items-center rounded-full bg-[#00450d] px-4 py-2 [font-family:'Inter-SemiBold',Helvetica] text-xs font-semibold text-white tracking-[0] leading-4 cursor-default">
+                      Get Data from Device
+                    </button>
+                  </div>
+                  <div className="grid w-full grid-cols-2 gap-4">
+                    {environmentalPreviewFields.map((field, index) => {
+                      return (
+                        <motion.div
+                          key={field.label}
+                          className="flex flex-col gap-2"
+                          initial={{ opacity: 0, y: 12 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true, amount: 0.2 }}
+                          transition={{ duration: 0.35, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          <div className="h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
+                            {field.label}
+                          </div>
+                          <div className="flex min-h-12 items-center justify-between px-4 py-3 bg-[#e3ebdc] rounded-md overflow-hidden">
+                            <div className="[font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-base tracking-[0] leading-6">
+                              {field.value}
+                            </div>
+                            <div className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#717a6d] text-xs tracking-[0] leading-4">
+                              {field.unit}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                  <p className="[font-family:'Inter-Regular',Helvetica] text-[#41493e] text-xs tracking-[0] leading-5">
+                    Auto-sync pulls moisture, pH, light, temperature, and humidity from your linked farm device.
+                  </p>
+                </div>
               </div>
+
               <button className="all-[unset] box-border flex gap-2 px-0 py-4 self-stretch w-full bg-[#00450d] rounded-full items-center justify-center relative flex-[0_0_auto]">
                 <div className="absolute w-full h-full top-0 left-0 bg-[#ffffff01] rounded-full shadow-[0px_2px_4px_-2px_#0000001a,0px_4px_6px_-1px_#0000001a]" />
-                <div className="justify-center w-[148.36px] h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-base text-center tracking-[0] leading-6 relative flex items-center whitespace-nowrap">
-                  Analyze Soil Health
+                <div className="justify-center w-[178px] h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-base text-center tracking-[0] leading-6 relative flex items-center whitespace-nowrap">
+                  Get Crop Recommendation
                 </div>
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <img
-                    className="relative w-[18px] h-[18px]"
-                    alt="Icon"
-                    src="/how-it-works/HIW5.svg"
-                  />
+                  <ArrowRight className="relative h-[18px] w-[18px] text-white" aria-hidden="true" />
                 </div>
               </button>
             </div>
@@ -281,11 +398,13 @@ export const HIW_Body = (): JSX.Element => {
               </div>
               <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
                 <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-lg tracking-[0] leading-[29.2px]">
-                  Don&#39;t let your data go to waste. Input your latest soil
+                  Input complete NPK values, then enrich your profile with
                   <br />
-                  test results or connect your IoT sensors for a real-time
+                  moisture, pH, light, temperature, and humidity. You can
                   <br />
-                  stream of vital underground metrics.
+                  enter values manually or fetch them directly from your
+                  <br />
+                  connected farm device.
                 </p>
               </div>
               <div className="flex flex-col items-start pt-8 pb-6 px-6 relative self-stretch w-full flex-[0_0_auto] bg-[#fdcdbc] rounded-[32px]">
@@ -352,11 +471,7 @@ export const HIW_Body = (): JSX.Element => {
                     className={`${card.iconBg} flex w-12 h-12 items-center justify-center relative rounded-full shadow-[0px_1px_2px_#0000000d]`}
                   >
                     <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                      <img
-                        className={card.iconClass}
-                        alt="Icon"
-                        src={card.icon}
-                      />
+                      <card.Icon className={`${card.iconClass} text-white`} aria-hidden="true" />
                     </div>
                   </div>
                   <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
@@ -390,11 +505,7 @@ export const HIW_Body = (): JSX.Element => {
                   className={`flex w-[calc(100%_-_50px)] h-32 items-center justify-center absolute top-[25px] left-[25px] ${card.iconBg} rounded-[32px]`}
                 >
                   <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                    <img
-                      className={card.iconClass}
-                      alt="Icon"
-                      src={card.icon}
-                    />
+                    <card.Icon className={`${card.iconClass} text-[#00450d]`} aria-hidden="true" />
                   </div>
                 </div>
                 <div className="w-[calc(100%_-_50px)] absolute top-[169px] left-[25px] flex flex-col items-start">
@@ -417,5 +528,6 @@ export const HIW_Body = (): JSX.Element => {
         </motion.div>
       </div>
     </div>
+    </>
   );
 };
