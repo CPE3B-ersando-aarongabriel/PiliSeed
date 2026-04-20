@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
-
 type FarmOption = {
 	id: string;
 	name: string;
@@ -25,6 +24,10 @@ type SoilInputValues = {
 	lightLevel: string;
 	temperatureC: string;
 	humidity: string;
+	landSize: string;
+	plantingDuration: string;
+	budget: string;
+	goal: string;
 };
 
 type DeviceNotice = {
@@ -42,6 +45,10 @@ const initialValues: SoilInputValues = {
 	lightLevel: "",
 	temperatureC: "",
 	humidity: "",
+	landSize: "",
+	plantingDuration: "",
+	budget: "",
+	goal: "",
 };
 
 const npkFields = [
@@ -56,6 +63,12 @@ const environmentalFields = [
 	{ id: "lightLevel", label: "Light Level", name: "lightLevel" as const, placeholder: "lux" },
 	{ id: "temperatureC", label: "Temperature", name: "temperatureC" as const, placeholder: "°C" },
 	{ id: "humidity", label: "Humidity", name: "humidity" as const, placeholder: "%" },
+];
+
+const planningFields = [
+	{ id: "landSize", label: "Land Size (hectares)", name: "landSize" as const, placeholder: "e.g., 2.5 hectares" },
+	{ id: "plantingDuration", label: "Planting Duration", name: "plantingDuration" as const, placeholder: "e.g., 90 days" },
+	{ id: "goal", label: "Primary Goal", name: "goal" as const, placeholder: "e.g., maximize profit" },
 ];
 
 function parseOptionalNumber(value: string) {
@@ -348,12 +361,23 @@ export default function SoilInputForm({
 				);
 			}
 
+			const recommendationPayload = {
+				...(values.landSize.trim() ? { landSize: values.landSize.trim() } : {}),
+				...(values.plantingDuration.trim()
+					? { plantingDuration: values.plantingDuration.trim() }
+					: {}),
+				...(values.goal.trim() ? { goal: values.goal.trim() } : {}),
+				...(values.budget.trim() ? { budget: values.budget.trim() } : {}),
+			};
+			const hasPersonalizationInput =
+				Object.keys(recommendationPayload).length > 0;
+
 			const recommendationResponse = await fetchJsonWithAuth(
 				currentUser,
 				`/api/farms/${farm.id}/recommendations/generate`,
 				{
 					method: "POST",
-					body: JSON.stringify({}),
+					body: JSON.stringify(recommendationPayload),
 				},
 			);
 			const recommendationBody: unknown = await recommendationResponse.json().catch(
@@ -367,6 +391,28 @@ export default function SoilInputForm({
 						"Unable to generate crop recommendation right now.",
 					),
 				);
+			}
+
+			if (hasPersonalizationInput) {
+				const personalizeResponse = await fetchJsonWithAuth(
+					currentUser,
+					`/api/farms/${farm.id}/recommendations/personalize`,
+					{
+						method: "POST",
+						body: JSON.stringify(recommendationPayload),
+					},
+				);
+				const personalizeBody: unknown =
+					await personalizeResponse.json().catch(() => null);
+
+				if (!personalizeResponse.ok) {
+					throw new Error(
+						getResponseMessage(
+							personalizeBody,
+							"Unable to personalize recommendations right now.",
+						),
+					);
+				}
 			}
 
 			router.push(`/recommendations?farmId=${farm.id}`);
@@ -424,6 +470,53 @@ export default function SoilInputForm({
 							Set a location on this farm before running soil analysis.
 						</p>
 					)}
+				</div>
+				<div className="border-t border-[#C0C9BB1A] pt-6">
+					<div className="flex items-center gap-3">
+						<img
+							src="/soil/npk.svg"
+							alt="Planning"
+							className="h-[13.5px] w-[13.54px]"
+						/>
+						<span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
+							PLANTING PLAN INPUTS
+						</span>
+					</div>
+
+					<div className="mt-6 grid gap-5">
+						{planningFields.map((field) => (
+							<div key={field.id} className="flex flex-col gap-2">
+								<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+									{field.label}
+								</label>
+								<input
+									type="text"
+									name={field.name}
+									value={values[field.name]}
+									onChange={(event) => handleFieldChange(field.name, event.target.value)}
+									placeholder={field.placeholder}
+									className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+								/>
+							</div>
+						))}
+
+						<div className="flex flex-col gap-2">
+							<label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+								Budget
+							</label>
+							<select
+								name="budget"
+								value={values.budget}
+								onChange={(event) => handleFieldChange("budget", event.target.value)}
+								className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none"
+							>
+								<option value="">Select budget level</option>
+								<option value="low">Low</option>
+								<option value="medium">Medium</option>
+								<option value="high">High</option>
+							</select>
+						</div>
+					</div>
 				</div>
 
 				<div className="border-t border-[#C0C9BB1A] pt-6">
