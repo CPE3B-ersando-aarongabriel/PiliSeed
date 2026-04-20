@@ -1,4 +1,8 @@
 import { UnauthorizedError } from "./authMiddleware";
+import {
+  AnalysisError,
+  AnalysisExternalServiceError,
+} from "./analysisErrors";
 
 type ApiErrorPayload = {
   code: string;
@@ -10,6 +14,7 @@ export function successResponse<T>(data: T, status = 200) {
   return Response.json(
     {
       success: true,
+      message: "Operation completed successfully",
       data,
     },
     { status },
@@ -34,6 +39,8 @@ export function errorResponse(
   return Response.json(
     {
       success: false,
+      message,
+      errors: details === undefined ? [] : [details],
       error: errorPayload,
     },
     { status },
@@ -43,6 +50,24 @@ export function errorResponse(
 export function handleRouteError(error: unknown) {
   if (error instanceof UnauthorizedError) {
     return errorResponse(401, "UNAUTHORIZED", error.message);
+  }
+
+  if (error instanceof AnalysisError) {
+    if (error instanceof AnalysisExternalServiceError) {
+      return errorResponse(
+        error.status >= 400 && error.status < 600 ? error.status : 502,
+        error.code,
+        error.message,
+        error.details,
+      );
+    }
+
+    return errorResponse(
+      error.code === "CONFIGURATION_ERROR" ? 500 : 400,
+      error.code,
+      error.message,
+      undefined,
+    );
   }
 
   if (isFirebaseAdminAuthError(error)) {
@@ -56,10 +81,29 @@ export function handleRouteError(error: unknown) {
 
   console.error("API route error:", error);
 
+  const internalErrorDetails =
+    typeof error === "object" && error !== null
+      ? {
+          name:
+            "name" in error && typeof (error as { name?: unknown }).name === "string"
+              ? (error as { name: string }).name
+              : "UnknownError",
+          message:
+            "message" in error &&
+            typeof (error as { message?: unknown }).message === "string"
+              ? (error as { message: string }).message
+              : "Unknown internal error",
+        }
+      : {
+          name: "UnknownError",
+          message: typeof error === "string" ? error : "Unknown internal error",
+        };
+
   return errorResponse(
     500,
     "INTERNAL_SERVER_ERROR",
     "Something went wrong while processing this request.",
+    internalErrorDetails,
   );
 }
 

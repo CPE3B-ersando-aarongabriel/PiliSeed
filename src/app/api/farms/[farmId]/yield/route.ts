@@ -3,9 +3,13 @@ import { z } from "zod";
 import {
   errorResponse,
   handleRouteError,
+  successResponse,
 } from "../../../../../lib/apiResponse";
 import { verifyTokenWithClaims } from "../../../../../lib/authMiddleware";
-import { getFarmByIdForUser } from "../../../../../lib/firestoreSchema";
+import {
+  getFarmByIdForUser,
+  getLatestYieldForecastForFarm,
+} from "../../../../../lib/firestoreSchema";
 
 export const runtime = "nodejs";
 
@@ -36,14 +40,27 @@ export async function GET(request: Request, context: FarmYieldContext) {
       return errorResponse(404, "FARM_NOT_FOUND", "Farm not found.");
     }
 
-    return errorResponse(
-      501,
-      "NOT_IMPLEMENTED",
-      "Yield endpoint placeholder is ready, but yield prediction logic is not implemented yet.",
-      {
-        farmId: farm.id,
-      },
+    const latestYieldForecast = await getLatestYieldForecastForFarm(
+      decodedToken.uid,
+      farm.id,
     );
+
+    if (!latestYieldForecast) {
+      return errorResponse(
+        404,
+        "YIELD_FORECAST_NOT_FOUND",
+        "No yield forecast was found for this farm.",
+      );
+    }
+
+    return successResponse({
+      farmId: farm.id,
+      yieldForecast: {
+        ...latestYieldForecast,
+        estimatedRevenuePhp: latestYieldForecast.estimatedRevenue,
+        estimatedRevenueCurrency: "PHP",
+      },
+    });
   } catch (error) {
     return handleRouteError(error);
   }
