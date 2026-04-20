@@ -21,7 +21,7 @@ const allNavigationItems: Record<string, NavigationItem> = {
     bgCard: "bg-[#065F181A]",
     borderCard: "border-[#065F1833]",
     bgIcon: "bg-[#065F18]",
-    iconSrc: "/crop-reco/soil-data.svg",
+    iconSrc: "/recommendations/soil-data.svg",
     iconAlt: "Soil data icon",
     label: "SOIL DATA ANALYSIS",
     labelClass: "text-[#065F18]",
