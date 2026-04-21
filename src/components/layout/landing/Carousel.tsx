@@ -1,6 +1,7 @@
 "use client";
 import { JSX, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Sprout } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 type Slide = {
   id: number;
@@ -82,9 +83,21 @@ export const Carousel = (): JSX.Element => {
   };
 
   return (
-    <section className="w-full bg-[#e3ebdc33]">
+    <motion.section
+      className="w-full bg-[#e3ebdc33]"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, amount: 0.45 }}
+      transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-14 sm:gap-10 sm:px-8 sm:py-20 lg:gap-12 lg:py-24">
-        <div className="flex w-full flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+        <motion.div
+          className="flex w-full flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.55 }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="flex w-full max-w-2xl flex-col gap-2 sm:gap-3">
             <h2 className="[font-family:'Inter-ExtraBold',Helvetica] text-[#171d14] text-3xl sm:text-4xl font-extrabold tracking-[-1.2px] sm:tracking-[-1.8px] leading-tight">
               Harvesting Innovation
@@ -95,22 +108,26 @@ export const Carousel = (): JSX.Element => {
           </div>
 
           <div className="flex h-[34px] w-[76px] shrink-0 items-center justify-between">
-            <button
+            <motion.button
               onClick={handlePrev}
               aria-label="Previous slide"
               className="h-8 w-8 rounded-full border border-[#41493e] bg-white flex items-center justify-center hover:bg-[#f0f4ed] transition-colors"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
             >
               <ChevronLeft className="h-3.5 w-3.5 text-[#41493e]" aria-hidden="true" />
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={handleNext}
               aria-label="Next slide"
               className="h-8 w-8 rounded-full border border-[#41493e] bg-white flex items-center justify-center hover:bg-[#f0f4ed] transition-colors"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
             >
               <ChevronRight className="h-3.5 w-3.5 text-[#41493e]" aria-hidden="true" />
-            </button>
+            </motion.button>
           </div>
-        </div>
+        </motion.div>
 
         <div
           className="w-full overflow-hidden rounded-[24px] sm:rounded-[32px] cursor-grab active:cursor-grabbing"
@@ -143,14 +160,25 @@ export const Carousel = (): JSX.Element => {
                   )}
 
                   <div className="absolute inset-0 flex items-end p-5 sm:p-8 lg:p-12 bg-[linear-gradient(0deg,rgba(0,0,0,0.6)_0%,rgba(0,0,0,0)_100%)]">
-                    <div className="flex max-w-2xl flex-col gap-2 sm:gap-3">
-                      <div className="[font-family:'Manrope-Bold',Helvetica] text-white text-2xl sm:text-3xl font-bold leading-tight tracking-[0]">
-                        {slide.title}
-                      </div>
-                      <p className="[font-family:'Inter-Medium',Helvetica] text-[#e8f5e0] text-sm sm:text-base font-medium tracking-[0] leading-6">
-                        {slide.description}
-                      </p>
-                    </div>
+                    <AnimatePresence mode="wait">
+                      {currentIndex === slide.id - 1 && (
+                        <motion.div
+                          key={slide.id}
+                          className="flex max-w-2xl flex-col gap-2 sm:gap-3"
+                          initial={{ opacity: 0, y: 14 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                        >
+                          <div className="[font-family:'Manrope-Bold',Helvetica] text-white text-2xl sm:text-3xl font-bold leading-tight tracking-[0]">
+                            {slide.title}
+                          </div>
+                          <p className="[font-family:'Inter-Medium',Helvetica] text-[#e8f5e0] text-sm sm:text-base font-medium tracking-[0] leading-6">
+                            {slide.description}
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </div>
@@ -158,6 +186,6 @@ export const Carousel = (): JSX.Element => {
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };

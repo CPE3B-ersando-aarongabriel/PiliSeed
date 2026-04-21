@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, type Variants } from "framer-motion";
-import { JSX } from "react";
+import { JSX, useEffect, useState } from "react";
 import { BadgeCheck, Sprout } from "lucide-react";
 
 const sectionReveal: Variants = {
@@ -9,6 +9,26 @@ const sectionReveal: Variants = {
   visible: {
     opacity: 1,
     y: 0,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+const textPartContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const textPart: Variants = {
+  hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
     transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
@@ -80,6 +100,23 @@ const teamMembers = [
 ];
 
 export const About_Body = (): JSX.Element => {
+  const subtitleText =
+    "At PiliSeed, we bridge ancestral farming wisdom with digital precision to help growers make better decisions every season.";
+  const [typedSubtitle, setTypedSubtitle] = useState("");
+
+  useEffect(() => {
+    let index = 0;
+    const timer = setInterval(() => {
+      index += 1;
+      setTypedSubtitle(subtitleText.slice(0, index));
+      if (index >= subtitleText.length) {
+        clearInterval(timer);
+      }
+    }, 30);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <>
     <div className="flex lg:hidden flex-col items-center gap-16 pt-24 pb-16 px-4 sm:px-8 w-full">
@@ -88,16 +125,32 @@ export const About_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.35 }}
+        viewport={{ once: false, amount: 0.5 }}
       >
         <p className="[font-family:'Inter-SemiBold',Helvetica] text-xs font-semibold tracking-[1.4px] text-[#7a5649]">CULTIVATING TOMORROW</p>
-        <h1 className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl font-extrabold leading-tight text-[#00450d] sm:text-5xl">
-          Roots in data.
-          <br />
-          Growth in tech.
-        </h1>
-        <p className="[font-family:'Inter-Regular',Helvetica] text-base leading-7 text-[#41493e]">
-          At PiliSeed, we bridge ancestral farming wisdom with digital precision to help growers make better decisions every season.
+        <motion.h1
+          className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl font-extrabold leading-tight text-[#00450d] sm:text-5xl"
+          variants={textPartContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.65 }}
+        >
+          <motion.span className="inline-block" variants={textPart}>
+            Roots in data.
+            <br />
+          </motion.span>
+          <motion.span className="inline-block" variants={textPart}>
+            Growth in tech.
+          </motion.span>
+        </motion.h1>
+        <p className="[font-family:'Inter-Regular',Helvetica] text-base leading-7 text-[#41493e] min-h-[112px] sm:min-h-[84px]">
+          {typedSubtitle}
+          <motion.span
+            className="inline-block ml-1 w-[2px] h-[1.35em] bg-[#065f18] align-[-0.25em]"
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+            aria-hidden="true"
+          />
         </p>
       </motion.div>
 
@@ -106,9 +159,13 @@ export const About_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
+        viewport={{ once: false, amount: 0.55 }}
       >
-        <div className="relative aspect-[4/3] w-full sm:aspect-[16/10] bg-[url(/about/About.png)] bg-cover bg-[50%_50%]">
+        <motion.div
+          className="relative aspect-[4/3] w-full sm:aspect-[16/10] bg-[url(/about/About.png)] bg-cover bg-[50%_50%]"
+          whileHover={{ scale: 1.03 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,69,13,0.08)_0%,rgba(0,69,13,0.5)_100%)]" />
 
           <div className="absolute inset-x-4 bottom-4 rounded-[22px] bg-[#ffffffd9] p-4 backdrop-blur-[8px] sm:inset-x-6 sm:bottom-6 sm:rounded-[28px] sm:p-5">
@@ -126,7 +183,7 @@ export const About_Body = (): JSX.Element => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
 
       <motion.div
@@ -134,29 +191,50 @@ export const About_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
+        viewport={{ once: false, amount: 0.5 }}
       >
-        <div className="rounded-[28px] bg-[#eff6e7] p-6">
+        <motion.div
+          className="rounded-[28px] bg-[#eff6e7] p-6"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.55 }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ scale: 1.015, y: -4 }}
+        >
           <h2 className="[font-family:'Inter-ExtraBold',Helvetica] text-2xl font-extrabold text-[#00450d]">Our Mission</h2>
           <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#41493e]">
             Democratize agricultural technology so every farm can optimize resources and increase sustainable growth.
           </p>
           <div className="mt-4 space-y-2">
             {missionPoints.map((point, index) => (
-              <div key={index} className="flex items-start gap-2 text-sm text-[#00450d]">
+              <motion.div
+                key={index}
+                className="flex items-start gap-2 text-sm text-[#00450d]"
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, amount: 0.7 }}
+                transition={{ duration: 0.35, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              >
                 <point.Icon className="mt-0.5 h-4 w-4" aria-label={point.alt} />
                 <span>{point.text}</span>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="rounded-[28px] bg-[#e3ebdc] p-6">
+        <motion.div
+          className="rounded-[28px] bg-[#e3ebdc] p-6"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.55 }}
+          transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ scale: 1.015, y: -4 }}
+        >
           <h2 className="[font-family:'Inter-ExtraBold',Helvetica] text-2xl font-extrabold text-[#00450d]">Our Vision</h2>
           <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#41493e]">
             A future where intelligent, sustainable farming becomes the default and strengthens food systems globally.
           </p>
-        </div>
+        </motion.div>
       </motion.div>
 
       <motion.div
@@ -164,15 +242,23 @@ export const About_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.5 }}
       >
         <h3 className="mb-6 text-center [font-family:'Manrope-ExtraBold',Helvetica] text-3xl font-extrabold text-[#00450d]">The Minds Behind the Seed</h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {teamMembers.map((member) => (
-            <div key={member.name} className="rounded-[24px] bg-white p-3 shadow-[0px_10px_24px_-12px_#00000040]">
+          {teamMembers.map((member, index) => (
+            <motion.div
+              key={member.name}
+              className="rounded-[24px] bg-white p-3 shadow-[0px_10px_24px_-12px_#00000040]"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.45 }}
+              transition={{ duration: 0.45, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ scale: 1.04, y: -6 }}
+            >
               <div className="h-40 w-full rounded-[20px] bg-cover bg-center" style={{ backgroundImage: `url(${member.bgImage})` }} />
               <p className="mt-3 text-center [font-family:'Manrope-Bold',Helvetica] text-sm font-bold text-[#00450d]">{member.name}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </motion.div>
@@ -184,7 +270,7 @@ export const About_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.35 }}
+        viewport={{ once: false, amount: 0.55 }}
       >
         <div className="flex flex-col w-[778.67px] items-start gap-4 relative">
           <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
@@ -192,29 +278,47 @@ export const About_Body = (): JSX.Element => {
               CULTIVATING TOMORROW
             </div>
           </div>
-          <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
+          <motion.div
+            className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]"
+            variants={textPartContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.65 }}
+          >
             <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-8xl tracking-[-4.80px] leading-[96px]">
-              Roots in data.
-              <br />
-              Growth in tech.
+              <motion.span className="inline-block" variants={textPart}>
+                Roots in data.
+                <br />
+              </motion.span>
+              <motion.span className="inline-block" variants={textPart}>
+                Growth in tech.
+              </motion.span>
             </p>
-          </div>
+          </motion.div>
           <div className="flex flex-col max-w-xl w-[576px] items-start pt-4 pb-0 px-0 relative flex-[0_0_auto]">
             <p className="relative w-[564.22px] h-[98px] mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-xl tracking-[0] leading-[32.5px]">
-              At PiliSeed, we believe the future of farming is written in the
-              <br />
-              soil and interpreted by intelligence. We are bridging the gap
-              <br />
-              between ancestral wisdom and digital precision.
+              {typedSubtitle}
+              <motion.span
+                className="inline-block ml-1 w-[2px] h-[1.35em] bg-[#065f18] align-[-0.25em]"
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+                aria-hidden="true"
+              />
             </p>
           </div>
         </div>
         <div className="flex flex-col w-[389.33px] items-start relative">
-          <div className="justify-end pt-[256.33px] pb-8 px-8 self-stretch w-full flex-[0_0_auto] bg-[#dee5d6] flex flex-col items-start relative rounded-[48px] overflow-hidden">
-            <img
+          <motion.div
+            className="justify-end pt-[256.33px] pb-8 px-8 self-stretch w-full flex-[0_0_auto] bg-[#dee5d6] flex flex-col items-start relative rounded-[48px] overflow-hidden"
+            whileHover={{ scale: 1.03 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <motion.img
               className="absolute w-full h-full top-0 left-0 mix-blend-multiply"
               alt="Image"
               src="/about/About.png"
+              whileHover={{ scale: 1.06 }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             />
             <div className="flex flex-col items-start gap-[15.25px] relative self-stretch w-full flex-[0_0_auto]">
               <Sprout className="relative h-[25.49px] w-[25.49px] text-[#00450d]" aria-hidden="true" />
@@ -226,7 +330,7 @@ export const About_Body = (): JSX.Element => {
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
       <motion.div
@@ -234,7 +338,7 @@ export const About_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.5 }}
       >
         <div className="grid w-[1216px] grid-cols-2 grid-rows-[710px] items-stretch gap-20">
           <div className="relative row-[1_/_2] col-[1_/_2] self-stretch w-full h-full flex flex-col items-start bg-[#ffffff01] rounded-[48px] overflow-hidden shadow-[0px_25px_50px_-12px_#00000040]">
@@ -304,7 +408,7 @@ export const About_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.45 }}
       >
         <div className="flex flex-col w-[calc(100%_-_64px)] items-center gap-4 absolute top-0 left-8">
           <div className="h-10 relative self-stretch w-full" />
@@ -322,8 +426,9 @@ export const About_Body = (): JSX.Element => {
               style={{ left: `${member.leftOffset}px` }}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
+              viewport={{ once: false, amount: 0.45 }}
               transition={{ duration: 0.45, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ scale: 1.04, y: -8 }}
             >
               {member.bgImage ? (
                 <div className="flex-1 max-h-[298.66px] w-56 justify-center bg-[#41493e] aspect-[0.75] flex flex-col items-start relative rounded-[48px] overflow-hidden">

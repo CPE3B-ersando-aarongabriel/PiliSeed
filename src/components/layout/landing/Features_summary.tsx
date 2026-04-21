@@ -1,5 +1,8 @@
+"use client";
+
 import { JSX } from "react";
 import { BrainCircuit, CloudSunRain, FlaskConical } from "lucide-react";
+import { motion } from "framer-motion";
 
 const highlights = [
   {
@@ -33,9 +36,21 @@ const highlights = [
 
 export const Features_summary = (): JSX.Element => {
   return (
-    <section className="w-full bg-[#f5fced]">
+    <motion.section
+      className="w-full bg-[#f5fced]"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, amount: 0.45 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-8 px-4 py-14 sm:gap-12 sm:px-8 sm:py-20 lg:gap-16 lg:py-24">
-        <div className="flex w-full max-w-3xl flex-col items-center gap-4 text-center">
+        <motion.div
+          className="flex w-full max-w-3xl flex-col items-center gap-4 text-center"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.55 }}
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        >
           <h2 className="[font-family:'Inter-ExtraBold',Helvetica] text-[#171d14] text-3xl sm:text-4xl font-extrabold tracking-[-1.2px] sm:tracking-[-1.8px] leading-tight">
             Precision Agriculture Core
           </h2>
@@ -44,13 +59,18 @@ export const Features_summary = (): JSX.Element => {
             Unlock the full potential of your land with our suite of intelligent
             agricultural tools.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8">
-          {highlights.map((item) => (
-            <article
+          {highlights.map((item, index) => (
+            <motion.article
               key={item.title}
               className="flex min-h-[320px] w-full flex-col rounded-[32px] sm:rounded-[40px] border border-solid border-[#c0c9bb4c] bg-[#eff6e7] px-6 py-7 sm:px-8 sm:py-8"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.5 }}
+              transition={{ duration: 0.6, delay: index * 0.14, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ scale: 1.03, boxShadow: "0px 22px 36px -16px rgba(0,0,0,0.24)" }}
             >
               <div
                 className={`flex h-14 w-14 items-center justify-center rounded-full ${item.iconWrapperBg}`}
@@ -65,10 +85,10 @@ export const Features_summary = (): JSX.Element => {
               <p className="mt-4 [font-family:'Inter-Regular',Helvetica] text-[#41493e] text-sm sm:text-base font-normal leading-7 tracking-[0]">
                 {item.description}
               </p>
-            </article>
+            </motion.article>
           ))}
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
