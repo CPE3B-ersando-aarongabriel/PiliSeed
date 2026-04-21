@@ -1,5 +1,7 @@
 "use client";
 
+import { Banknote, TrendingUp } from "lucide-react";
+
 interface EstimatedRevenueCardProps {
   revenue: string;
   percentageIncrease: string;
@@ -20,12 +22,7 @@ export default function EstimatedRevenueCard({
           <span className="font-semibold text-white/80 text-xs tracking-[1.20px]">
             ESTIMATED REVENUE
           </span>
-          <img
-            src="/yield/revenue.svg"
-            width={22}
-            height={22}
-            alt="revenue"
-          />
+          <Banknote className="w-[25px] h-[25px] text-[#FFFFFF]"/>
         </div>
 
         <div className="font-extrabold text-white text-5xl tracking-[-2.40px] mb-4">
@@ -33,7 +30,7 @@ export default function EstimatedRevenueCard({
         </div>
 
         <div className="flex items-center gap-2 mb-6">
-          <img src="/yield/graph.svg" width={20} height={20} alt="graph" />
+          <TrendingUp className="w-8 h-8 text-[#FFFFFF]" />
           <p className="text-white">
             {percentageIncrease} increase from last season
           </p>

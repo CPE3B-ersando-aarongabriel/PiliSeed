@@ -7,7 +7,7 @@ import DashboardCropReco from "@/components/layout/dashboard/DashbordCropReco";
 import DashboardFarm from "@/components/layout/dashboard/DashboardFarm";
 import DashboardWeather from "@/components/layout/dashboard/DashboardWeather";
 import DashboardYieldPred from "@/components/layout/dashboard/DashboardYieldPred";
-
+import { CloudSun, Sparkles } from "lucide-react";
 export interface FarmData {
   id: string;
   name: string;
@@ -306,11 +306,7 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="rounded-xl sm:rounded-2xl bg-[#CEE5FF] p-1.5 sm:p-2">
-                  <img
-                    src="/dashboard/weather-forecast.svg"
-                    alt="weather"
-                    className="w-8 h-8 sm:w-10 sm:h-10"
-                  />
+                  <CloudSun className="w-8 h-8 sm:w-10 sm:h-10 text-[#003E63]"/>
                 </div>
                 <h2 className="text-lg sm:text-xl font-bold text-[#171D14]">
                   Weather
@@ -360,11 +356,7 @@ export default function DashboardPage() {
           <div className="w-full lg:w-auto lg:flex-1 bg-[#00450D] rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-md flex flex-col">
             <div className="flex items-center gap-2 sm:gap-3 mb-4">
               <div className="rounded-xl sm:rounded-2xl bg-[#065F18] p-1.5 sm:p-2 w-fit">
-                <img
-                  src="/dashboard/crop-recommendation.svg"
-                  alt="crop recommendation icon"
-                  className="w-8 h-8 sm:w-10 sm:h-10"
-                />
+                 <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-[#86D881]" />
               </div>
               <h2 className="text-lg sm:text-xl font-bold text-white">
                 Crop <br /> Recommendation

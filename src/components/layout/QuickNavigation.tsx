@@ -1,6 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import {
+  FlaskConical,
+  LucideIcon,
+  Sprout,
+  CloudSun,
+  TrendingUp,
+}from "lucide-react";
 
 interface NavigationItem {
   id: string;
@@ -8,8 +15,8 @@ interface NavigationItem {
   bgCard: string;
   borderCard: string;
   bgIcon: string;
-  iconSrc: string;
-  iconAlt: string;
+  icon?: LucideIcon; 
+  iconColor?: string;
   label: string;
   labelClass: string;
 }
@@ -21,8 +28,8 @@ const allNavigationItems: Record<string, NavigationItem> = {
     bgCard: "bg-[#065F181A]",
     borderCard: "border-[#065F1833]",
     bgIcon: "bg-[#065F18]",
-    iconSrc: "/recommendations/soil-data.svg",
-    iconAlt: "Soil data icon",
+    icon: FlaskConical,
+    iconColor: "text-[#86D881]",
     label: "SOIL DATA ANALYSIS",
     labelClass: "text-[#065F18]",
   },
@@ -32,8 +39,8 @@ const allNavigationItems: Record<string, NavigationItem> = {
     bgCard: "bg-[#065F181A]",
     borderCard: "border-[#065F1833]",
     bgIcon: "bg-[#065F18]",
-    iconSrc: "/weather/crop-reco.svg",
-    iconAlt: "Crop Recommendation icon",
+    icon: Sprout,
+    iconColor: "text-[#86D881]",
     label: "CROP RECOMMENDATION",
     labelClass: "text-[#065F18]",
   },
@@ -43,8 +50,8 @@ const allNavigationItems: Record<string, NavigationItem> = {
     bgCard: "bg-[#0056871a]",
     borderCard: "border-[#00568733]",
     bgIcon: "bg-[#005687]",
-    iconSrc: "/soil/weather-forecast.svg",
-    iconAlt: "Weather forecasting icon",
+    icon: CloudSun,
+    iconColor: "text-[#93CBFF]",
     label: "WEATHER ANALYSIS",
     labelClass: "text-[#005687]",
   },
@@ -54,8 +61,8 @@ const allNavigationItems: Record<string, NavigationItem> = {
     bgCard: "bg-[#fdcdbc33]",
     borderCard: "border-[#FDCDBC4C]",
     bgIcon: "bg-[#7A5649]",
-    iconSrc: "/soil/yield-pred.svg",
-    iconAlt: "Yield prediction icon",
+    icon: TrendingUp,
+    iconColor: "text-[#FFFFFF]",
     label: "YIELD PREDICTION",
     labelClass: "text-[#7A5649]",
   },
@@ -103,11 +110,7 @@ export default function QuickNavigation({ currentPage }: QuickNavigationProps) {
               <div
                 className={`w-12 h-12 rounded-full flex items-center justify-center ${item.bgIcon}`}
               >
-                <img
-                  className="w-6 h-6 object-contain"
-                  alt={item.iconAlt}
-                  src={item.iconSrc}
-                />
+                {item.icon && <item.icon className={`w-6 h-6 ${item.iconColor}`} />}
               </div>
               <span
                 className={`font-semibold text-xs text-center tracking-[1.2px] ${item.labelClass}`}

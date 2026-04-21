@@ -1,5 +1,5 @@
 "use client";
-
+import {CloudSun} from "lucide-react";
 interface WeatherCardProps {
   weather: {
     temperatureC: number;
@@ -22,11 +22,7 @@ export default function DashboardWeather({ weather }: WeatherCardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4">
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="rounded-xl sm:rounded-2xl bg-[#CEE5FF] p-1.5 sm:p-2">
-            <img
-              src="/dashboard/weather-forecast.svg"
-              alt="weather"
-              className="w-8 h-8 sm:w-10 sm:h-10"
-            />
+           <CloudSun className="w-8 h-8 sm:w-10 sm:h-10 text-[#003E63]"/>
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-[#171D14]">
             Weather

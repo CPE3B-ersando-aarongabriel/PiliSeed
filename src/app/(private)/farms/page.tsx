@@ -9,6 +9,7 @@ import AddFarmCard from "@/components/layout/farms/AddFarmCard";
 import AddFarmForm from "@/components/layout/farms/AddFarmForm";
 import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
+import { MapPin } from "lucide-react";
 
 const MAX_FARMS = 5;
 const FARM_CARD_BG = "#e9f0e1";
@@ -233,7 +234,7 @@ export default function FarmsPage() {
             name={farm.name}
             location={farm.location}
             isActive={farm.isActive}
-            locationIcon="/farms/location.svg"
+            locationIcon={MapPin}
             bgColor={FARM_CARD_BG}
             onToggle={handleToggle}
           />

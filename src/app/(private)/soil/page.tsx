@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
-
 import QuickNavigation from "@/components/layout/QuickNavigation";
 import SoilInputForm from "@/components/layout/soil/SoilInputForm";
 import { getClientAuth } from "@/lib/firebaseClient";
-
+import { Droplet, Diamond, Clover, ChevronDown } from "lucide-react";
 type FarmOption = {
   id: string;
   name: string;
@@ -17,31 +16,22 @@ type FarmOption = {
 
 const metrics = [
   {
-    iconSrc: "/soil/moisture.svg",
-    iconAlt: "Moisture icon",
+    icon: <Droplet className="h-[20px] w-[20px] text-[#00450D]" />,
     iconBg: "bg-[#00450d1a]",
-    iconWidth: "w-[13.33px]",
-    iconHeight: "h-[16.67px]",
     title: "Moisture Balance",
     description:
       "Proper hydration prevents root rot while ensuring nutrient transport from soil to stalk.",
   },
   {
-    iconSrc: "/soil/ph.svg",
-    iconAlt: "pH icon",
+    icon: <Diamond className="h-[20px] w-[20px] text-[#7A5649]" />,
     iconBg: "bg-[#fdcdbc4c]",
-    iconWidth: "w-[16.71px]",
-    iconHeight: "h-[16.71px]",
     title: "pH Equilibrium",
     description:
       "Solubility of nutrients is directly linked to pH. Most cereal crops thrive between 6.0 and 7.5.",
   },
   {
-    iconSrc: "/soil/npk.svg",
-    iconAlt: "NPK icon",
+    icon: <Clover className="h-[20px] w-[20px] text-[#003E63]" />,
     iconBg: "bg-[#cee5ff]",
-    iconWidth: "w-[15.83px]",
-    iconHeight: "h-[17.92px]",
     title: "NPK Vitality",
     description:
       "Nitrogen for foliage, Phosphorus for roots and fruit, and Potassium for overall plant health.",
@@ -175,11 +165,7 @@ export default function SoilData() {
                 <span className="font-semibold text-[#00450D] text-sm truncate max-w-42.5 text-left">
                   {selectedFarmLabel}
                 </span>
-                <img
-                  src="/soil/dropdown.svg"
-                  alt="Dropdown"
-                  className="w-3 h-2 object-contain"
-                />
+                <ChevronDown className="w-5 h-5 text-[#6B7280]"/>
               </button>
 
               {isFarmDropdownOpen && farms.length > 0 && (
@@ -258,11 +244,7 @@ export default function SoilData() {
                   <div
                     className={`flex w-10 h-10 items-center justify-center ${metric.iconBg} rounded-full`}
                   >
-                    <img
-                      className={`${metric.iconWidth} ${metric.iconHeight}`}
-                      alt={metric.iconAlt}
-                      src={metric.iconSrc}
-                    />
+                    {metric.icon}
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-[#171d14] text-sm mb-1">
