@@ -1,5 +1,6 @@
 "use client";
 
+import { Lightbulb, TrendingUp } from "lucide-react";
 import Image from "next/image";
 
 interface DiversificationCardProps {
@@ -18,12 +19,7 @@ export default function DiversificationCard({
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start gap-3 mb-4">
           <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-            <Image
-              src="/recommendations/lightbulb.svg"
-              alt="Diversification strategy"
-              width={20}
-              height={20}
-            />
+            <Lightbulb className="w-5 h-5 text-[#795548]"/>
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-lg mb-1 text-[#795548]">
@@ -38,12 +34,7 @@ export default function DiversificationCard({
         <div className="mt-auto pt-4 border-t border-[#795548]/20">
           <div className="flex items-center gap-3 bg-white/50 rounded-2xl p-4">
             <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-white rounded-full">
-              <Image
-                src="/recommendations/roi.svg"
-                alt="ROI"
-                width={20}
-                height={20}
-              />
+              <TrendingUp className="w-5 h-5 text-[#7A5649]"/>
             </div>
             <div>
               <p className="text-xs text-[#795548]/70 mb-0.5 font-semibold tracking-wide">

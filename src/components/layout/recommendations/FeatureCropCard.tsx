@@ -1,5 +1,6 @@
 "use client";
 
+import { Calendar, Droplet, Thermometer } from "lucide-react";
 import Image from "next/image";
 
 interface FeaturedCropCardProps {
@@ -48,13 +49,7 @@ export default function FeaturedCropCard({
         <div className="absolute bottom-5 left-5 text-white">
           <h2 className="text-3xl font-bold mb-2">{cropName}</h2>
           <div className="flex items-center gap-2">
-            <Image
-              src="/recommendations/calendar.svg"
-              alt="Calendar"
-              width={16}
-              height={16}
-              className="opacity-90"
-            />
+            <Calendar className="w-4 h-4 text-[#FFFFFF] opacity-90"/>
             <p className="text-sm opacity-90">Optimal Planting: Next 14 Days</p>
           </div>
         </div>
@@ -79,13 +74,7 @@ export default function FeaturedCropCard({
               <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-4 h-4 flex items-center justify-center">
-                    <Image
-                      src="/recommendations/moisture.svg"
-                      alt="Moisture"
-                      width={16}
-                      height={16}
-                      className="w-full h-full object-contain"
-                    />
+                    <Droplet className="w-4 h-4 text-[#41493E]"/>
                   </div>
                   <p className="text-xs text-[#41493E] font-semibold">
                     MOISTURE NEED
@@ -101,13 +90,7 @@ export default function FeaturedCropCard({
               <div className="flex-1 bg-[#EEF3EA] rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-4 h-4 flex items-center justify-center">
-                    <Image
-                      src="/recommendations/temp.svg"
-                      alt="Temperature"
-                      width={16}
-                      height={16}
-                      className="w-full h-full object-contain"
-                    />
+                    <Thermometer className="w-4 h-4 text-[#7A5649]"/>
                   </div>
                   <p className="text-xs text-[#41493E] font-semibold">TEMP RANGE</p>
                 </div>
