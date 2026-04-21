@@ -243,6 +243,13 @@ export async function POST(
       temperatureC: validationResult.data.temperatureC,
       humidity: validationResult.data.humidity,
     };
+    const normalizedSensorContext = {
+      moistureContent: readingsPayload.moistureContent ?? null,
+      pH: readingsPayload.pH ?? null,
+      lightLevel: readingsPayload.lightLevel ?? null,
+      temperatureC: readingsPayload.temperatureC ?? null,
+      humidity: readingsPayload.humidity ?? null,
+    };
 
     const soilProfile = await createSoilAnalysisForFarm(
       linkedDevice.uid,
@@ -270,7 +277,7 @@ export async function POST(
           inputMode: "device-readings",
           collectedAt,
           source: "soil-device-readings",
-          sensorContext: readingsPayload,
+          sensorContext: normalizedSensorContext,
         },
       },
     );

@@ -132,6 +132,13 @@ export async function POST(request: Request, context: HardwareReadingsContext) {
         payloadValidation.data.lightLevel ?? payloadValidation.data.light_lux,
       pH: payloadValidation.data.pH ?? payloadValidation.data.ph,
     };
+    const normalizedSensorContext = {
+      moistureContent: readingsPayload.moistureContent ?? null,
+      pH: readingsPayload.pH ?? null,
+      lightLevel: readingsPayload.lightLevel ?? null,
+      temperatureC: readingsPayload.temperatureC ?? null,
+      humidity: readingsPayload.humidity ?? null,
+    };
 
     const collectedAt = new Date().toISOString();
 
@@ -161,7 +168,7 @@ export async function POST(request: Request, context: HardwareReadingsContext) {
           inputMode: "device-readings",
           source: "hardware-readings-route",
           collectedAt,
-          sensorContext: readingsPayload,
+          sensorContext: normalizedSensorContext,
         },
       },
     );

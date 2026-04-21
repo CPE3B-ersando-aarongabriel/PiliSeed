@@ -102,6 +102,34 @@ export const About_Body = (): JSX.Element => {
       </motion.div>
 
       <motion.div
+        className="mx-auto w-full max-w-5xl overflow-hidden rounded-[28px] bg-[#dee5d6] shadow-[0px_20px_40px_-12px_#00000040]"
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+      >
+        <div className="relative aspect-[4/3] w-full sm:aspect-[16/10] bg-[url(/about/About.png)] bg-cover bg-[50%_50%]">
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,69,13,0.08)_0%,rgba(0,69,13,0.5)_100%)]" />
+
+          <div className="absolute inset-x-4 bottom-4 rounded-[22px] bg-[#ffffffd9] p-4 backdrop-blur-[8px] sm:inset-x-6 sm:bottom-6 sm:rounded-[28px] sm:p-5">
+            <div className="flex items-start gap-3 text-left">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e3ebdc]">
+                <Sprout className="h-5 w-5 text-[#00450d]" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="[font-family:'Inter-SemiBold',Helvetica] text-sm font-semibold leading-5 text-[#00450d] sm:text-base">
+                  Empowering 10,000+ farmers with real-time insights.
+                </p>
+                <p className="mt-1 [font-family:'Inter-Regular',Helvetica] text-xs leading-4 text-[#41493e] sm:text-sm">
+                  Data-backed decisions, rooted in sustainability.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div
         className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6"
         variants={sectionReveal}
         initial="hidden"
