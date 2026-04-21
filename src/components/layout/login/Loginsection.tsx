@@ -391,7 +391,7 @@ export const LoginSection = (): JSX.Element => {
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={loading || !hasFirebaseConfig}
-                className="all-[unset] box-border row-[1_/_2] col-[1_/_2] w-full h-fit inline-flex gap-2 pl-[68.88px] pr-[68.89px] py-3.5 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="all-[unset] box-border row-[1_/_2] col-[1_/_2] w-full h-fit min-h-[56px] inline-flex gap-2 px-8 py-3.5 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 whileHover={{ scale: 1.05, borderColor: "#a3f69c" }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -403,7 +403,7 @@ export const LoginSection = (): JSX.Element => {
                   />
                 </div>
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <div className="justify-center w-[48.23px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
+                  <div className="justify-center min-w-[48.23px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
                     {loading ? "Processing..." : "Google"}
                   </div>
                 </div>
