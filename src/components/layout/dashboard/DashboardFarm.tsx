@@ -1,5 +1,5 @@
 import Link from "next/link";
-
+import { MapPin,ArrowRight } from "lucide-react";
 export interface FarmData {
   id: string;
   name: string;
@@ -21,11 +21,7 @@ export default function FarmCard({ farm }: FarmCardProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="rounded-2xl bg-[#FDCDBC] p-2">
-            <img
-              src="/dashboard/location.svg"
-              alt="location"
-              className="w-8 h-8 sm:w-10 sm:h-9"
-            />
+            <MapPin className="w-8 h-8 sm:w-10 sm:h-9 text-[#795548]"/>
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-[#171D14]">{farm.name}</h2>
         </div>
@@ -61,11 +57,7 @@ export default function FarmCard({ farm }: FarmCardProps) {
         className="text-[#00450D] text-sm font-semibold hover:text-[#003d0b] transition"
       >
         Go to Farm Management
-        <img
-          src="/dashboard/arrow.svg"
-          alt="arrow right"
-          className="w-3 h-3 ml-2 inline"
-        />
+        <ArrowRight className="w-5 h-5 ml-2 inline text-[#41493E]"/>
       </Link>
     </div>
   );
