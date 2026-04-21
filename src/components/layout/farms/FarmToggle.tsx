@@ -14,7 +14,7 @@ export default function FarmToggle({
   return (
     <div className="absolute top-px right-0 flex items-center gap-2">
       <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-        <div className="relative flex items-center w-[56.19px] h-4 mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493E] text-xs tracking-[0] leading-4 whitespace-nowrap">
+        <div className="relative flex items-center w-[56px] h-2 mt-[-25px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493E] text-xs tracking-[0] leading-4 whitespace-nowrap">
           ANALYZE
         </div>
       </div>

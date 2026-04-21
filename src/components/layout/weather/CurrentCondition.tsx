@@ -1,6 +1,13 @@
 "use client";
 
-import Image from "next/image";
+import { 
+  Sun, 
+  Cloud, 
+  CloudRain, 
+  CloudSun, 
+  Cloudy,
+  LucideIcon, 
+} from "lucide-react";
 
 interface CurrentConditionCardProps {
   condition: string;
@@ -10,20 +17,18 @@ interface CurrentConditionCardProps {
   uvIndex: string;
 }
 
-const getWeatherIcon = (condition: string) => {
-  const icons: Record<string, string> = {
-    "sunny": "/weather/sunny.svg",
-    "cloudy": "/weather/cloudy.svg",
-    "rainy": "/weather/rainy.svg",
-    "partly-cloudy": "/weather/partly.svg",
-    "Partly Cloudy": "/weather/partly.svg",
-    "Cloudy": "/weather/cloudy.svg",
-    "Sunny": "/weather/sunny.svg",
-    "Rainy": "/weather/rainy.svg",
-    "Clear": "/weather/sunny.svg",
-    "Overcast": "/weather/cloudy.svg",
+const getWeatherIcon = (condition: string): { icon: LucideIcon; color: string } => {
+  const normalizedCondition = condition.toLowerCase();
+  const icons: Record<string, { icon: LucideIcon; color: string }> = {
+    "sunny": { icon: Sun, color: "text-[#00450D]" },
+    "cloudy": { icon: Cloud, color: "text-[#003E63]" },
+    "rainy": { icon: CloudRain, color: "text-[#003E63]" },
+    "partly-cloudy": { icon: CloudSun, color: "text-[#00450D]" },
+    "partly cloudy": { icon: CloudSun, color: "text-[#00450D]" },
+    "clear": { icon: Sun, color: "text-[#00450D]" },
+    "overcast": { icon: Cloudy, color: "text-[#00450D]" },
   };
-  return icons[condition] || "/weather/default.svg";
+  return icons[condition] || { icon: Cloud, color: "text-[#003E63]" };; 
 };
 
 export default function CurrentConditionCard({
@@ -33,19 +38,16 @@ export default function CurrentConditionCard({
   humidity,
   uvIndex,
 }: CurrentConditionCardProps) {
+  const { icon: WeatherIconComponent, color } = getWeatherIcon(condition);
   return (
     <div className="col-span-4">
       <div className="p-8 bg-white rounded-[48px] shadow-sm">
         <div className="flex items-start justify-between mb-8">
           <div>
             <span className="text-sm font-medium text-[#41493E]">Current Condition</span>
-            <h3 className="text-lg font-semibold mt-1">{condition}</h3>
+            <h3 className="text-lg font-semibold mt-1 text-[#171D14]">{condition}</h3>
           </div>
-          <img
-            src={getWeatherIcon(condition)}
-            alt={condition}
-            className="w-12 h-12"
-          />
+          <WeatherIconComponent className={`w-12 h-12 ${color}`} />
         </div>
 
         <div className="flex items-baseline gap-2 mb-8">

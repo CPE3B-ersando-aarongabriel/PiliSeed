@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {Info} from "lucide-react"
 import {
   LineChart,
   Line,
@@ -31,25 +32,25 @@ export default function TemperatureChart({ data }: TemperatureChartProps) {
   }, []);
 
   return (
-    <div className="col-span-8">
-      <div className="p-8 bg-white rounded-[48px] shadow-sm h-full">
+    <div className="col-span-8 min-w-0 min-h-0">
+      <div className="p-8 bg-white rounded-[48px] shadow-sm h-full flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold">Temperature Evolution</h3>
+          <h3 className="text-xl font-bold text-[#171D14]">Temperature Evolution</h3>
           <div className="flex gap-2">
             <span className="flex items-center gap-1 px-3 py-1 bg-[#EFF6E7] rounded-full text-xs">
               <span className="w-2 h-2 bg-[#00450D] rounded-full" />
-              Daytime
+              <p className="text-[#171D14]">Daytime</p>
             </span>
             <span className="flex items-center gap-1 px-3 py-1 bg-[#EFF6E7] rounded-full text-xs">
               <span className="w-2 h-2 bg-[#003E63] rounded-full" />
-              Nighttime
+              <p className="text-[#171D14]">Nighttime</p>
             </span>
           </div>
         </div>
 
-        <div className="h-64 mb-2" style={{ minWidth: 0, minHeight: 0 }}>
+        <div className="h-64 w-full min-w-0 min-h-0">
           {mounted ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={data} margin={{ top: 15, right: 10, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                 <XAxis
@@ -87,7 +88,7 @@ export default function TemperatureChart({ data }: TemperatureChartProps) {
         </div>
 
         <div className="flex items-center gap-2 text-sm text-[#41493E] mt-2">
-          <img src="/weather/info.svg" alt="info" className="w-4 h-4" />
+          <Info className="w-5 h-5 text-[#41493E]"/>
           <p>Average temperature is 2.4°C higher than the seasonal baseline.</p>
         </div>
       </div>

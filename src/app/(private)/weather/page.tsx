@@ -518,7 +518,7 @@ export default function WeatherAnalysis() {
           </div>
         )}
 
-        <div className="grid grid-cols-12 gap-8 mt-8">
+        <div className="grid grid-cols-12 gap-8 mt-8 min-h-0 min-w-0">
           <CurrentConditionCard {...data.current} />
           <TemperatureChart data={data.temperatureEvolution} />
           <ForecastCard data={data.forecast} />

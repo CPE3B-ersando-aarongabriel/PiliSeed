@@ -1,6 +1,13 @@
 "use client";
+import { 
+  Sun, 
+  Cloud, 
+  CloudRain, 
+  CloudSun, 
+  Cloudy,
+  LucideIcon,
+} from "lucide-react";
 
-import Image from "next/image";
 
 interface ForecastData {
   date?: string;
@@ -15,14 +22,18 @@ interface ForecastCardProps {
   data: ForecastData[];
 }
 
-const getWeatherIcon = (condition: string) => {
-  const icons: Record<string, string> = {
-    "sunny": "/weather/sunny.svg",
-    "cloudy": "/weather/cloudy.svg",
-    "rainy": "/weather/rainy.svg",
-    "partly-cloudy": "/weather/partly.svg",
+const getWeatherIcon = (condition: string): { icon: LucideIcon; color: string }=> {
+  const normalizedCondition = condition.toLowerCase();
+  const icons: Record<string, { icon: LucideIcon; color: string }> = {
+    "sunny": { icon: Sun, color: "text-[#00450D]" },
+    "cloudy": { icon: Cloud, color: "text-[#003E63]" },
+    "rainy": { icon: CloudRain, color: "text-[#003E63]" },
+    "partly-cloudy": { icon: CloudSun, color: "text-[#00450D]" },
+    "partly cloudy": { icon: CloudSun, color: "text-[#00450D]" },
+    "clear": { icon: Sun, color: "text-[#00450D]" },
+    "overcast": { icon: Cloudy, color: "text-[#00450D]" },
   };
-  return icons[condition];
+  return icons[normalizedCondition] || { icon: Cloud, color: "text-[#003E63]" };
 };
 
 export default function ForecastCard({ data }: ForecastCardProps) {
@@ -31,11 +42,12 @@ export default function ForecastCard({ data }: ForecastCardProps) {
 
   return (
     <div className="col-span-12">
-      <h3 className="text-xl font-bold mb-6">7-Day Agricultural Outlook</h3>
+      <h3 className="text-xl font-bold mb-6 text-[#171d14]">7-Day Agricultural Outlook</h3>
       <div className="grid grid-cols-7 gap-4">
         {data.map((day, idx) => {
           const isHighlighted =
             day.date === todayKey || day.isToday || (!hasToday && idx === 0);
+            const { icon: WeatherIcon, color } = getWeatherIcon(day.condition);
           return (
             <div
               key={day.day}
@@ -48,11 +60,7 @@ export default function ForecastCard({ data }: ForecastCardProps) {
               <span className={`text-[10px] font-semibold mb-4 ${isHighlighted ? 'text-[#00450D]' : 'text-[#41493e]'}`}>
                 {day.day}
               </span>
-              <img
-                src={getWeatherIcon(day.condition)}
-                alt={day.condition}
-                className="w-8 h-8 mb-4"
-              />
+                 <WeatherIcon className={`w-10 h-10 mb-4 ${color}`} />
               <span className={`text-2xl font-bold mb-1 ${isHighlighted ? 'text-[#00450D]' : 'text-[#171d14]'}`}>
                 {day.high}°
               </span>

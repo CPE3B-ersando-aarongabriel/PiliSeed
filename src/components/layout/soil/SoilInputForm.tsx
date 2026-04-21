@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { 
+  Clover,
+  Droplet,
+  FlaskRound,
+  Search,
+ } from "lucide-react";
+ 
 type FarmOption = {
   id: string;
   name: string;
@@ -857,11 +864,7 @@ export default function SoilInputForm({
           </div>
           <div className="border-t border-[#C0C9BB1A] pt-6">
             <div className="flex items-center gap-3">
-              <img
-                src="/soil/npk.svg"
-                alt="Planning"
-                className="h-[13.5px] w-[13.54px]"
-              />
+              <Clover className="h-[18px] w-[18px] text-[#003E63]"/>
               <span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
                 PLANTING PLAN INPUTS
               </span>
@@ -914,11 +917,7 @@ export default function SoilInputForm({
               disabled={isSubmitting || !currentUser || !hasFarmLocation}
               className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#00450D] py-5 shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <img
-                src="/soil/analyze.svg"
-                alt="Analyze"
-                className="h-4.5 w-4.5"
-              />
+              <Search className="h-[18px] w-[18px] text-[#FFFFFF]"/>
               <span className="text-base font-semibold text-white">
                 {isSubmitting ? "Analyzing Soil..." : "Get Crop Reccomendation"}
               </span>
@@ -952,11 +951,7 @@ export default function SoilInputForm({
 
               <div className="mt-6 flex flex-col gap-6">
                 <div className="flex items-center gap-3">
-                  <img
-                    src="/soil/chemical-comp.svg"
-                    alt="NPK"
-                    className="h-[13.5px] w-[13.54px]"
-                  />
+                  <FlaskRound className="h-[18px] w-[18px] text-[#41493E]"/>
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                     NPK inputs
                   </span>
@@ -997,11 +992,7 @@ export default function SoilInputForm({
               <div className="mt-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <img
-                      src="/soil/moisture.svg"
-                      alt="Sensor"
-                      className="h-[13.5px] w-[13.54px]"
-                    />
+                    <Droplet className="h-[18px] w-[18px] text-[#00450D]"/>
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                         Sensor inputs
@@ -1098,13 +1089,9 @@ export default function SoilInputForm({
               disabled={isSubmitting || !currentUser || !hasFarmLocation}
               className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#00450D] py-5 shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <img
-                src="/soil/analyze.svg"
-                alt="Analyze"
-                className="h-4.5 w-4.5"
-              />
+              <Search className="h-[18px] w-[18px] text-[#FFFFFF]"/>
               <span className="text-base font-semibold text-white">
-                {isSubmitting ? "Analyzing Soil..." : "Get Crop Reccomendation"}
+                {isSubmitting ? "Analyzing Soil..." : "Get Crop Recommendation"}
               </span>
             </button>
 

@@ -5,6 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getClientAuth } from "@/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
+import {
+    LayoutDashboard,
+    Tractor,
+    FlaskConical,
+    Sprout,
+    CloudSun,
+    TrendingUp,
+    Menu,
+    Settings,
+    X,
+}from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -28,38 +39,32 @@ export default function Sidebar() {
     {
       name: "Dashboard",
       path: "/dashboard",
-      icon: "/sidebar/dashboard.svg",
-      iconHover: "/sidebar/dashboard-hover.svg",
+      icon: LayoutDashboard,
     },
     {
       name: "Farms",
       path: "/farms",
-      icon: "/sidebar/farms.svg",
-      iconHover: "/sidebar/farms-hover.svg",
+      icon: Tractor,
     },
     {
       name: "Soil Data",
       path: "/soil",
-      icon: "/sidebar/soil-data.svg",
-      iconHover: "/sidebar/soil-data-hover.svg",
+      icon: FlaskConical,
     },
     {
       name: "Crop Recommendations",
       path: "/recommendations",
-      icon: "/sidebar/crop-reco.svg",
-      iconHover: "/sidebar/crop-reco-hover.svg",
+      icon: Sprout,
     },
     {
       name: "Weather Analysis",
       path: "/weather",
-      icon: "/sidebar/weather.svg",
-      iconHover: "/sidebar/weather-hover.svg",
+      icon: CloudSun,
     },
     {
       name: "Yield Prediction",
       path: "/yield",
-      icon: "/sidebar/yield.svg",
-      iconHover: "/sidebar/yield-hover.svg",
+      icon: TrendingUp,
     },
   ];
 
@@ -68,8 +73,9 @@ export default function Sidebar() {
       <button
         className="lg:hidden fixed top-4 left-4 z-50 bg-[#00450D] p-2 rounded-lg shadow"
         onClick={() => setIsOpen(true)}
+        aria-label="Open menu"
       >
-        <img src="/sidebar/menu.svg" alt="menu" className="w-5 h-5 invert" />
+        <Menu className="w-5 h-5 text-white" />
       </button>
 
       {isOpen && (
@@ -122,30 +128,24 @@ export default function Sidebar() {
                   <Link
                     href={item.path}
                     onClick={() => setIsOpen(false)}
-                    className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-3xl 
-                      transition-all duration-200 text-sm group
-                      ${
-                        isActive
-                          ? "bg-white text-[#00450D] font-semibold"
-                          : "text-[#171D14]/70 font-medium hover:bg-white hover:text-[#00450D] hover:font-semibold"
-                      }
-                    `}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-3xl transition-all duration-200 text-sm group ${
+                      isActive
+                        ? "bg-white text-[#00450D] font-semibold"
+                        : "text-[#171D14]/70 font-medium hover:bg-white hover:text-[#00450D] hover:font-semibold"
+                    }`}
                   >
-                    <img
-                      src={item.icon}
-                      alt={item.name}
-                      
-    
-                      className={`w-5 h-5 ${isActive ? "hidden" : "block group-hover:hidden"}`}
-                    />
-                    <img
-                      src={item.iconHover}
-                      alt={item.name}
-                      
-                      
-                      className={`w-5 h-5 ${isActive ? "block" : "hidden group-hover:block"}`}
-                    />
+                   
+                    {(() => {
+                      const Icon = item.icon as any;
+                      return (
+                        <Icon
+                          className={`w-5.5 h-5.5 transition-colors duration-200 ${
+                            isActive ? "text-[#00450D]" : "text-[#171D14]/70 group-hover:text-[#00450D]"
+                          }`}
+                        />
+                      );
+                    })()}
+
                     {item.name}
                   </Link>
                 </li>
@@ -153,26 +153,6 @@ export default function Sidebar() {
             })}
           </ul>
         </nav>
-
-        <div className="px-4 pb-4">
-          <button className="w-full bg-transparent border-2 border-[#41493E]/20 text-[#41493E] font-bold py-2 px-4 rounded-2xl transition-all duration-200 text-sm hover:bg-[#00450D] hover:text-white hover:border-[#00450D] flex items-center justify-center gap-2 group">
-            <img
-              src="/sidebar/add-device.svg"
-              alt="add device"
-              
-              
-              className="w-4 h-4 block group-hover:hidden"
-            />
-            <img
-              src="/sidebar/add-device-hover.svg"
-              alt="add device"
-              
-              
-              className="w-4 h-4 hidden group-hover:block"
-            />
-            Add a Device
-          </button>
-        </div>
 
         <div className="px-4 pb-6 mt-auto">
           <Link href="/profile" className="w-full bg-white/50 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between border border-[#171D14]/5 shadow-sm hover:bg-white/80 transition-all duration-200 cursor-pointer">
@@ -188,13 +168,7 @@ export default function Sidebar() {
               </p>
             </div>
 
-            <img
-              src="/sidebar/setting.svg"
-              alt="settings"
-              
-              
-              className="w-5 h-5 cursor-pointer opacity-70 hover:opacity-100 transition shrink-0"
-            />
+            <Settings className="w-5 h-5 cursor-pointer  text-[#41493E]"/>
           </Link>
         </div>
       </div>
