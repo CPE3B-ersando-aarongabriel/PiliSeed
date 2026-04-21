@@ -275,7 +275,7 @@ export const SignupSection = (): JSX.Element => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Johnathan Appleseed"
-                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
+                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#000000] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
@@ -301,7 +301,7 @@ export const SignupSection = (): JSX.Element => {
                 >
                   <div className="flex items-center pl-12 pr-4 py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden">
                     <input
-                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
+                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#000000] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
                       id="input-1"
                       name="signup-email"
                       placeholder="john@piliseed.com"
@@ -344,7 +344,7 @@ export const SignupSection = (): JSX.Element => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min. 8 characters"
-                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
+                      className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#000000] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
                     />
                   </div>
                   <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] left-4">
@@ -415,7 +415,7 @@ export const SignupSection = (): JSX.Element => {
                 type="button"
                 onClick={handleGoogleSignup}
                 disabled={loading || !hasFirebaseConfig}
-                className="all-[unset] box-border row-[1_/_2] col-[1_/_2] w-full h-fit inline-flex gap-2 pl-[68.88px] pr-[68.89px] py-3.5 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="all-[unset] box-border row-[1_/_2] col-[1_/_2] w-full h-fit min-h-[56px] inline-flex gap-2 px-8 py-3.5 rounded-[32px] border border-solid border-[#c0c9bb4c] items-center justify-center relative cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 whileHover={{ scale: 1.05, borderColor: "#a3f69c" }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -427,7 +427,7 @@ export const SignupSection = (): JSX.Element => {
                   />
                 </div>
                 <div className="inline-flex flex-col items-center relative flex-[0_0_auto]">
-                  <div className="justify-center w-[48.23px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
+                  <div className="justify-center min-w-[48.23px] h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#171d14] text-sm text-center tracking-[0] leading-5 relative flex items-center mt-[-1.00px] whitespace-nowrap">
                     {loading ? "Processing..." : "Google"}
                   </div>
                 </div>
