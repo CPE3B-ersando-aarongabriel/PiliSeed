@@ -34,7 +34,7 @@ export const Header = (): JSX.Element => {
           {!isLoginPage ? (
             <Link href="/login" className="all-[unset] box-border inline-flex flex-col items-center justify-center rounded-full bg-[#00450d] px-4 sm:px-6 py-2 shadow-[0px_1px_2px_#0000000d] hover:shadow-[inset_0_0_0_2px_#38873A] cursor-pointer transition-all">
               <span className="relative flex h-6 w-auto items-center justify-center text-center [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-sm sm:text-base tracking-[0] leading-6 whitespace-nowrap mt-[-1.00px]">
-                Get Started
+                Login
               </span>
             </Link>
           ) : null}

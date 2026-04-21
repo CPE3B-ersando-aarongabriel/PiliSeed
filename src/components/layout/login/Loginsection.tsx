@@ -273,7 +273,7 @@ export const LoginSection = (): JSX.Element => {
               >
                 <div className="pl-12 pr-4 py-[18px] flex items-start justify-center relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden transition-all hover:bg-[#d9e1d0]">
                   <input
-                    className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none"
+                    className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#000000] text-base tracking-[0] leading-[normal] p-0 outline-none"
                     id="input-1"
                     name="login-email"
                     placeholder="john@piliseed.com"
@@ -309,7 +309,7 @@ export const LoginSection = (): JSX.Element => {
               >
                 <div className="px-12 py-[18px] flex items-start justify-center relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[32px] overflow-hidden transition-all hover:bg-[#d9e1d0]">
                   <input
-                    className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#c0c9bb] text-base tracking-[0] leading-[normal] p-0 outline-none"
+                    className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#000000] text-base tracking-[0] leading-[normal] p-0 outline-none"
                     id="input-2"
                     name="login-password"
                     placeholder="••••••••"

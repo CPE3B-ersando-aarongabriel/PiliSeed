@@ -15,7 +15,7 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
   
   return (
     <motion.div
-      className={`flex w-full sm:w-[calc(100%_-_64px)] min-h-[500px] items-center justify-center px-4 sm:px-12 py-12 sm:py-[90.5px] pb-8 sm:pb-16 ${positionClass} rounded-[32px] sm:rounded-[48px] overflow-hidden ${className}`}
+      className={`flex mx-4 max-w-8xl mx-auto min-h-[500px] items-center justify-center px-4 sm:px-2 py-12 sm:py-[90.5px] pb-8 sm:pb-16 ${positionClass} rounded-[32px] sm:rounded-[48px] overflow-hidden ${className}`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.35 }}
