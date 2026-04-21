@@ -15,6 +15,7 @@ import { firestore } from "./firebaseAdmin";
 export const firestoreCollections = {
   users: "users",
   farms: "farms",
+  farmDevices: "farmDevices",
   soilProfiles: "soilProfiles",
   weatherSnapshots: "weatherSnapshots",
   cropRecommendations: "cropRecommendations",
@@ -24,6 +25,9 @@ export const firestoreCollections = {
 
 const usersCollection = firestore.collection(firestoreCollections.users);
 const farmsCollection = firestore.collection(firestoreCollections.farms);
+const farmDevicesCollection = firestore.collection(
+  firestoreCollections.farmDevices,
+);
 const soilProfilesCollection = firestore.collection(
   firestoreCollections.soilProfiles,
 );
@@ -93,6 +97,33 @@ export type SoilProfile = {
   soilSource: "manual" | "api" | "mixed" | "unknown";
   classificationJson: DocumentData | null;
   analysisJson: DocumentData | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type FarmDeviceReadings = {
+  moistureContent: number | null;
+  temperatureC: number | null;
+  humidity: number | null;
+  lightLevel: number | null;
+  pH: number | null;
+};
+
+export type FarmDeviceLink = {
+  id: string;
+  uid: string;
+  farmId: string;
+  deviceId: string;
+  deviceName: string;
+  tokenHash: string;
+  tokenHint: string | null;
+  activationPending: boolean;
+  lastReadings: FarmDeviceReadings | null;
+  lastCollectedAt: string | null;
+  lastActivationRequestedAt: string | null;
+  lastActivationFulfilledAt: string | null;
+  lastSeenAt: string | null;
+  linkedAt: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -205,13 +236,29 @@ type SoilAnalysisCreateInput = {
   nitrogen: number | null;
   phosphorus: number | null;
   potassium: number | null;
-  soilSource?: "manual" | "api" | "mixed";
+  soilSource?: "manual" | "api" | "mixed" | "device";
   soilClass?: string | null;
   soilClassValue?: number | null;
   soilClassProbability?: number | null;
   soilClassProbabilities: SoilClassificationProbability[];
   classificationJson: DocumentData;
   analysisJson: DocumentData;
+};
+
+type FarmDeviceLinkUpsertInput = {
+  deviceId: string;
+  deviceName: string;
+  tokenHash: string;
+  tokenHint?: string | null;
+};
+
+type FarmDeviceReadingInput = {
+  moistureContent?: number | null;
+  temperatureC?: number | null;
+  humidity?: number | null;
+  lightLevel?: number | null;
+  pH?: number | null;
+  collectedAt?: string | null;
 };
 
 type CropRecommendationCreateInput = {
@@ -355,16 +402,17 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
       : [],
     pH: toNullableNumber(data.ph ?? data.pH),
     moistureContent: toNullableNumber(data.moistureContent ?? data.moisture),
-        lightLevel: toNullableNumber(data.lightLevel ?? data.light),
-        temperatureC: toNullableNumber(data.temperatureC ?? data.temperature),
-        humidity: toNullableNumber(data.humidity),
+    lightLevel: toNullableNumber(data.lightLevel ?? data.light),
+    temperatureC: toNullableNumber(data.temperatureC ?? data.temperature),
+    humidity: toNullableNumber(data.humidity),
     nitrogen: toNullableNumber(data.nitrogen),
     phosphorus: toNullableNumber(data.phosphorus),
     potassium: toNullableNumber(data.potassium),
     soilSource:
       data.soilSource === "manual" ||
       data.soilSource === "api" ||
-      data.soilSource === "mixed"
+      data.soilSource === "mixed" ||
+      data.soilSource === "device"
         ? data.soilSource
         : "unknown",
     classificationJson:
@@ -376,6 +424,49 @@ function toSoilProfile(id: string, data: DocumentData): SoilProfile {
       typeof data.analysisJson === "object" && data.analysisJson !== null
         ? data.analysisJson
         : null,
+    createdAt: toIsoString(data.createdAt),
+    updatedAt: toIsoString(data.updatedAt),
+  };
+}
+
+function toFarmDeviceReadings(value: unknown): FarmDeviceReadings | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const typedValue = value as {
+    moistureContent?: unknown;
+    temperatureC?: unknown;
+    humidity?: unknown;
+    lightLevel?: unknown;
+    pH?: unknown;
+  };
+
+  return {
+    moistureContent: toNullableNumber(typedValue.moistureContent),
+    temperatureC: toNullableNumber(typedValue.temperatureC),
+    humidity: toNullableNumber(typedValue.humidity),
+    lightLevel: toNullableNumber(typedValue.lightLevel),
+    pH: toNullableNumber(typedValue.pH),
+  };
+}
+
+function toFarmDeviceLink(id: string, data: DocumentData): FarmDeviceLink {
+  return {
+    id,
+    uid: normalizeText(data.uid, 128) ?? "",
+    farmId: normalizeText(data.farmId, 128) ?? "",
+    deviceId: normalizeText(data.deviceId, 128) ?? "",
+    deviceName: normalizeText(data.deviceName, 120) ?? "Unnamed Device",
+    tokenHash: normalizeText(data.tokenHash, 256) ?? "",
+    tokenHint: normalizeText(data.tokenHint, 32),
+    activationPending: data.activationPending === true,
+    lastReadings: toFarmDeviceReadings(data.lastReadings),
+    lastCollectedAt: toIsoString(data.lastCollectedAt),
+    lastActivationRequestedAt: toIsoString(data.lastActivationRequestedAt),
+    lastActivationFulfilledAt: toIsoString(data.lastActivationFulfilledAt),
+    lastSeenAt: toIsoString(data.lastSeenAt),
+    linkedAt: toIsoString(data.linkedAt),
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
   };
@@ -916,6 +1007,191 @@ export async function activateFarmByIdForUser(
   }
 
   return toFarm(activeSnapshot.id, activeSnapshot.data() ?? {});
+}
+
+export async function upsertFarmDeviceLinkForUser(
+  uid: string,
+  farmId: string,
+  input: FarmDeviceLinkUpsertInput,
+): Promise<FarmDeviceLink | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const deviceDocRef = farmDevicesCollection.doc(farmId);
+  const normalizedDeviceId = normalizeText(input.deviceId, 128);
+  const normalizedDeviceName =
+    normalizeText(input.deviceName, 120) ?? normalizedDeviceId;
+  const normalizedTokenHash = normalizeText(input.tokenHash, 256);
+
+  if (!normalizedDeviceId || !normalizedDeviceName || !normalizedTokenHash) {
+    throw new Error("Invalid device link payload.");
+  }
+
+  await deviceDocRef.set(
+    {
+      uid,
+      farmId,
+      deviceId: normalizedDeviceId,
+      deviceName: normalizedDeviceName,
+      tokenHash: normalizedTokenHash,
+      tokenHint: normalizeText(input.tokenHint, 32),
+      activationPending: false,
+      lastReadings: null,
+      lastCollectedAt: null,
+      lastActivationRequestedAt: null,
+      lastActivationFulfilledAt: null,
+      lastSeenAt: null,
+      linkedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  const linkedSnapshot = await deviceDocRef.get();
+
+  if (!linkedSnapshot.exists) {
+    throw new Error("Failed to link soil device.");
+  }
+
+  return toFarmDeviceLink(linkedSnapshot.id, linkedSnapshot.data() ?? {});
+}
+
+export async function getFarmDeviceLinkForUser(
+  uid: string,
+  farmId: string,
+): Promise<FarmDeviceLink | null> {
+  const ownership = await assertFarmOwnership(uid, farmId);
+
+  if (!ownership) {
+    return null;
+  }
+
+  const deviceSnapshot = await farmDevicesCollection.doc(farmId).get();
+
+  if (!deviceSnapshot.exists) {
+    return null;
+  }
+
+  const linkedDevice = toFarmDeviceLink(
+    deviceSnapshot.id,
+    deviceSnapshot.data() ?? {},
+  );
+
+  if (linkedDevice.uid !== uid || linkedDevice.farmId !== farmId) {
+    throw new UnauthorizedError(
+      "You are not allowed to access this farm device.",
+    );
+  }
+
+  return linkedDevice;
+}
+
+export async function getFarmDeviceLinkByFarmId(
+  farmId: string,
+): Promise<FarmDeviceLink | null> {
+  const deviceSnapshot = await farmDevicesCollection.doc(farmId).get();
+
+  if (!deviceSnapshot.exists) {
+    return null;
+  }
+
+  return toFarmDeviceLink(deviceSnapshot.id, deviceSnapshot.data() ?? {});
+}
+
+export async function getFarmDeviceLinkByDeviceId(
+  deviceId: string,
+): Promise<FarmDeviceLink | null> {
+  const normalizedDeviceId = normalizeText(deviceId, 128);
+
+  if (!normalizedDeviceId) {
+    return null;
+  }
+
+  const linkedDeviceSnapshot = await farmDevicesCollection
+    .where("deviceId", "==", normalizedDeviceId)
+    .limit(1)
+    .get();
+
+  if (linkedDeviceSnapshot.empty) {
+    return null;
+  }
+
+  const linkedDeviceDoc = linkedDeviceSnapshot.docs[0];
+
+  return toFarmDeviceLink(linkedDeviceDoc.id, linkedDeviceDoc.data());
+}
+
+export async function requestFarmDeviceReadingForUser(
+  uid: string,
+  farmId: string,
+): Promise<FarmDeviceLink | null> {
+  const linkedDevice = await getFarmDeviceLinkForUser(uid, farmId);
+
+  if (!linkedDevice) {
+    return null;
+  }
+
+  const deviceDocRef = farmDevicesCollection.doc(farmId);
+
+  await deviceDocRef.set(
+    {
+      activationPending: true,
+      lastActivationRequestedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  const updatedSnapshot = await deviceDocRef.get();
+
+  if (!updatedSnapshot.exists) {
+    throw new Error("Failed to queue device reading request.");
+  }
+
+  return toFarmDeviceLink(updatedSnapshot.id, updatedSnapshot.data() ?? {});
+}
+
+export async function completeFarmDeviceReadingUpload(
+  farmId: string,
+  input: FarmDeviceReadingInput,
+): Promise<FarmDeviceLink | null> {
+  const existingLink = await getFarmDeviceLinkByFarmId(farmId);
+
+  if (!existingLink) {
+    return null;
+  }
+
+  const deviceDocRef = farmDevicesCollection.doc(farmId);
+
+  await deviceDocRef.set(
+    {
+      activationPending: false,
+      lastActivationFulfilledAt: FieldValue.serverTimestamp(),
+      lastSeenAt: FieldValue.serverTimestamp(),
+      lastCollectedAt: FieldValue.serverTimestamp(),
+      lastReadings: {
+        moistureContent: input.moistureContent ?? null,
+        temperatureC: input.temperatureC ?? null,
+        humidity: input.humidity ?? null,
+        lightLevel: input.lightLevel ?? null,
+        pH: input.pH ?? null,
+      },
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  const updatedSnapshot = await deviceDocRef.get();
+
+  if (!updatedSnapshot.exists) {
+    throw new Error("Failed to update linked soil device state.");
+  }
+
+  return toFarmDeviceLink(updatedSnapshot.id, updatedSnapshot.data() ?? {});
 }
 
 export async function createSoilProfileForFarm(

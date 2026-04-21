@@ -14,16 +14,16 @@ const sectionReveal = {
 
 export const Hero_features = (): JSX.Element => {
   return (
-    <div className="pt-40 px-8">
+    <div className="pt-28 sm:pt-32 lg:pt-40 px-4 sm:px-8">
       <motion.div
-        className="grid grid-cols-12 grid-rows-[478.66px] h-fit gap-12 relative"
+        className="mx-auto grid w-full max-w-[1216px] grid-cols-1 gap-8 lg:grid-cols-12 lg:grid-rows-[478.66px] lg:gap-12 relative"
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.35 }}
       >
       <motion.div
-        className="relative row-[1_/_2] col-[1_/_8] self-center w-full h-fit flex flex-col items-start gap-6"
+        className="relative col-span-1 lg:row-[1_/_2] lg:col-[1_/_8] self-center w-full h-fit flex flex-col items-start gap-4 sm:gap-6"
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.35 }}
@@ -36,7 +36,7 @@ export const Hero_features = (): JSX.Element => {
         </div>
 
         <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-          <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-transparent text-7xl leading-[72px]">
+          <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-transparent text-4xl leading-tight sm:text-6xl sm:leading-[62px] lg:text-7xl lg:leading-[72px]">
             <span className="text-[#00450d] tracking-[-2.59px]">
               The Future of
               <br />
@@ -50,8 +50,8 @@ export const Hero_features = (): JSX.Element => {
           </p>
         </div>
 
-        <div className="flex flex-col max-w-xl w-[576px] items-start pt-2 pb-0 px-0 relative flex-[0_0_auto]">
-          <p className="relative w-[575.91px] h-[98px] mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-xl tracking-[0] leading-[32.5px]">
+        <div className="flex flex-col max-w-xl w-full items-start pt-2 pb-0 px-0 relative flex-[0_0_auto]">
+          <p className="relative w-full mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-base tracking-[0] leading-7 sm:text-lg sm:leading-8 lg:text-xl lg:leading-[32.5px]">
             PiliSeed integrates satellite intelligence with ground-level soil
             <br />
             data to create a high-fidelity roadmap for your farm&#39;s
@@ -62,7 +62,7 @@ export const Hero_features = (): JSX.Element => {
       </motion.div>
 
       <motion.div
-        className="relative row-[1_/_2] col-[8_/_13] self-center w-full h-full flex flex-col items-center justify-center bg-[#ffffff01] rounded-[48px] overflow-hidden shadow-[0px_25px_50px_-12px_#00000040]"
+        className="relative col-span-1 lg:row-[1_/_2] lg:col-[8_/_13] self-center w-full h-[280px] sm:h-[360px] lg:h-full flex flex-col items-center justify-center bg-[#ffffff01] rounded-[32px] lg:rounded-[48px] overflow-hidden shadow-[0px_25px_50px_-12px_#00000040]"
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.35 }}
@@ -71,14 +71,14 @@ export const Hero_features = (): JSX.Element => {
         <motion.img 
           src="/features/Hero_features.png" 
           alt="Features" 
-          className="w-full h-full rounded-[48px] object-cover"
+          className="w-full h-full rounded-[32px] lg:rounded-[48px] object-cover"
           initial={{ scale: 1.06 }}
           whileInView={{ scale: 1 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         />
 
-        <div className="absolute w-full h-full top-0 left-0 bg-[linear-gradient(0deg,rgba(0,69,13,0.4)_0%,rgba(0,69,13,0)_100%)] rounded-[48px]" />
+        <div className="absolute w-full h-full top-0 left-0 bg-[linear-gradient(0deg,rgba(0,69,13,0.4)_0%,rgba(0,69,13,0)_100%)] rounded-[32px] lg:rounded-[48px]" />
       </motion.div>
       </motion.div>
     </div>

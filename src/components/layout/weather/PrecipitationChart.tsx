@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -44,42 +45,45 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
     amount: item.amount,
   }));
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <div className="col-span-7">
-      <div className="p-8 bg-white rounded-[48px] shadow-sm h-full">
+    <div className="col-span-7 min-w-0 min-h-0">
+      <div className="p-8 bg-white rounded-[48px] shadow-sm flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-10">
-          <h3 className="text-xl font-bold">Precipitation Accumulation</h3>
+          <h3 className="text-xl font-bold text-[#171D14]">Precipitation Accumulation</h3>
           <div className="flex items-center gap-2 px-4 py-3 bg-[#E3EBDC] rounded-full">
-            <span className="text-xs font-semibold">Current Week</span>
+            <span className="text-xs font-semibold text-[#171D14]">Current Week</span>
           </div>
         </div>
 
-        <div className="h-48 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
-            >
-              <XAxis
-                dataKey="day"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 10, fontWeight: "semibold", fill: "#41493E" }}
-                dy={10}
-              />
-              <YAxis hide={true} />
-              <Tooltip content={<CustomTooltip />} cursor={false} />
-              <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={32}>
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill="#00450D"
-                    opacity={entry.amount > 0 ? 1 : 0.3}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="h-48 w-full min-w-0 min-h-0">
+          {mounted ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fontWeight: "semibold", fill: "#41493E" }}
+                  dy={10}
+                />
+                <YAxis hide={true} />
+                <Tooltip content={<CustomTooltip />} cursor={false} />
+                <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={32}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill="#00450D" opacity={entry.amount > 0 ? 1 : 0.3} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ width: "100%", height: "100%" }} />
+          )}
         </div>
 
         <div className="flex justify-between mt-2 px-2">

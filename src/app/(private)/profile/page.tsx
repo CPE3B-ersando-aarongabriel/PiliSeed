@@ -1,22 +1,110 @@
 "use client";
-import { FormEvent, useId, useState } from "react";
+
+import { FormEvent, useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, ChevronDown, Lock, Upload, Camera, LogOut } from "lucide-react";
+import { User, Upload, Camera, LogOut } from "lucide-react";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+
+import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
+
+type ProfileData = {
+  name: string;
+  email: string;
+  countryCode: string;
+  phone: string;
+  address: string;
+};
+
+type ProfileRecord = {
+  name: string | null;
+  phone: string | null;
+  address: string | null;
+};
+
+const DEFAULT_PROFILE: ProfileData = {
+  name: "",
+  email: "",
+  countryCode: "+1",
+  phone: "",
+  address: "",
+};
+
+function splitPhone(value: string | null | undefined) {
+  if (!value) {
+    return { countryCode: "+1", phone: "" };
+  }
+
+  const trimmedValue = value.trim();
+  const match = trimmedValue.match(/^(\+\d+)\s*(.*)$/);
+
+  if (match) {
+    return { countryCode: match[1], phone: match[2].trim() };
+  }
+
+  return { countryCode: "+1", phone: trimmedValue };
+}
 
 export default function ProfilePage() {
   const router = useRouter();
   const photoInputId = useId();
 
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    fullName: "Alex Rivera",
-    email: "alex.rivera@agritech.com",
-    countryCode: "+1",
-    phone: "555-0123-4567",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const [formData, setFormData] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [initialProfile, setInitialProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    const auth = getClientAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const { response, body } = await fetchWithAuth(user, "/api/profile");
+
+        if (!response.ok) {
+          throw new Error(
+            getApiErrorMessage(body, "Unable to load your profile right now."),
+          );
+        }
+
+        const data = extractApiData<{ profile: ProfileRecord }>(body);
+        const profile = data?.profile ?? null;
+        const phoneParts = splitPhone(profile?.phone ?? null);
+        const nextProfile: ProfileData = {
+          name: profile?.name ?? "",
+          email: user.email ?? "",
+          countryCode: phoneParts.countryCode,
+          phone: phoneParts.phone,
+          address: profile?.address ?? "",
+        };
+
+        setFormData(nextProfile);
+        setInitialProfile(nextProfile);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to load your profile right now.";
+        setErrorMessage(message);
+      } finally {
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -29,19 +117,79 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!currentUser) {
+      setErrorMessage("Sign in to update your profile.");
+      return;
+    }
+
+    const payload: Record<string, string> = {};
+    const trimmedName = formData.name.trim();
+    const trimmedPhone = formData.phone.trim();
+    const trimmedAddress = formData.address.trim();
+
+    if (trimmedName) {
+      payload.name = trimmedName;
+    }
+
+    if (trimmedPhone) {
+      payload.phone = `${formData.countryCode} ${trimmedPhone}`.trim();
+    }
+
+    if (trimmedAddress) {
+      payload.address = trimmedAddress;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      setErrorMessage("Add at least one profile field before saving.");
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      const { response, body } = await fetchWithAuth(currentUser, "/api/profile", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          getApiErrorMessage(body, "Unable to update your profile right now."),
+        );
+      }
+
+      const data = extractApiData<{ profile: ProfileRecord }>(body);
+      const profile = data?.profile ?? null;
+      const phoneParts = splitPhone(profile?.phone ?? payload.phone ?? null);
+      const nextProfile: ProfileData = {
+        name: profile?.name ?? formData.name,
+        email: formData.email,
+        countryCode: phoneParts.countryCode,
+        phone: phoneParts.phone,
+        address: profile?.address ?? formData.address,
+      };
+
+      setFormData(nextProfile);
+      setInitialProfile(nextProfile);
+      setSuccessMessage("Profile updated successfully.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update your profile right now.";
+      setErrorMessage(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    setFormData({
-      fullName: "Alex Rivera",
-      email: "alex.rivera@agritech.com",
-      countryCode: "+1",
-      phone: "555-0123-4567",
-      newPassword: "",
-      confirmPassword: "",
-    });
+    setFormData(initialProfile);
+    setErrorMessage("");
+    setSuccessMessage("");
   };
 
   const handleLogout = async () => {
@@ -68,6 +216,12 @@ export default function ProfilePage() {
           Logout
         </button>
       </div>
+
+      {isLoading && (
+        <p className="px-8 text-sm font-semibold text-[#00450D]">
+          Loading profile...
+        </p>
+      )}
 
       <div className="flex flex-col w-full items-start gap-8 px-8 py-12">
         <header className="flex flex-col items-start gap-1 relative self-stretch w-full">
@@ -155,8 +309,8 @@ export default function ProfilePage() {
                     <input
                       className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                       type="text"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -170,7 +324,8 @@ export default function ProfilePage() {
                       className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                       type="email"
                       value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                      readOnly
+                      disabled
                     />
                   </div>
                 </div>
@@ -187,6 +342,8 @@ export default function ProfilePage() {
                         onChange={(e) => setFormData(prev => ({ ...prev, countryCode: e.target.value }))}
                       >
                         <option value="+1">+1</option>
+                        <option value="+44">+44</option>
+                        <option value="+63">+63</option>
                       </select>
                     </div>
                     <div className="flex-1 px-4 py-3 flex items-center bg-[#eaead1] rounded-xl overflow-hidden">
@@ -199,69 +356,35 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
-            <section
-              aria-labelledby="security-heading"
-              className="flex flex-col items-start gap-6 p-6 relative self-stretch w-full flex-[0_0_auto] bg-white rounded-[32px] shadow-[0px_1px_2px_#0000000d]"
-            >
-              <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">
-                <div className="w-10 h-10 justify-center bg-[#e4e4cc] rounded-2xl flex items-center relative">
-                  <Lock className="w-4 h-5 text-[#1b1d0e]" />
-                </div>
-                <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                  <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-                    <h2
-                      className="w-fit mt-[-1.00px] [font-family:'Epilogue-Bold',Helvetica] font-bold text-[#1b1d0e] text-lg leading-7 whitespace-nowrap relative flex items-center tracking-[0]"
-                      id="security-heading"
-                    >
-                      Security
-                    </h2>
-                  </div>
-                  <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-                    <p className="w-fit mt-[-1.00px] [font-family:'Manrope-Regular',Helvetica] font-normal text-[#75584d] text-sm leading-5 whitespace-nowrap relative flex items-center tracking-[0]">
-                      Maintain account safety and authentication settings.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-6 w-full">
-                <div className="flex flex-col gap-2 w-full">
+                <div className="col-span-2 flex flex-col gap-2 w-full">
                   <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
-                    NEW PASSWORD
+                    ADDRESS
                   </label>
                   <div className="px-4 py-3 flex items-center bg-[#eaead1] rounded-xl overflow-hidden">
                     <input
                       className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
-                      type="password"
-                      placeholder="Enter new password"
-                      value={formData.newPassword}
-                      onChange={(e) => setFormData(prev => ({ ...prev, newPassword: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 w-full">
-                  <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
-                    CONFIRM PASSWORD
-                  </label>
-                  <div className="px-4 py-3 flex items-center bg-[#eaead1] rounded-xl overflow-hidden">
-                    <input
-                      className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
-                      type="password"
-                      placeholder="Confirm password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                     />
                   </div>
                 </div>
               </div>
             </section>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[#9C4A00]">
+                {errorMessage}
+              </div>
+              <div className="text-sm font-semibold text-[#00450D]">
+                {successMessage}
+              </div>
+            </div>
             <div className="flex items-center justify-end gap-3 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto]">
               <button
                 className="all-[unset] box-border inline-flex flex-col items-center justify-center px-8 py-3 relative flex-[0_0_auto] bg-[#e4e4cc] rounded-2xl cursor-pointer"
                 onClick={handleCancel}
                 type="button"
+                disabled={isSaving || isLoading}
               >
                 <div className="justify-center w-fit mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#75584d] text-base text-center leading-6 whitespace-nowrap relative flex items-center tracking-[0]">
                   Cancel Changes
@@ -270,10 +393,11 @@ export default function ProfilePage() {
               <button
                 className="all-[unset] box-border inline-flex flex-col items-center justify-center px-8 py-3 relative flex-[0_0_auto] bg-[#0d631b] rounded-2xl cursor-pointer"
                 type="submit"
+                disabled={isSaving || isLoading}
               >
                 <div className="absolute top-0 left-0 w-full h-full bg-[#ffffff01] rounded-2xl shadow-[0px_8px_10px_-6px_#0d631b33,0px_20px_25px_-5px_#0d631b33]" />
                 <div className="justify-center w-fit mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-base text-center leading-6 whitespace-nowrap relative flex items-center tracking-[0]">
-                  Save All Changes
+                  {isSaving ? "Saving..." : "Save All Changes"}
                 </div>
               </button>
             </div>

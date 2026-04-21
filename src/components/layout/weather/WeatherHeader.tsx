@@ -1,17 +1,25 @@
 "use client";
 
+type FarmOption = {
+  id: string;
+  name: string;
+  isActive: boolean;
+};
+
 interface WeatherHeaderProps {
-  selectedFarm: string;
-  onFarmChange: (farm: string) => void;
+  selectedFarmId: string;
+  selectedFarmName: string;
+  onFarmChange: (farmId: string) => void;
   onRefresh: () => void;
   isLoading: boolean;
   isFarmDropdownOpen: boolean;
   setIsFarmDropdownOpen: (open: boolean) => void;
-  farmOptions: string[];
+  farmOptions: FarmOption[];
 }
 
 export default function WeatherHeader({
-  selectedFarm,
+  selectedFarmId,
+  selectedFarmName,
   onFarmChange,
   onRefresh,
   isLoading,
@@ -19,6 +27,9 @@ export default function WeatherHeader({
   setIsFarmDropdownOpen,
   farmOptions,
 }: WeatherHeaderProps) {
+  const isDisabled = isLoading || farmOptions.length === 0;
+  const isRefreshDisabled = isLoading || !selectedFarmId;
+
   return (
     <div className="flex items-start justify-between mt-2">
       <div>
@@ -26,7 +37,7 @@ export default function WeatherHeader({
           Weather Analysis
         </h1>
         <p className="mt-3 text-medium text-[#41493E] leading-relaxed max-w-2xl">
-          Precision meteorological tracking for {selectedFarm} in the Central
+          Precision meteorological tracking for {selectedFarmName} in the Central
           Highlands. Real-time atmospheric monitoring synced with soil moisture
           sensors.
         </p>
@@ -41,10 +52,11 @@ export default function WeatherHeader({
           <div className="relative">
             <button
               onClick={() => setIsFarmDropdownOpen(!isFarmDropdownOpen)}
+              disabled={isDisabled}
               className="w-[200px] h-[42px] bg-[#E3EBDC] rounded-full shadow-sm flex items-center justify-between px-5 hover:bg-[#D5E0CC] transition-colors"
             >
               <span className="font-semibold text-[#00450D] text-sm">
-                {selectedFarm}
+                {selectedFarmName}
               </span>
               <img
                 src="/soil/dropdown.svg"
@@ -62,18 +74,25 @@ export default function WeatherHeader({
                 <div className="absolute left-0 mt-2 w-[185px] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
                   {farmOptions.map((farm) => (
                     <button
-                      key={farm}
+                      key={farm.id}
                       onClick={() => {
-                        onFarmChange(farm);
+                        onFarmChange(farm.id);
                         setIsFarmDropdownOpen(false);
                       }}
                       className={`w-full text-left px-5 py-2.5 text-sm hover:bg-[#E3EBDC] transition ${
-                        farm === selectedFarm
+                        farm.id === selectedFarmId
                           ? "text-[#00450D] font-medium bg-[#EEF3EA]"
                           : "text-[#171D14]"
                       }`}
                     >
-                      {farm}
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="truncate">{farm.name}</span>
+                        {farm.isActive && (
+                          <span className="rounded-full bg-[#00450D]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[#00450D]">
+                            Active
+                          </span>
+                        )}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -84,7 +103,7 @@ export default function WeatherHeader({
 
         <button
           onClick={onRefresh}
-          disabled={isLoading}
+          disabled={isRefreshDisabled}
           className="flex items-center justify-center gap-2 w-[140px] h-[42px] bg-[#00450D] text-white rounded-full hover:bg-[#00380A] transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           <img

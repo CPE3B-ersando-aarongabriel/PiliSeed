@@ -17,8 +17,18 @@ interface YieldDataPoint {
   value: number;
 }
 
+interface YieldPreview {
+  cropType?: string | null;
+  expectedYield: number;
+  unit: string;
+  estimatedRevenuePhp?: number | null;
+}
+
 interface YieldPredictionCardProps {
   yieldHistory?: YieldDataPoint[];
+  yieldPreview?: YieldPreview | null;
+  revenueValue?: string;
+  percentageIncrease?: string;
   isLoading?: boolean;
 }
 
@@ -35,31 +45,60 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export default function YieldPredictionCard({
   yieldHistory,
+  yieldPreview,
+  revenueValue,
+  percentageIncrease,
   isLoading = false,
 }: YieldPredictionCardProps) {
+  const [mounted, setMounted] = useState(false);
+
+  const formatRevenuePhp = (amount: number | null | undefined) => {
+    if (amount === null || amount === undefined || !Number.isFinite(amount)) {
+      return "PHP --";
+    }
+
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const buildPreviewSeries = (expectedYield: number) => {
+    if (!Number.isFinite(expectedYield) || expectedYield <= 0) {
+      return [] as YieldDataPoint[];
+    }
+
+    const start = new Date();
+    const points: YieldDataPoint[] = [];
+
+    for (let index = 0; index < 6; index += 1) {
+      const date = new Date(start);
+      date.setMonth(start.getMonth() + index);
+      const label = date.toLocaleDateString("en-US", { month: "short" });
+      const variation = Math.sin(index / 2) * 0.05;
+      const value = Number((expectedYield * (1 + variation)).toFixed(2));
+
+      points.push({ month: label, value });
+    }
+
+    return points;
+  };
+
+  const displaySeries =
+    yieldHistory && yieldHistory.length > 0
+      ? yieldHistory
+      : yieldPreview
+        ? buildPreviewSeries(yieldPreview.expectedYield)
+        : [];
+
+  const resolvedRevenue = revenueValue ?? formatRevenuePhp(yieldPreview?.estimatedRevenuePhp);
+  const resolvedIncrease = percentageIncrease ?? "Market data pending";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const gradientId = "yieldGradient";
-
-  const handleExportCSV = () => {
-    if (!yieldHistory) return;
-
-    const headers = ["Month", "Predicted Yield (MT)"];
-    const rows = yieldHistory.map((item) => [item.month, item.value]);
-    const csvContent = [headers, ...rows]
-      .map((row) => row.join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "yield-prediction.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleCompareLastYear = () => {
-    alert("Comparison feature will be available soon");
-  };
 
   if (isLoading) {
     return (
@@ -73,10 +112,10 @@ export default function YieldPredictionCard({
     );
   }
 
-  if (!yieldHistory || yieldHistory.length === 0) {
+  if (displaySeries.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-md border border-[#41493E]/10 p-6">
-        <div className="text-center py-12">
+        <div className="h-[300px] flex items-center justify-center">
           <p className="text-[#41493E]/60">No yield data available</p>
         </div>
       </div>
@@ -94,77 +133,98 @@ export default function YieldPredictionCard({
             Projected harvest weight for the next 6 months (Metric Tons)
           </p>
         </div>
-
-        <div className="flex gap-3">
-          <button
-            onClick={handleCompareLastYear}
-            className="px-4 py-2 border border-[#41493E]/20 rounded-lg text-sm font-medium text-[#00450D] hover:bg-gray-50 transition"
-          >
-            Compare Last Year
-          </button>
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2 bg-[#dee5d6] text-[#00450D] rounded-lg text-sm font-medium transition hover:bg-[#00450D] hover:text-white"
-          >
-            Export CSV
-          </button>
-        </div>
       </div>
 
-      <div className="h-60 sm:h-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={yieldHistory}>
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00450D" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#00450D" stopOpacity={0} />
-              </linearGradient>
-            </defs>
+      {yieldPreview && (
+        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-[#E3EBDC] bg-[#F7FAF2] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7B8776]">
+              Expected Yield
+            </p>
+            <p className="mt-2 text-2xl font-bold text-[#171D14]">
+              {yieldPreview.expectedYield.toFixed(2)}
+              <span className="ml-2 text-xs font-semibold text-[#7B8776]">
+                {yieldPreview.unit}
+              </span>
+            </p>
+          </div>
+          <div className="rounded-2xl border border-[#E3EBDC] bg-[#F7FAF2] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7B8776]">
+              Estimated Revenue
+            </p>
+            <p className="mt-2 text-2xl font-bold text-[#00450D]">
+              {resolvedRevenue}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-[#E3EBDC] bg-[#F7FAF2] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7B8776]">
+              Market Shift
+            </p>
+            <p className="mt-2 text-lg font-semibold text-[#171D14]">
+              {resolvedIncrease}
+            </p>
+          </div>
+        </div>
+      )}
 
-            <CartesianGrid vertical={false} stroke="#E5E7EB" />
+      <div className="w-full h-[300px] sm:h-[350px] min-h-[300px]">
+        {mounted ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={displaySeries}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00450D" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#00450D" stopOpacity={0} />
+                </linearGradient>
+              </defs>
 
-            <XAxis
-              dataKey="month"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#6B7280", fontSize: 12 }}
-            />
+              <CartesianGrid vertical={false} stroke="#E5E7EB" />
 
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "#6B7280", fontSize: 12 }}
-            />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6B7280", fontSize: 12 }}
+              />
 
-            <Tooltip content={<CustomTooltip />} />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6B7280", fontSize: 12 }}
+              />
 
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="none"
-              fill={`url(#${gradientId})`}
-            />
+              <Tooltip content={<CustomTooltip />} />
 
-            <Line
-              type="natural"
-              dataKey="value"
-              stroke="#00450D"
-              strokeWidth={3}
-              dot={{
-                r: 4,
-                fill: "#00450D",
-                stroke: "white",
-                strokeWidth: 2,
-              }}
-              activeDot={{
-                r: 7,
-                fill: "#00450D",
-              }}
-              isAnimationActive={true}
-              animationDuration={800}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="none"
+                fill={`url(#${gradientId})`}
+              />
+
+              <Line
+                type="natural"
+                dataKey="value"
+                stroke="#00450D"
+                strokeWidth={3}
+                dot={{
+                  r: 4,
+                  fill: "#00450D",
+                  stroke: "white",
+                  strokeWidth: 2,
+                }}
+                activeDot={{
+                  r: 7,
+                  fill: "#00450D",
+                }}
+                isAnimationActive={true}
+                animationDuration={800}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ width: '100%', height: '100%' }} />
+        )}
       </div>
     </div>
   );

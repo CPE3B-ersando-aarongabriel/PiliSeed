@@ -3,10 +3,12 @@
 import Image from "next/image";
 
 interface ForecastData {
+  date?: string;
   day: string;
   high: number;
   low: number;
   condition: string;
+  isToday?: boolean;
 }
 
 interface ForecastCardProps {
@@ -24,12 +26,16 @@ const getWeatherIcon = (condition: string) => {
 };
 
 export default function ForecastCard({ data }: ForecastCardProps) {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const hasToday = data.some((entry) => entry.date === todayKey || entry.isToday);
+
   return (
     <div className="col-span-12">
-      <h3 className="text-xl font-bold mb-6">7-Day Agricultural Outlook</h3>
+      <h3 className="text-xl font-bold mb-6 text-[#171d14]">7-Day Agricultural Outlook</h3>
       <div className="grid grid-cols-7 gap-4">
         {data.map((day, idx) => {
-          const isHighlighted = idx === 2;
+          const isHighlighted =
+            day.date === todayKey || day.isToday || (!hasToday && idx === 0);
           return (
             <div
               key={day.day}
