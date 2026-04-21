@@ -1,5 +1,6 @@
 "use client";
 
+import { Map } from "lucide-react";
 import Image from "next/image";
 
 interface FarmContext {
@@ -30,12 +31,7 @@ export default function HyperLocalContext({ data }: HyperLocalContextProps) {
         <div className="absolute bottom-12 left-12 right-12">
           <div className="max-w-md p-8 bg-white/70 backdrop-blur-md rounded-[48px]">
             <div className="flex items-center gap-3 mb-4">
-              <img
-                src="/weather/map.svg"
-                alt="location"
-                width={18}
-                height={18}
-              />
+              <Map className="w-[20px] h-[20px] text-[#00450D]"/>
               <h4 className="font-bold text-lg text-[#171D14]">Hyper-Local Context</h4>
             </div>
 
