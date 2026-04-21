@@ -39,7 +39,7 @@ export default function CurrentConditionCard({
         <div className="flex items-start justify-between mb-8">
           <div>
             <span className="text-sm font-medium text-[#41493E]">Current Condition</span>
-            <h3 className="text-lg font-semibold mt-1">{condition}</h3>
+            <h3 className="text-lg font-semibold mt-1 text-[#171D14]">{condition}</h3>
           </div>
           <img
             src={getWeatherIcon(condition)}

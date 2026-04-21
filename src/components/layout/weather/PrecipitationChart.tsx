@@ -52,18 +52,18 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
   }, []);
 
   return (
-    <div className="col-span-7">
-      <div className="p-8 bg-white rounded-[48px] shadow-sm h-full">
+    <div className="col-span-7 min-w-0 min-h-0">
+      <div className="p-8 bg-white rounded-[48px] shadow-sm flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-10">
-          <h3 className="text-xl font-bold">Precipitation Accumulation</h3>
+          <h3 className="text-xl font-bold text-[#171D14]">Precipitation Accumulation</h3>
           <div className="flex items-center gap-2 px-4 py-3 bg-[#E3EBDC] rounded-full">
-            <span className="text-xs font-semibold">Current Week</span>
+            <span className="text-xs font-semibold text-[#171D14]">Current Week</span>
           </div>
         </div>
 
-        <div className="h-48 w-full" style={{ minWidth: 0, minHeight: 0 }}>
+        <div className="h-48 w-full min-w-0 min-h-0">
           {mounted ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                 <XAxis
                   dataKey="day"
