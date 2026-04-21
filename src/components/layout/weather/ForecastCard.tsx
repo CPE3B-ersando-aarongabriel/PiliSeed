@@ -31,7 +31,7 @@ export default function ForecastCard({ data }: ForecastCardProps) {
 
   return (
     <div className="col-span-12">
-      <h3 className="text-xl font-bold mb-6">7-Day Agricultural Outlook</h3>
+      <h3 className="text-xl font-bold mb-6 text-[#171d14]">7-Day Agricultural Outlook</h3>
       <div className="grid grid-cols-7 gap-4">
         {data.map((day, idx) => {
           const isHighlighted =

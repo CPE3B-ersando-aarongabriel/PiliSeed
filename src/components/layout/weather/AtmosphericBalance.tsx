@@ -58,13 +58,13 @@ export default function AtmosphericBalance({
   ];
 
   return (
-    <div className="col-span-5">
-      <div className="relative h-full p-8 bg-[#E3EBDC] rounded-[48px] [&_.recharts-radar-polygon]:!fill-[#00450D]/40 [&_.recharts-radar-dot]:!hidden">
-        <h3 className="text-xl font-bold mb-4">Atmospheric Balance</h3>
+    <div className="col-span-5 min-w-0 min-h-0">
+      <div className="relative h-full p-8 bg-[#E3EBDC] rounded-[48px] flex flex-col min-h-0">
+        <h3 className="text-xl font-bold mb-4 text-[#171D14]">Atmospheric Balance</h3>
 
-        <div className="h-72 mb-2" style={{ minWidth: 0, minHeight: 0 }}>
+        <div className=" w-full h-72 mb-2 min-w-0">
           {mounted ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            <ResponsiveContainer width="100%" height={250}>
               <RadarChart outerRadius="70%" data={atmosphericData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                 <PolarGrid stroke="#C0C9BB" />
                 <PolarAngleAxis dataKey="subject" tick={{ fontSize: 9, fill: '#41493E', fontWeight: 600 }} />
