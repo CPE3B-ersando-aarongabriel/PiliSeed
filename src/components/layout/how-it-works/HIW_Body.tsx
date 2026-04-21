@@ -112,42 +112,150 @@ export const HIW_Body = (): JSX.Element => {
         </p>
       </motion.div>
 
-      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-5">
-        <div className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]">
-          <h2 className="text-xl font-bold text-[#00450d]">1. Pinpoint Your Farm</h2>
-          <p className="mt-2 text-sm leading-6 text-[#41493e]">Select a farm and lock the location context before analysis.</p>
-          <div className="mt-3 space-y-2 text-sm text-[#171d14]">
-            <div className="flex items-center gap-2"><MapPinned className="h-4 w-4 text-[#00450d]" /> Precision farm selection</div>
-            <div className="flex items-center gap-2"><Mountain className="h-4 w-4 text-[#00450d]" /> Regional context applied</div>
-          </div>
-        </div>
+      <motion.div
+        className="mx-auto w-full max-w-5xl overflow-hidden rounded-[28px] bg-[#ffffff01] shadow-[0px_20px_40px_-12px_#00000040]"
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+      >
+        <div className="relative aspect-[4/3] w-full sm:aspect-[16/10] overflow-hidden rounded-[28px] bg-[url(/how-it-works/HIW.png)] bg-cover bg-[50%_50%]">
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,69,13,0.12)_0%,rgba(0,69,13,0.55)_100%)]" />
 
-        <div className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]">
-          <h2 className="text-xl font-bold text-[#00450d]">2. Input Soil Data</h2>
-          <p className="mt-2 text-sm leading-6 text-[#41493e]">Fill NPK values and optional environmental readings manually or from device sync.</p>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {npkPreviewFields.map((field) => (
-              <div key={field.label} className="rounded-xl bg-[#e3ebdc] px-3 py-2 text-sm text-[#171d14]">
-                <div className="font-semibold">{field.label}</div>
-                <div>{field.value} {field.unit}</div>
+          <div className="absolute inset-x-4 bottom-4 rounded-[22px] bg-[#ffffffd9] p-4 backdrop-blur-[8px] sm:inset-x-6 sm:bottom-6 sm:rounded-[28px] sm:p-5">
+            <div className="flex items-start gap-3 text-left">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#a3f69c]">
+                <Sprout className="h-5 w-5 text-[#00450d]" aria-hidden="true" />
               </div>
-            ))}
+              <div>
+                <p className="[font-family:'Inter-SemiBold',Helvetica] text-sm font-semibold leading-5 text-[#00450d] sm:text-base">
+                  From soil input to AI recommendations.
+                </p>
+                <p className="mt-1 [font-family:'Inter-Regular',Helvetica] text-xs leading-4 text-[#41493e] sm:text-sm">
+                  A clear workflow designed to match the landing page visuals.
+                </p>
+              </div>
+            </div>
           </div>
-          <button className="mt-4 inline-flex items-center rounded-full bg-[#00450d] px-4 py-2 text-xs font-semibold text-white">Get Data from Device</button>
         </div>
+      </motion.div>
 
-        <div className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]">
-          <h2 className="text-xl font-bold text-[#00450d]">3. Receive Recommendations</h2>
-          <p className="mt-2 text-sm leading-6 text-[#41493e]">PiliSeed suggests crop and irrigation strategies based on your farm profile and inputs.</p>
-          <div className="mt-3 space-y-2">
+      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-6">
+        <motion.div
+          className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]"
+          variants={sectionReveal}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00450d] text-sm font-extrabold text-white">1</div>
+            <div className="h-px flex-1 bg-[#c0c9bb4c]" />
+          </div>
+
+          <h2 className="mt-4 text-2xl font-bold text-[#00450d]">Pinpoint Your Farm</h2>
+          <p className="mt-2 text-sm leading-6 text-[#41493e]">
+            Start by locating your field on our high-resolution satellite map. Our system automatically identifies climate zones and historical weather patterns specific to your coordinates.
+          </p>
+
+          <div className="mt-4 space-y-2 text-sm text-[#171d14]">
+            <div className="flex items-center gap-2"><MapPinned className="h-4 w-4 text-[#00450d]" /> Precision geolocation up to 1 meter accuracy.</div>
+            <div className="flex items-center gap-2"><Mountain className="h-4 w-4 text-[#00450d]" /> Automatic regional topography analysis.</div>
+          </div>
+
+          <div className="mt-5 relative overflow-hidden rounded-[20px] border-4 border-[#00450d66] bg-[url(/how-it-works/HIW2.png)] bg-cover bg-[50%_50%] aspect-[16/10]">
+            <div className="absolute right-3 top-3 rounded-2xl bg-[#ffffffcc] px-3 py-2 backdrop-blur-[8px]">
+              <p className="text-[10px] font-semibold tracking-[1.1px] text-[#00450d]">ACTIVE REGION</p>
+              <p className="text-sm font-bold text-[#171d14]">Valley Plot #402</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]"
+          variants={sectionReveal}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7a5649] text-sm font-extrabold text-white">2</div>
+            <div className="h-px flex-1 bg-[#c0c9bb4c]" />
+          </div>
+
+          <h2 className="mt-4 text-2xl font-bold text-[#00450d]">Input Soil Data</h2>
+          <p className="mt-2 text-sm leading-6 text-[#41493e]">
+            Input complete NPK values, then enrich your profile with moisture, pH, light, temperature, and humidity. You can enter values manually or fetch them directly from your connected farm device.
+          </p>
+
+          <div className="mt-5 rounded-[20px] border border-[#c0c9bb33] bg-[#eff6e7] p-4">
+            <p className="mb-3 text-[10px] font-semibold tracking-[1.2px] text-[#00450d]">CHEMICAL COMPOSITION (NPK)</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {npkPreviewFields.map((field) => (
+                <div key={field.label} className="rounded-xl bg-[#e3ebdc] px-3 py-2 text-sm text-[#171d14]">
+                  <div className="font-semibold">{field.label}</div>
+                  <div>{field.value} {field.unit}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 border-t border-[#c0c9bb33] pt-4">
+              <p className="mb-3 text-[10px] font-semibold tracking-[1.2px] text-[#003e63]">ENVIRONMENTAL READINGS</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {environmentalPreviewFields.map((field) => (
+                  <div key={field.label} className="rounded-xl bg-[#e3ebdc] px-3 py-2 text-sm text-[#171d14]">
+                    <div className="font-semibold">{field.label}</div>
+                    <div>{field.value} {field.unit}</div>
+                  </div>
+                ))}
+              </div>
+              <button className="mt-4 inline-flex items-center rounded-full bg-[#00450d] px-4 py-2 text-xs font-semibold text-white">Get Data from Device</button>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]"
+          variants={sectionReveal}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#003e63] text-sm font-extrabold text-white">3</div>
+            <div className="h-px flex-1 bg-[#c0c9bb4c]" />
+          </div>
+
+          <h2 className="mt-4 text-2xl font-bold text-[#00450d]">Receive Recommendations</h2>
+          <p className="mt-2 text-sm leading-6 text-[#41493e]">
+            Our proprietary Greenhouse AI processes your data against thousands of crop varieties to deliver a personalized roadmap for planting, irrigation, and fertilization.
+          </p>
+
+          <div className="mt-5 relative overflow-hidden rounded-[20px] bg-[url(/how-it-works/HIW.png)] bg-cover bg-[50%_50%] aspect-[16/10]">
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,69,13,0.1)_0%,rgba(0,69,13,0.5)_100%)]" />
+            <div className="absolute inset-x-3 bottom-3 rounded-xl bg-[#ffffffd9] px-3 py-2 backdrop-blur-[8px]">
+              <p className="text-xs font-semibold text-[#00450d]">AI Recommendation Ready</p>
+              <p className="text-[11px] text-[#41493e]">Personalized plan generated from your live farm profile.</p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
             {recommendationCards.map((card) => (
               <div key={card.title} className="flex items-center gap-3 rounded-xl bg-[#dee5d6] px-3 py-2 text-sm text-[#171d14]">
                 <card.Icon className="h-4 w-4 text-[#00450d]" />
-                <span className="font-semibold">{card.title}</span>
+                <div>
+                  <div className="font-semibold">{card.title}</div>
+                  <div className="text-xs text-[#41493e]">{card.desc}</div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+
+          <button className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#00450d] px-4 py-3 text-sm font-semibold text-white">
+            Get Crop Recommendation
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </motion.div>
       </div>
     </div>
 
