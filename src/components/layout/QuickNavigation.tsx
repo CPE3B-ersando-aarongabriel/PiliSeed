@@ -24,13 +24,13 @@ interface NavigationItem {
 const allNavigationItems: Record<string, NavigationItem> = {
   "soil-data": {
     id: "soil-data",
-    path: "/soil",
+    path: "/parameters",
     bgCard: "bg-[#065F181A]",
     borderCard: "border-[#065F1833]",
     bgIcon: "bg-[#065F18]",
     icon: FlaskConical,
     iconColor: "text-[#86D881]",
-    label: "SOIL DATA ANALYSIS",
+    label: "PARAMETERS ANALYSIS",
     labelClass: "text-[#065F18]",
   },
   "crop-recommendations": {

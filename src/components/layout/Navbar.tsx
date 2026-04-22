@@ -4,6 +4,9 @@ import { JSX, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { onAuthStateChanged } from "firebase/auth";
+
+import { getClientAuth } from "@/lib/firebaseClient";
 
 const navLinks = [
   { label: "Home", href: "/", active: true, width: "w-[43.72px]" },
@@ -14,6 +17,8 @@ const navLinks = [
 
 export const Navbar = (): JSX.Element => {
   const pathname = usePathname();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const pathToLabel: Record<string, string> = {
@@ -24,6 +29,17 @@ export const Navbar = (): JSX.Element => {
   };
 
   const activeNav = pathToLabel[pathname] || "Home";
+
+  useEffect(() => {
+    const auth = getClientAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(Boolean(user));
+      setIsAuthReady(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -72,45 +88,73 @@ export const Navbar = (): JSX.Element => {
         </div>
 
         <div className="hidden md:inline-flex items-center gap-2 sm:gap-4 relative flex-[0_0_auto] ml-auto md:ml-0">
-          <Link href="/login">
-            <motion.button
-              className="all-[unset] box-border px-4 sm:px-6 py-2 inline-flex flex-col rounded-full shadow-[0px_1px_2px_#0000000d] items-center justify-center relative flex-[0_0_auto] border border-solid border-[#00450d] hover:shadow-[inset_0_0_0_2px_#00450d] cursor-pointer transition-all"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="w-auto h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-sm sm:text-base leading-6 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
-                Log in
-              </div>
-            </motion.button>
-          </Link>
-          <Link href="/signup">
-            <motion.button
-              className="all-[unset] box-border px-4 sm:px-6 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] hover:shadow-[inset_0_0_0_2px_#38873A] cursor-pointer transition-all"
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="relative flex items-center justify-center h-6 mt-[-1.00px] w-auto [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-sm sm:text-base text-center tracking-[0] leading-6 whitespace-nowrap">
-                Sign Up
-              </div>
-            </motion.button>
-          </Link>
+          {isAuthReady && isAuthenticated ? (
+            <Link href="/dashboard">
+              <motion.button
+                className="all-[unset] box-border px-4 sm:px-6 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] hover:shadow-[inset_0_0_0_2px_#38873A] cursor-pointer transition-all"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="relative flex items-center justify-center h-6 mt-[-1.00px] w-auto [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-sm sm:text-base text-center tracking-[0] leading-6 whitespace-nowrap">
+                  Dashboard
+                </div>
+              </motion.button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <motion.button
+                  className="all-[unset] box-border px-4 sm:px-6 py-2 inline-flex flex-col rounded-full shadow-[0px_1px_2px_#0000000d] items-center justify-center relative flex-[0_0_auto] border border-solid border-[#00450d] hover:shadow-[inset_0_0_0_2px_#00450d] cursor-pointer transition-all"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="w-auto h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-sm sm:text-base leading-6 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
+                    Log in
+                  </div>
+                </motion.button>
+              </Link>
+              <Link href="/signup">
+                <motion.button
+                  className="all-[unset] box-border px-4 sm:px-6 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] hover:shadow-[inset_0_0_0_2px_#38873A] cursor-pointer transition-all"
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="relative flex items-center justify-center h-6 mt-[-1.00px] w-auto [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-sm sm:text-base text-center tracking-[0] leading-6 whitespace-nowrap">
+                    Sign Up
+                  </div>
+                </motion.button>
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="md:hidden flex items-center gap-2 ml-auto">
-          <Link href="/login">
-            <button className="all-[unset] box-border px-3 py-2 inline-flex flex-col rounded-full shadow-[0px_1px_2px_#0000000d] items-center justify-center relative flex-[0_0_auto] border border-solid border-[#00450d] cursor-pointer transition-all">
-              <div className="w-auto h-5 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-xs leading-5 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
-                Log in
-              </div>
-            </button>
-          </Link>
-          <Link href="/signup">
-            <button className="all-[unset] box-border px-3 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer transition-all">
-              <div className="relative flex items-center justify-center h-5 mt-[-1.00px] w-auto [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-xs text-center tracking-[0] leading-5 whitespace-nowrap">
-                Sign Up
-              </div>
-            </button>
-          </Link>
+          {isAuthReady && isAuthenticated ? (
+            <Link href="/dashboard">
+              <button className="all-[unset] box-border px-3 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer transition-all">
+                <div className="relative flex items-center justify-center h-5 mt-[-1.00px] w-auto [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-xs text-center tracking-[0] leading-5 whitespace-nowrap">
+                  Dashboard
+                </div>
+              </button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <button className="all-[unset] box-border px-3 py-2 inline-flex flex-col rounded-full shadow-[0px_1px_2px_#0000000d] items-center justify-center relative flex-[0_0_auto] border border-solid border-[#00450d] cursor-pointer transition-all">
+                  <div className="w-auto h-5 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#00450d] text-xs leading-5 relative flex items-center justify-center text-center tracking-[0] whitespace-nowrap">
+                    Log in
+                  </div>
+                </button>
+              </Link>
+              <Link href="/signup">
+                <button className="all-[unset] box-border px-3 py-2 bg-[#00450d] rounded-full shadow-[0px_1px_2px_#0000000d] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer transition-all">
+                  <div className="relative flex items-center justify-center h-5 mt-[-1.00px] w-auto [font-family:'Manrope-Bold',Helvetica] font-bold text-[#f5fced] text-xs text-center tracking-[0] leading-5 whitespace-nowrap">
+                    Sign Up
+                  </div>
+                </button>
+              </Link>
+            </>
+          )}
           <button
             type="button"
             className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[#00450d] text-[#00450d]"

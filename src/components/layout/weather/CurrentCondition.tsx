@@ -40,19 +40,19 @@ export default function CurrentConditionCard({
 }: CurrentConditionCardProps) {
   const { icon: WeatherIconComponent, color } = getWeatherIcon(condition);
   return (
-    <div className="col-span-4">
-      <div className="p-8 bg-white rounded-[48px] shadow-sm">
-        <div className="flex items-start justify-between mb-8">
+    <div className="col-span-12 lg:col-span-4 min-w-0">
+      <div className="p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm">
+        <div className="flex items-start justify-between mb-6 sm:mb-8">
           <div>
             <span className="text-sm font-medium text-[#41493E]">Current Condition</span>
             <h3 className="text-lg font-semibold mt-1 text-[#171D14]">{condition}</h3>
           </div>
-          <WeatherIconComponent className={`w-12 h-12 ${color}`} />
+          <WeatherIconComponent className={`w-10 h-10 sm:w-12 sm:h-12 ${color}`} />
         </div>
 
-        <div className="flex items-baseline gap-2 mb-8">
-          <span className="text-6xl font-extrabold text-[#00450D]">{temperature}°</span>
-          <span className="text-xl font-medium text-[#41493E]">/ {feelsLike}°</span>
+        <div className="flex items-baseline gap-2 mb-6 sm:mb-8">
+          <span className="text-5xl sm:text-6xl font-extrabold text-[#00450D]">{temperature}°</span>
+          <span className="text-lg sm:text-xl font-medium text-[#41493E]">/ {feelsLike}°</span>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

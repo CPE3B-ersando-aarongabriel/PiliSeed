@@ -58,11 +58,11 @@ export default function AtmosphericBalance({
   ];
 
   return (
-    <div className="col-span-5 min-w-0 min-h-0">
-      <div className="relative h-full p-8 bg-[#E3EBDC] rounded-[48px] flex flex-col min-h-0">
-        <h3 className="text-xl font-bold mb-4 text-[#171D14]">Atmospheric Balance</h3>
+    <div className="col-span-12 lg:col-span-6 min-w-0 min-h-0">
+      <div className="relative h-full p-4 sm:p-6 lg:p-8 bg-[#E3EBDC] rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] flex flex-col min-h-0">
+        <h3 className="text-lg sm:text-xl font-bold mb-4 text-[#171D14]">Atmospheric Balance</h3>
 
-        <div className=" w-full h-72 mb-2 min-w-0">
+        <div className="w-full h-60 sm:h-72 mb-2 min-w-0">
           {mounted ? (
             <ResponsiveContainer width="100%" height={250}>
               <RadarChart outerRadius="70%" data={atmosphericData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
@@ -80,11 +80,11 @@ export default function AtmosphericBalance({
         <div className="grid grid-cols-2 gap-4 mt-auto">
           <div>
             <span className="text-[10px] font-semibold text-[#41493E]">DEW POINT</span>
-            <p className="text-xl font-semibold">{dewPoint}°C</p>
+            <p className="text-lg sm:text-xl font-semibold">{dewPoint}°C</p>
           </div>
           <div>
             <span className="text-[10px] font-semibold text-[#41493E]">PRESSURE</span>
-            <p className="text-xl font-semibold">{pressure} hPa</p>
+            <p className="text-lg sm:text-xl font-semibold">{pressure} hPa</p>
           </div>
         </div>
       </div>

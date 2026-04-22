@@ -47,8 +47,8 @@ export default function Sidebar() {
       icon: Tractor,
     },
     {
-      name: "Soil Data",
-      path: "/soil",
+      name: "Parameters",
+      path: "/parameters",
       icon: FlaskConical,
     },
     {
@@ -96,7 +96,7 @@ export default function Sidebar() {
       >
         <div className="px-6 pt-8 pb-6 border-gray-100 flex justify-between items-center">
           <div>
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
               <img
                 src="/Pili-logo-main.png"
                 alt="PiliSeed logo"
@@ -104,7 +104,7 @@ export default function Sidebar() {
                 loading="eager"
               />
               <h1 className="text-2xl font-bold text-[#00450D]">PiliSeed</h1>
-            </div>
+            </Link>
             <p className="text-[#171D14]/60 text-sm font-medium mt-0.5">
               Digital Greenhouse
             </p>

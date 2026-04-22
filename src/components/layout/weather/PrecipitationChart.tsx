@@ -52,10 +52,10 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
   }, []);
 
   return (
-    <div className="col-span-7 min-w-0 min-h-0">
-      <div className="p-8 bg-white rounded-[48px] shadow-sm flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-10">
-          <h3 className="text-xl font-bold text-[#171D14]">Precipitation Accumulation</h3>
+    <div className="col-span-12 lg:col-span-6 min-w-0 min-h-0">
+      <div className="p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm flex flex-col min-h-0">
+        <div className="flex items-center justify-between mb-6 sm:mb-10 gap-3">
+          <h3 className="text-lg sm:text-xl font-bold text-[#171D14]">Precipitation Accumulation</h3>
           <div className="flex items-center gap-2 px-4 py-3 bg-[#E3EBDC] rounded-full">
             <span className="text-xs font-semibold text-[#171D14]">Current Week</span>
           </div>
@@ -63,7 +63,7 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
 
         <div className="h-48 w-full min-w-0 min-h-0">
           {mounted ? (
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                 <XAxis
                   dataKey="day"
@@ -74,7 +74,7 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
                 />
                 <YAxis hide={true} />
                 <Tooltip content={<CustomTooltip />} cursor={false} />
-                <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={32}>
+                <Bar dataKey="amount" radius={[4, 4, 0, 0]} barSize={24}>
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill="#00450D" opacity={entry.amount > 0 ? 1 : 0.3} />
                   ))}
