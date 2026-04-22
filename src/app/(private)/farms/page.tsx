@@ -197,13 +197,13 @@ export default function FarmsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-[1176px] items-start gap-16 p-12 relative self-stretch w-full flex-[0_0_auto] bg-[#EFF6E7]">
+    <div className="flex w-full flex-col items-start gap-8 sm:gap-10 lg:gap-12 bg-[#EFF6E7]">
       <div className="flex items-end relative self-stretch w-full flex-[0_0_auto]">
-        <div className="inline-flex flex-col items-start gap-[8.5px] relative flex-[0_0_auto]">
-          <div className="relative flex items-center w-[200.28px] h-5 mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#7a5649] text-sm tracking-[1.40px] leading-5 whitespace-nowrap">
+        <div className="inline-flex flex-col items-start gap-2 relative flex-[0_0_auto]">
+          <div className="relative flex items-center mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#7a5649] text-xs sm:text-sm tracking-[1.20px] sm:tracking-[1.40px] leading-5 whitespace-nowrap">
             MANAGEMENT CONSOLE
           </div>
-          <div className="relative flex items-center w-[245px] h-12 font-extrabold text-[#00450d] text-5xl tracking-[-2.40px] leading-[48px] whitespace-nowrap">
+          <div className="relative flex items-center font-extrabold text-[#00450d] text-3xl sm:text-4xl lg:text-5xl tracking-[-1.60px] sm:tracking-[-2.40px] leading-tight whitespace-nowrap">
             My Farms
           </div>
         </div>
@@ -218,7 +218,7 @@ export default function FarmsPage() {
         <p className="text-sm font-semibold text-[#9C4A00]">{pageError}</p>
       )}
 
-      <div className="flex flex-row flex-wrap gap-8">
+      <div className="flex w-full flex-row flex-wrap gap-4 sm:gap-6 lg:gap-8">
     
         <AddFarmCard 
           onAdd={handleAddFarmFromModal}
@@ -241,19 +241,17 @@ export default function FarmsPage() {
         ))}
       </div>
 
-      <div className="flex flex-col items-start pt-20 pb-12 px-12 relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[48px]">
-        <div className="flex items-center justify-center gap-12 relative self-stretch w-full flex-[0_0_auto]">
+      <div className="flex flex-col items-start px-4 py-8 sm:px-6 sm:py-10 lg:px-12 lg:py-12 relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[24px] sm:rounded-[36px] lg:rounded-[48px]">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-center gap-8 lg:gap-12 relative self-stretch w-full flex-[0_0_auto]">
           <div className="flex flex-col items-start gap-4 relative flex-1 grow">
             <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-              <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-3xl tracking-[-0.75px] leading-[30px]">
+              <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-2xl sm:text-3xl tracking-[-0.75px] leading-tight">
                 Connect a New Plot
               </div>
             </div>
             <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-              <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-base tracking-[0] leading-[26px]">
-                Enter your farm details to begin satellite
-                <br />
-                synchronization and soil health monitoring.
+              <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-sm sm:text-base tracking-[0] leading-6 sm:leading-[26px]">
+                Enter your farm details to begin satellite synchronization and soil health monitoring.
               </p>
             </div>
           </div>

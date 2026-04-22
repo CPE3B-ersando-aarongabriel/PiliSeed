@@ -404,19 +404,19 @@ export default function RecommendationsClient() {
 
 	return (
 		<div className="min-h-screen bg-[#EFF6E7]">
-			<main className="max-w-300 mx-auto px-6 py-8">
-				<div className="flex flex-col md:flex-row justify-between gap-6 mb-10">
+			<main className="max-w-300 mx-auto px-4 sm:px-6 py-6 sm:py-8">
+				<div className="mb-8 sm:mb-10 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 					<div className="max-w-2xl space-y-4">
-						<h1 className="text-5xl font-extrabold text-[#171d14]">
+						<h1 className="text-3xl sm:text-4xl lg:text-5xl leading-tight font-extrabold text-[#171d14]">
 							Personalized Crop <br /> Recommendations
 						</h1>
-						<p className="text-[#41493e] text-medium">
+						<p className="text-sm sm:text-base text-[#41493e]">
 							AI-driven insights analyzing your soil inputs, farm context, and generated recommendation history to find your next harvest.
 						</p>
 					</div>
 
-					<div className="flex items-start gap-4">
-						<div className="flex flex-col">
+					<div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto">
+						<div className="flex flex-col min-w-0 flex-1 sm:flex-none">
 							<label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1.5">
 								SELECTED FARM
 							</label>
@@ -424,9 +424,9 @@ export default function RecommendationsClient() {
 								<button
 									onClick={() => setIsFarmDropdownOpen((previousValue) => !previousValue)}
 									disabled={isLoading || farms.length === 0}
-									className="w-55 h-10 bg-white rounded-full shadow-sm flex items-center justify-between px-5 border border-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
+									className="w-full sm:w-55 h-10 bg-white rounded-full shadow-sm flex items-center justify-between px-5 border border-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
 								>
-									<span className="font-semibold text-[#00450D] text-sm truncate max-w-37.5 text-left">
+									<span className="flex-1 min-w-0 pr-2 font-semibold text-[#00450D] text-sm truncate text-left">
 										{selectedFarm?.name ?? (isLoading ? "Loading farms..." : "Select a farm")}
 									</span>
 									<ChevronDown className="w-5 h-5 text-[#6B7280]"/>
@@ -435,7 +435,7 @@ export default function RecommendationsClient() {
 								{isFarmDropdownOpen && farms.length > 0 && (
 									<>
 										<div className="fixed inset-0 z-40" onClick={() => setIsFarmDropdownOpen(false)} />
-										<div className="absolute left-0 mt-2 w-55 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+										<div className="absolute left-0 mt-2 w-full sm:w-55 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
 											{farms.map((farm) => (
 												<button
 													key={farm.id}
@@ -465,22 +465,22 @@ export default function RecommendationsClient() {
 							)}
 						</div>
 
-						<div className="flex flex-col">
+						<div className="flex flex-col min-w-0 flex-1 sm:flex-none">
 							<label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1.5">
 								SORT BY
 							</label>
 							<div className="relative">
 								<button
 									onClick={() => setIsSortDropdownOpen((previousValue) => !previousValue)}
-									className="w-42.5 h-10 bg-white rounded-full shadow-sm flex items-center justify-between px-5 border border-gray-200"
+									className="w-full sm:w-42.5 h-10 bg-white rounded-full shadow-sm flex items-center justify-between px-5 border border-gray-200"
 								>
-									<span className="font-semibold text-[#00450D] text-sm">{sortBy}</span>
+									<span className="flex-1 min-w-0 pr-2 font-semibold text-[#00450D] text-sm truncate text-left">{sortBy}</span>
 									<ChevronDown className="w-5 h-5 text-[#6B7280]"/>
 								</button>
 								{isSortDropdownOpen && (
 									<>
 										<div className="fixed inset-0 z-40" onClick={() => setIsSortDropdownOpen(false)} />
-										<div className="absolute left-0 mt-2 w-42.5 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+										<div className="absolute left-0 mt-2 w-full sm:w-42.5 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
 											{sortOptions.map((option) => (
 												<button
 													key={option}
@@ -517,21 +517,21 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
-						<div className="mb-12 rounded-4xl border border-[#C0C9BB1A] bg-white px-6 py-6">
+						<div className="mb-12 rounded-[24px] sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
 							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 								<div>
 									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">
 										Planting decision
 									</p>
-									<h3 className="text-2xl font-bold text-[#171D14]">
+									<h3 className="text-xl sm:text-2xl font-bold text-[#171D14]">
 										Which crop will you plant?
 									</h3>
-									<p className="mt-2 text-sm text-[#41493E]">
+									<p className="mt-2 text-xs sm:text-sm text-[#41493E]">
 										Confirm your choice so we can tailor yield and market insights for this farm.
 									</p>
 								</div>
 								{confirmedCrop && !showCropPrompt && (
-									<div className="rounded-full bg-[#00450D]/10 px-4 py-2 text-xs font-semibold text-[#00450D]">
+									<div className="self-start md:self-auto rounded-full bg-[#00450D]/10 px-3 sm:px-4 py-2 text-xs font-semibold text-[#00450D] max-w-full truncate">
 										Selected: {confirmedCrop}
 									</div>
 								)}
@@ -560,10 +560,10 @@ export default function RecommendationsClient() {
 											</p>
 										)}
 									</div>
-									<div className="flex items-center gap-3">
+									<div className="flex w-full md:w-auto items-center gap-3">
 										<button
 											onClick={handleConfirmCropSelection}
-											className="rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
+											className="w-full md:w-auto rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
 										>
 											Confirm crop
 										</button>
@@ -572,7 +572,7 @@ export default function RecommendationsClient() {
 							) : (
 								<button
 									onClick={handleChangeCropSelection}
-									className="mt-5 rounded-full border border-[#00450D] px-5 py-2 text-xs font-semibold text-[#00450D]"
+									className="mt-5 w-full sm:w-auto rounded-full border border-[#00450D] px-5 py-2 text-xs font-semibold text-[#00450D]"
 								>
 									Change selection
 								</button>

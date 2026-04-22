@@ -915,11 +915,11 @@ export default function SoilInputForm({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !currentUser || !hasFarmLocation}
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#00450D] py-4 md:py-5 text-sm md:text-base shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#00450D] px-4 py-2.5 sm:py-4 text-xs sm:text-base shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Search className="h-4 w-4 md:h-5 md:w-5 text-[#FFFFFF]"/>
-              <span className="text-base font-semibold text-white">
-                {isSubmitting ? "Analyzing Soil..." : "Get Crop Reccomendation"}
+              <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]"/>
+              <span className="text-center leading-tight whitespace-nowrap font-semibold text-white">
+                {isSubmitting ? "Analyzing Soil..." : "Get Crop Recommendation"}
               </span>
             </button>
 
@@ -1087,14 +1087,12 @@ export default function SoilInputForm({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !currentUser || !hasFarmLocation}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-[#00450D] py-4 text-base font-semibold text-white hover:bg-[#005610] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-[#00450D] px-4 py-2.5 sm:py-4 text-xs sm:text-base font-semibold text-white hover:bg-[#005610] disabled:opacity-60"
             >
-              <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 md:h-5 md:w-5 text-[#FFFFFF]"/>
-              <span className="text-base font-semibold text-white">
+              <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]" />
+              <span className="text-center leading-tight whitespace-nowrap">
                 {isSubmitting ? "Analyzing Soil..." : "Get Crop Recommendation"}
               </span>
-              </div>
             </button>
 
             {submitError && (
