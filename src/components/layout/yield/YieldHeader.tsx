@@ -33,23 +33,23 @@ export default function YieldHeader({
   const isAnalysisDisabled = isLoading || !selectedFarmId;
 
   return (
-    <div className="flex items-start justify-between mt-2 mb-8">
+    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mt-2 mb-6 lg:mb-8">
       <div>
-        <h1 className="font-extrabold text-4xl text-[#171D14] tracking-tight">
+        <h1 className="font-extrabold text-2xl sm:text-3xl lg:text-4xl text-[#171D14] tracking-tight">
           Yield Prediction
         </h1>
-        <p className="mt-3 text-medium text-[#41493E] leading-relaxed max-w-2xl">
+        <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#41493E] leading-relaxed max-w-2xl">
           AI-driven harvest forecasting for <span className="text-[#00450D] font-semibold">{selectedFarmName}</span>.
         </p>
       </div>
 
-      <div className="flex items-end gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-3 w-full lg:w-auto">
       
-        <div className="flex flex-col">
+        <div className="flex flex-col w-full sm:w-auto">
           <label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1.5">
             SELECTED FARM
           </label>
-          <div className="relative">
+          <div className="relative w-full sm:w-[200px]">
             <button
               onClick={() => setIsFarmDropdownOpen(!isFarmDropdownOpen)}
               disabled={isDisabled}
