@@ -1,9 +1,46 @@
 "use client";
-import { JSX } from "react";
+import { JSX, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
+const textPartContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const textPart = {
+  hidden: { opacity: 0, y: 30, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.62, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
 export const Hero = (): JSX.Element => {
+  const subtitleText =
+    "Transform your agricultural legacy with real-time soil analysis, hyper-local weather intelligence, and AI-powered yield predictions tailored for your soil's unique DNA.";
+  const [typedSubtitle, setTypedSubtitle] = useState("");
+
+  useEffect(() => {
+    let index = 0;
+    const timer = setInterval(() => {
+      index += 1;
+      setTypedSubtitle(subtitleText.slice(0, index));
+      if (index >= subtitleText.length) {
+        clearInterval(timer);
+      }
+    }, 30);
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <motion.section
       className="relative w-full min-h-[calc(100svh-5rem)] overflow-hidden"
@@ -28,33 +65,42 @@ export const Hero = (): JSX.Element => {
             </div>
           </div>
 
-          <div className="mt-6 w-full">
+          <motion.div
+            className="mt-6 w-full"
+            variants={textPartContainer}
+            initial="hidden"
+            animate="visible"
+          >
             <p className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-tight sm:leading-[1.08] lg:leading-[72px] text-transparent">
-              <span className="text-[#f4fbef] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
+              <motion.span className="text-[#f4fbef] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px] inline-block" variants={textPart}>
                 Empowering Farmers with
-              </span>{" "}
-              <span className="text-[#f4d35e] tracking-[0]">
+              </motion.span>{" "}
+              <motion.span className="text-[#f4d35e] tracking-[0] inline-block" variants={textPart}>
                 Smarter Data-Driven
-              </span>{" "}
-              <span className="text-[#f4fbef] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px]">
+              </motion.span>{" "}
+              <motion.span className="text-[#f4fbef] tracking-[-1.8px] sm:tracking-[-2.1px] lg:tracking-[-2.59px] inline-block" variants={textPart}>
                 Decisions.
-              </span>
+              </motion.span>
             </p>
-          </div>
+          </motion.div>
 
-          <div className="mt-6 w-full max-w-2xl">
+          <div className="mt-6 w-full max-w-2xl min-h-[172px] sm:min-h-[150px] lg:min-h-[132px]">
             <p className="[font-family:'Inter-Medium',Helvetica] text-[#e6f2e2] text-base sm:text-lg font-medium leading-relaxed tracking-[0]">
-              Transform your agricultural legacy with real-time soil analysis,
-              hyper-local weather intelligence, and AI-powered yield predictions
-              tailored for your soil&#39;s unique DNA.
+              {typedSubtitle}
+              <motion.span
+                className="inline-block ml-1 w-[2px] h-[1.35em] bg-[#f4d35e] align-[-0.25em]"
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+                aria-hidden="true"
+              />
             </p>
           </div>
 
-          <div className="mt-8 flex w-full flex-wrap items-center justify-center gap-3 sm:gap-4 lg:justify-start">
+          <div className="mt-3 sm:mt-4 flex w-full flex-wrap items-center justify-center gap-3 sm:gap-4 lg:justify-start">
             <Link href="/signup" className="w-full sm:w-auto">
               <motion.button
                 className="all-[unset] box-border inline-flex w-full sm:w-auto items-center justify-center rounded-full border-2 border-solid border-[#00450d1a] bg-white px-8 py-3.5 cursor-pointer"
-                whileHover={{ y: -4, scale: 1.02 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 360, damping: 20 }}
               >
@@ -67,7 +113,7 @@ export const Hero = (): JSX.Element => {
             <Link href="/how-it-works" className="w-full sm:w-auto">
               <motion.button
                 className="all-[unset] box-border inline-flex w-full sm:w-auto items-center justify-center rounded-full border-2 border-solid border-[#00450d1a] bg-white px-8 py-3.5 cursor-pointer"
-                whileHover={{ y: -4, scale: 1.02 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 360, damping: 20 }}
               >

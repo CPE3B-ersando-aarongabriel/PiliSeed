@@ -18,8 +18,8 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
       className={`flex mx-4 max-w-8xl mx-auto min-h-[500px] items-center justify-center px-4 sm:px-2 py-12 sm:py-[90.5px] pb-8 sm:pb-16 ${positionClass} rounded-[32px] sm:rounded-[48px] overflow-hidden ${className}`}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.35 }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: false, amount: 0.45 }}
+      transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="flex flex-col w-full h-full items-start justify-center absolute top-0 left-0">
         <div className="relative flex-1 self-stretch w-full grow bg-[url(/Encouragement.png)] bg-cover bg-[50%_50%]" />
@@ -33,8 +33,8 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
         className="inline-flex flex-col max-w-screen-md items-center gap-6 sm:gap-8 relative flex-[0_0_auto] w-full"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.45 }}
-        transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+        viewport={{ once: false, amount: 0.55 }}
+        transition={{ duration: 0.62, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="flex items-center self-stretch w-full flex-[0_0_auto] relative flex-col">
           <p className="relative flex items-center justify-center w-full h-auto mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-4xl sm:text-5xl lg:text-6xl text-center tracking-[-3.00px] leading-tight sm:leading-[60px]">
@@ -53,7 +53,7 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
             <motion.button
               type="button"
               className="all-[unset] box-border pt-[16.5px] pb-[17.5px] px-6 sm:px-8 bg-white rounded-full inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
-              whileHover={{ y: -4, scale: 1.02 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 360, damping: 20 }}
             >
@@ -69,7 +69,7 @@ export const Encouragement = ({ absolute = false, className = "" }: Encouragemen
             <motion.button
               type="button"
               className="all-[unset] box-border px-6 sm:px-8 py-4 bg-[#ffffff1a] rounded-full border border-solid border-[#ffffff33] backdrop-blur-[6px] backdrop-brightness-[100%] [-webkit-backdrop-filter:blur(6px)_brightness(100%)] inline-flex flex-col items-center justify-center relative flex-[0_0_auto] cursor-pointer"
-              whileHover={{ y: -4, scale: 1.02 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 360, damping: 20 }}
             >

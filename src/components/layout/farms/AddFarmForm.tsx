@@ -16,19 +16,19 @@ export default function AddFarmForm({
   onSubmit,
 }: AddFarmFormProps) {
   return (
-    <div className="flex flex-col items-start pt-0 pb-4 px-0 relative flex-1 grow">
+    <div className="flex w-full flex-col items-start pt-0 pb-4 px-0 relative flex-1 grow">
       <div className="flex flex-col items-start gap-4 relative self-stretch w-full flex-[0_0_auto]">
         <div className="flex flex-col items-end gap-2 relative self-stretch w-full flex-[0_0_auto]">
-          <div className="flex flex-col w-[360px] items-start relative flex-[0_0_auto]">
-            <label className="relative flex items-center w-[69.67px] h-[15px] mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493E] text-[10px] tracking-[1.00px] leading-[15px] whitespace-nowrap">
+          <div className="flex w-full flex-col items-start relative flex-[0_0_auto]">
+            <label className="relative flex items-center mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493E] text-[10px] tracking-[1.00px] leading-[15px] whitespace-nowrap">
               FARM NAME
             </label>
           </div>
 
-          <div className="flex items-start justify-center px-6 py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-white rounded-md overflow-hidden">
+          <div className="flex items-start justify-center px-4 sm:px-6 py-4 sm:py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-white rounded-md overflow-hidden">
             <div className="flex flex-col items-start relative flex-1 grow">
               <input
-                className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-gray-500 text-base tracking-[0] leading-[normal] w-full border-none outline-none bg-transparent p-0"
+                className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-gray-500 text-sm sm:text-base tracking-[0] leading-[normal] w-full border-none outline-none bg-transparent p-0"
                 placeholder="e.g. Sunny Brook Orchards"
                 type="text"
                 value={farmName}
@@ -39,16 +39,16 @@ export default function AddFarmForm({
         </div>
 
         <div className="flex flex-col items-end gap-2 relative self-stretch w-full flex-[0_0_auto]">
-          <div className="flex flex-col w-[360px] items-start relative flex-[0_0_auto]">
-            <label className="relative flex items-center w-[146.16px] h-[15px] mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493E] text-[10px] tracking-[1.00px] leading-[15px] whitespace-nowrap">
+          <div className="flex w-full flex-col items-start relative flex-[0_0_auto]">
+            <label className="relative flex items-center mt-[-1.00px] [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493E] text-[10px] tracking-[1.00px] leading-[15px] whitespace-nowrap">
               LOCATION
             </label>
           </div>
 
           <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-            <div className="flex items-start justify-center pl-6 pr-12 py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-white rounded-md overflow-hidden">
+            <div className="flex items-start justify-center pl-4 sm:pl-6 pr-10 sm:pr-12 py-4 sm:py-[18px] relative self-stretch w-full flex-[0_0_auto] bg-white rounded-md overflow-hidden">
               <input
-                className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-gray-500 text-base tracking-[0] leading-[normal] p-0 outline-none w-full"
+                className="relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-gray-500 text-sm sm:text-base tracking-[0] leading-[normal] p-0 outline-none w-full"
                 placeholder="City, region, or coordinates"
                 type="text"
                 value={locationCoords}
@@ -56,7 +56,7 @@ export default function AddFarmForm({
               />
             </div>
 
-            <div className="inline-flex flex-col h-[42.86%] items-start absolute top-[28.57%] right-4">
+            <div className="inline-flex flex-col items-start absolute top-1/2 right-3 sm:right-4 -translate-y-1/2">
               <Map className="relative w-[18px] h-[18px] text-[#00450D]"/>
             </div>
           </div>

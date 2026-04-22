@@ -1,5 +1,8 @@
+"use client";
+
 import { JSX } from "react";
 import { Leaf } from "lucide-react";
+import { motion } from "framer-motion";
 
 const stats = [
   {
@@ -18,9 +21,21 @@ const stats = [
 
 export const Problem = (): JSX.Element => {
   return (
-    <section className="w-full bg-white">
+    <motion.section
+      className="w-full bg-white"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, amount: 0.45 }}
+      transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-4 py-14 sm:gap-12 sm:px-8 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:py-24">
-        <div className="flex w-full flex-col items-center gap-6 text-center lg:items-start lg:text-left">
+        <motion.div
+          className="flex w-full flex-col items-center gap-6 text-center lg:items-start lg:text-left"
+          initial={{ opacity: 0, x: -24 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="flex items-center gap-2">
             <div className="h-0.5 w-12 bg-[#00450d]" />
             <div className="[font-family:'Manrope-Bold',Helvetica] text-[#00450d] text-sm font-bold tracking-[1.4px] leading-5 whitespace-nowrap">
@@ -49,10 +64,14 @@ export const Problem = (): JSX.Element => {
           </p>
 
           <div className="grid w-full grid-cols-1 gap-4 pt-2 sm:grid-cols-2 sm:gap-6 lg:pt-4">
-            {stats.map((stat) => (
-              <div
+            {stats.map((stat, index) => (
+              <motion.div
                 key={stat.label}
                 className={`flex w-full flex-col items-start gap-1.5 border-l-4 ${stat.borderColor} pl-4`}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false, amount: 0.5 }}
+                transition={{ duration: 0.4, delay: index * 0.16, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div
                   className="[font-family:'Inter-ExtraBold',Helvetica] text-2xl sm:text-3xl font-extrabold leading-9 tracking-[0]"
@@ -63,18 +82,35 @@ export const Problem = (): JSX.Element => {
                 <div className="[font-family:'Inter-SemiBold',Helvetica] text-[#41493e] text-sm font-semibold leading-5 tracking-[0]">
                   {stat.label}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative flex w-full items-center justify-center lg:justify-end">
+        <motion.div
+          className="relative flex w-full items-center justify-center lg:justify-end"
+          initial={{ opacity: 0, x: 24 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: false, amount: 0.5 }}
+          transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
+        >
           <div className="absolute hidden h-[92%] w-[92%] rounded-full bg-[#00450d0d] -top-8 right-4 lg:block" />
 
           <div className="relative w-full max-w-[620px] overflow-visible">
-            <div className="aspect-[5/4] sm:aspect-[6/5] lg:aspect-[5/4] w-full rounded-[24px] sm:rounded-[32px] shadow-[0px_25px_50px_-12px_#00000040] bg-[url(/landing/Problem.png)] bg-cover bg-[50%_50%]" />
+            <motion.div
+              className="aspect-[5/4] sm:aspect-[6/5] lg:aspect-[5/4] w-full rounded-[24px] sm:rounded-[32px] shadow-[0px_25px_50px_-12px_#00000040] bg-[url(/landing/Problem.png)] bg-cover bg-[50%_50%]"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 220, damping: 22 }}
+            />
 
-            <div className="absolute -bottom-5 left-1/2 flex w-[min(92%,360px)] -translate-x-1/2 items-center gap-3 rounded-[28px] bg-white p-4 shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] sm:-bottom-6 sm:gap-4 sm:rounded-[32px] sm:p-5 lg:left-8 lg:translate-x-0">
+            <motion.div
+              className="absolute -bottom-5 left-1/2 flex w-[min(92%,360px)] -translate-x-1/2 items-center gap-3 rounded-[28px] bg-white p-4 shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] sm:-bottom-6 sm:gap-4 sm:rounded-[32px] sm:p-5 lg:left-8 lg:translate-x-0"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.55 }}
+              transition={{ duration: 0.45, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              whileHover={{ scale: 1.03 }}
+            >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#ffdbcf] sm:h-12 sm:w-12">
                 <Leaf
                   className="h-4 w-4 text-[#7a5649] sm:h-[17px] sm:w-[17px]"
@@ -90,10 +126,10 @@ export const Problem = (): JSX.Element => {
                   Sustainable Agriculture 2.0
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   );
 };

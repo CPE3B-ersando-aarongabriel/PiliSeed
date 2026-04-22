@@ -7,6 +7,7 @@ import QuickNavigation from "@/components/layout/QuickNavigation";
 import SoilInputForm from "@/components/layout/soil/SoilInputForm";
 import { getClientAuth } from "@/lib/firebaseClient";
 import { Droplet, Diamond, Clover, ChevronDown } from "lucide-react";
+
 type FarmOption = {
   id: string;
   name: string;
@@ -52,7 +53,7 @@ function getErrorMessage(body: unknown, fallbackMessage: string) {
   return fallbackMessage;
 }
 
-export default function SoilData() {
+export default function ParametersPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [farms, setFarms] = useState<FarmOption[]>([]);
   const [selectedFarmId, setSelectedFarmId] = useState("");
@@ -69,7 +70,7 @@ export default function SoilData() {
       if (!user) {
         setFarms([]);
         setSelectedFarmId("");
-        setFarmError("Sign in to load farms for soil analysis.");
+        setFarmError("Sign in to load farms for parameter analysis.");
         setIsLoadingFarms(false);
         return;
       }
@@ -137,20 +138,20 @@ export default function SoilData() {
 
   return (
     <div className="min-h-screen bg-[#EFF6E7]">
-      <div className="px-6 mt-8">
-        <div className="flex items-start justify-between mb-2">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold text-gray-900">
-              Input Soil Data
+      <div className="px-4 sm:px-6 mt-6 sm:mt-8">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 sm:gap-4 mb-2">
+          <div className="space-y-2 max-w-2xl">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+              Input Parameters
             </h1>
-            <p className="text-gray-600 text-base max-w-2xl">
-              Capture the precise biological composition of your soil to unlock
+            <p className="text-sm sm:text-base text-gray-600">
+              Capture the precise biological parameters of your soil to unlock
               AI-driven crop optimization and yield forecasting.
             </p>
           </div>
 
-          <div className="flex flex-col">
-            <label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1.5">
+          <div className="flex flex-col w-full sm:w-auto">
+            <label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1">
               SELECTED FARM
             </label>
 
@@ -160,12 +161,12 @@ export default function SoilData() {
                   setIsFarmDropdownOpen((previousValue) => !previousValue)
                 }
                 disabled={isLoadingFarms || farms.length === 0}
-                className="w-60 h-10 bg-white rounded-full shadow-sm flex items-center justify-between px-5 border border-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
+                className="w-full sm:w-56 h-9 sm:h-10 bg-white rounded-full shadow-sm flex items-center justify-between px-4 sm:px-5 border border-gray-200 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <span className="font-semibold text-[#00450D] text-sm truncate max-w-42.5 text-left">
+                <span className="flex-1 min-w-0 pr-2 font-semibold text-[#00450D] text-xs sm:text-sm truncate text-left">
                   {selectedFarmLabel}
                 </span>
-                <ChevronDown className="w-5 h-5 text-[#6B7280]"/>
+                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-[#6B7280]"/>
               </button>
 
               {isFarmDropdownOpen && farms.length > 0 && (
@@ -174,7 +175,7 @@ export default function SoilData() {
                     className="fixed inset-0 z-40"
                     onClick={() => setIsFarmDropdownOpen(false)}
                   />
-                  <div className="absolute left-0 mt-2 w-55 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  <div className="absolute left-0 mt-2 w-full sm:w-55 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
                     {farms.map((farm) => (
                       <button
                         key={farm.id}
@@ -212,8 +213,8 @@ export default function SoilData() {
         </div>
       </div>
 
-      <div className="flex gap-6 p-6">
-        <div className="flex-1">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 p-4 md:p-6">
+        <div className="flex-1 w-full">
           <SoilInputForm
             farm={selectedFarm}
             farms={farms}
@@ -222,9 +223,9 @@ export default function SoilData() {
           />
         </div>
 
-        <div className="w-95 flex flex-col gap-8">
+        <div className="w-full lg:w-[380px] flex flex-col gap-6 lg:gap-8">
           <div className="rounded-[48px] overflow-hidden shadow-[0px_25px_50px_-12px_#00000040]">
-            <div className="h-48.5 bg-[url(/soil/soildatabg.png)] bg-cover bg-center" />
+            <div className="h-40 sm:h-44 md:h-48 lg:h-52 bg-[url(/soil/soildatabg.png)] bg-cover bg-center" />
             <div className="p-6 bg-linear-to-t from-black/60 to-transparent -mt-16 relative">
               <p className="font-medium text-white text-xs leading-4">
                 "The foundation of every great harvest is the
@@ -260,7 +261,7 @@ export default function SoilData() {
           </div>
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-12 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 pb-8">
         <QuickNavigation currentPage="soil-data" />
       </div>
     </div>

@@ -478,7 +478,7 @@ export default function YieldPrediction() {
 
   return (
     <div className="min-h-screen bg-[#EFF6E7] py-8">
-      <div className="max-w-7xl mx-auto px-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-12">
         <YieldHeader
           selectedFarmId={selectedFarmId}
           selectedFarmName={selectedFarmName}
@@ -496,11 +496,13 @@ export default function YieldPrediction() {
           </p>
         )}
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-4 flex flex-col gap-6">
+          <div className= "lg:col-span-8">
           <SeasonalYieldChart
             dailyData={dailySeries}
             legendLabel={`Projected Yield (${activeCropName})`}
           />
+          </div>
 
           <div className="col-span-4 flex flex-col gap-6">
             <EstimatedRevenueCard
