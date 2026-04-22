@@ -496,15 +496,17 @@ export default function YieldPrediction() {
           </p>
         )}
 
-        <div className="col-span-4 flex flex-col gap-6">
-          <div className= "lg:col-span-8">
-          <SeasonalYieldChart
-            dailyData={dailySeries}
-            legendLabel={`Projected Yield (${activeCropName})`}
-          />
+        {/* Responsive layout: stack on mobile, side-by-side on large screens */}
+        <div className="flex flex-col lg:flex-row gap-6 w-full">
+          {/* Graph Card */}
+          <div className="w-full lg:w-2/3 flex-shrink-0">
+            <SeasonalYieldChart
+              dailyData={dailySeries}
+              legendLabel={`Projected Yield (${activeCropName})`}
+            />
           </div>
-
-          <div className="col-span-4 flex flex-col gap-6">
+          {/* Side Cards */}
+          <div className="w-full lg:w-1/3 flex flex-col gap-6 mt-0">
             <EstimatedRevenueCard
               revenue={revenueValue}
               percentageIncrease={

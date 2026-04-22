@@ -217,7 +217,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {isLoading && (
+      {isLoading && ( 
         <p className="px-4 md:px-8 text-sm font-semibold text-[#00450D]">
           Loading profile...
         </p>

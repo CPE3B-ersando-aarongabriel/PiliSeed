@@ -105,7 +105,7 @@ export default function AddFarmCard({
               <input
                 type="text"
                 placeholder="e.g. Sunny Brook Orchards"
-                className="w-full px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
+                className="w-full text-[#000000] px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
                 value={farmName}
                 onChange={(e) => setFarmName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
@@ -119,7 +119,7 @@ export default function AddFarmCard({
               <input
                 type="text"
                 placeholder="City, State or Coordinates"
-                className="w-full px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
+                className="w-full text-[#000000] px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
