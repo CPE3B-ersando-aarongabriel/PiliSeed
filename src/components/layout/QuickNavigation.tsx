@@ -100,20 +100,20 @@ export default function QuickNavigation({ currentPage }: QuickNavigationProps) {
           </h2>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {navigationItems.map((item) => (
             <Link
               key={item.id}
               href={item.path}
-              className={`${item.bgCard} ${item.borderCard} flex flex-col items-center justify-center gap-5 py-10 px-4 w-full rounded-2xl border shadow-sm hover:shadow-md transition-shadow`}
+              className={`${item.bgCard} ${item.borderCard} flex flex-col items-center sm:items-center justify-center gap-4 sm:gap-5 py-6 sm:py-8 lg:py-10 px-4 w-full rounded-2xl border shadow-sm hover:shadow-md transition-shadow`}
             >
               <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center ${item.bgIcon}`}
+                className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${item.bgIcon}`}
               >
-                {item.icon && <item.icon className={`w-6 h-6 ${item.iconColor}`} />}
+                {item.icon && <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${item.iconColor}`} />}
               </div>
               <span
-                className={`font-semibold text-xs text-center tracking-[1.2px] ${item.labelClass}`}
+                className={`font-semibold text-[11px] sm:text-xs text-center tracking-[1px] sm:tracking-[1.2px] ${item.labelClass}`}
               >
                 {item.label}
               </span>
