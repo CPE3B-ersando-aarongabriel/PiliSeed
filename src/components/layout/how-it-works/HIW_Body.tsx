@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useScroll, useSpring, useTransform, type Variants } from "framer-motion";
-import { JSX, useRef } from "react";
+import { JSX, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Bot,
@@ -17,6 +17,26 @@ const sectionReveal: Variants = {
   visible: {
     opacity: 1,
     y: 0,
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+const textPartContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const textPart: Variants = {
+  hidden: { opacity: 0, y: 28, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
     transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
@@ -80,6 +100,13 @@ const forecastCards = [
 ];
 
 export const HIW_Body = (): JSX.Element => {
+  const mobileSubtitleText =
+    "A streamlined flow from farm setup, to soil input, to AI recommendations.";
+  const desktopSubtitleText =
+    "We've distilled complex agricultural science into a seamless digital journey. Empower your land with AI-driven insights that respect the rhythm of nature.";
+  const [typedMobileSubtitle, setTypedMobileSubtitle] = useState("");
+  const [typedDesktopSubtitle, setTypedDesktopSubtitle] = useState("");
+
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -91,6 +118,32 @@ export const HIW_Body = (): JSX.Element => {
   );
   const heroImageY = useTransform(scrollYProgress, [0, 0.6], [0, -24]);
 
+  useEffect(() => {
+    let mobileIndex = 0;
+    const mobileTimer = setInterval(() => {
+      mobileIndex += 1;
+      setTypedMobileSubtitle(mobileSubtitleText.slice(0, mobileIndex));
+      if (mobileIndex >= mobileSubtitleText.length) {
+        clearInterval(mobileTimer);
+      }
+    }, 30);
+
+    return () => clearInterval(mobileTimer);
+  }, []);
+
+  useEffect(() => {
+    let desktopIndex = 0;
+    const desktopTimer = setInterval(() => {
+      desktopIndex += 1;
+      setTypedDesktopSubtitle(desktopSubtitleText.slice(0, desktopIndex));
+      if (desktopIndex >= desktopSubtitleText.length) {
+        clearInterval(desktopTimer);
+      }
+    }, 30);
+
+    return () => clearInterval(desktopTimer);
+  }, []);
+
   return (
     <>
     <div className="flex lg:hidden flex-col gap-12 pt-24 pb-16 px-4 sm:px-8 bg-[#f5fced]">
@@ -99,16 +152,32 @@ export const HIW_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
+        viewport={{ once: false, amount: 0.5 }}
       >
         <span className="inline-flex rounded-full bg-[#a3f69c] px-3 py-1 text-xs font-semibold tracking-[0.35px] text-[#005312]">THE PILLISEED METHOD</span>
-        <h1 className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl font-extrabold leading-tight text-[#00450d] sm:text-5xl">
-          From Soil to Success
-          <br />
-          in Three Steps.
-        </h1>
-        <p className="[font-family:'Inter-Regular',Helvetica] text-base leading-7 text-[#41493e]">
-          A streamlined flow from farm setup, to soil input, to AI recommendations.
+        <motion.h1
+          className="[font-family:'Inter-ExtraBold',Helvetica] text-4xl font-extrabold leading-tight text-[#00450d] sm:text-5xl"
+          variants={textPartContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.65 }}
+        >
+          <motion.span className="inline-block" variants={textPart}>
+            From Soil to Success
+            <br />
+          </motion.span>
+          <motion.span className="inline-block" variants={textPart}>
+            in Three Steps.
+          </motion.span>
+        </motion.h1>
+        <p className="[font-family:'Inter-Regular',Helvetica] text-base leading-7 text-[#41493e] min-h-[112px] sm:min-h-[84px]">
+          {typedMobileSubtitle}
+          <motion.span
+            className="inline-block ml-1 w-[2px] h-[1.35em] bg-[#065f18] align-[-0.25em]"
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+            aria-hidden="true"
+          />
         </p>
       </motion.div>
 
@@ -117,7 +186,7 @@ export const HIW_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
+        viewport={{ once: false, amount: 0.55 }}
       >
         <div className="relative aspect-[4/3] w-full sm:aspect-[16/10] overflow-hidden rounded-[28px] bg-[url(/how-it-works/HIW.png)] bg-cover bg-[50%_50%]">
           <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,69,13,0.12)_0%,rgba(0,69,13,0.55)_100%)]" />
@@ -140,13 +209,20 @@ export const HIW_Body = (): JSX.Element => {
         </div>
       </motion.div>
 
-      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-6">
+      <motion.div
+        className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-6"
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.45 }}
+      >
         <motion.div
           className="rounded-[28px] bg-white p-6 shadow-[0px_10px_24px_-12px_#00000030]"
           variants={sectionReveal}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.5 }}
+          whileHover={{ scale: 1.015, y: -4 }}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00450d] text-sm font-extrabold text-white">1</div>
@@ -176,7 +252,8 @@ export const HIW_Body = (): JSX.Element => {
           variants={sectionReveal}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.5 }}
+          whileHover={{ scale: 1.015, y: -4 }}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7a5649] text-sm font-extrabold text-white">2</div>
@@ -219,7 +296,8 @@ export const HIW_Body = (): JSX.Element => {
           variants={sectionReveal}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.5 }}
+          whileHover={{ scale: 1.015, y: -4 }}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#003e63] text-sm font-extrabold text-white">3</div>
@@ -256,7 +334,7 @@ export const HIW_Body = (): JSX.Element => {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
 
     <div ref={sectionRef} className="hidden lg:flex flex-col items-center gap-24 pt-32 pb-24 px-0 relative self-stretch w-full flex-[0_0_auto]">
@@ -268,7 +346,7 @@ export const HIW_Body = (): JSX.Element => {
         variants={sectionReveal}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
+        viewport={{ once: false, amount: 0.55 }}
       >
         <div className="relative row-[1_/_2] col-[1_/_2] justify-self-start self-center w-[624px] h-fit flex flex-col items-start gap-6">
           <div className="inline-flex items-start px-4 py-1.5 relative flex-[0_0_auto] bg-[#a3f69c] rounded-full">
@@ -276,27 +354,35 @@ export const HIW_Body = (): JSX.Element => {
               THE PILLISEED METHOD
             </div>
           </div>
-          <div className="relative self-stretch w-full flex-[0_0_auto] flex flex-col items-start">
+          <motion.div
+            className="relative self-stretch w-full flex-[0_0_auto] flex flex-col items-start"
+            variants={textPartContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.65 }}
+          >
             <p className="relative w-[598px] mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-transparent text-7xl leading-[72px]">
-              <span className="text-[#00450d] tracking-[-1.30px]">
+              <motion.span className="text-[#00450d] tracking-[-1.30px] inline-block" variants={textPart}>
                 From Soil to
                 <br />
                 Success in{" "}
-              </span>
-              <span className="text-[#7a5649] tracking-[0]">
+              </motion.span>
+              <motion.span className="text-[#7a5649] tracking-[0] inline-block" variants={textPart}>
                 Three
                 <br />
                 Steps.
-              </span>
+              </motion.span>
             </p>
-          </div>
+          </motion.div>
           <div className="flex flex-col max-w-xl items-start pt-2 pb-0 px-0 relative w-full flex-[0_0_auto]">
             <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-xl tracking-[0] leading-[32.5px]">
-              We&#39;ve distilled complex agricultural science into a seamless
-              <br />
-              digital journey. Empower your land with AI-driven insights
-              <br />
-              that respect the rhythm of nature.
+              {typedDesktopSubtitle}
+              <motion.span
+                className="inline-block ml-1 w-[2px] h-[1.35em] bg-[#065f18] align-[-0.25em]"
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
+                aria-hidden="true"
+              />
             </p>
           </div>
         </div>
@@ -316,7 +402,7 @@ export const HIW_Body = (): JSX.Element => {
           variants={sectionReveal}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.25 }}
+          viewport={{ once: false, amount: 0.5 }}
         >
           <div className="relative row-[1_/_2] col-[1_/_6] self-center w-full h-fit flex flex-col items-start gap-6">
             <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">
@@ -324,7 +410,7 @@ export const HIW_Body = (): JSX.Element => {
                 className="flex w-12 h-12 items-center justify-center pt-[7.5px] pb-[8.5px] px-0 relative bg-[#00450d] rounded-full"
                 initial={{ scale: 0.8, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
+                viewport={{ once: false, amount: 0.45 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="relative flex items-center justify-center w-[10.91px] h-8 mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-2xl text-center tracking-[0] leading-8 whitespace-nowrap">
@@ -368,7 +454,11 @@ export const HIW_Body = (): JSX.Element => {
               </div>
             </div>
           </div>
-          <div className="relative row-[1_/_2] col-[6_/_13] self-center w-full h-fit flex flex-col items-start p-4 bg-[#e3ebdc] rounded-[48px] overflow-hidden shadow-[0px_1px_2px_#0000000d]">
+          <motion.div
+            className="relative row-[1_/_2] col-[6_/_13] self-center w-full h-fit flex flex-col items-start p-4 bg-[#e3ebdc] rounded-[48px] overflow-hidden shadow-[0px_1px_2px_#0000000d]"
+            whileHover={{ scale: 1.015, y: -6 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="flex flex-col items-start justify-center relative self-stretch w-full flex-[0_0_auto] bg-[#ffffff33] rounded-[32px] overflow-hidden bg-blend-saturation aspect-[1.78]">
               <div className="relative self-stretch w-full h-[369.73px] bg-[url(/how-it-works/HIW2.png)] bg-cover bg-[50%_50%]" />
               <div className="absolute w-full h-full top-0 left-0 rounded-[32px] border-[6px] border-solid border-[#00450d66]" />
@@ -386,17 +476,21 @@ export const HIW_Body = (): JSX.Element => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
         <motion.div
           className="flex flex-col items-center px-8 py-32 relative self-stretch w-full flex-[0_0_auto] bg-[#eff6e7]"
           variants={sectionReveal}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.5 }}
         >
           <div className="grid grid-cols-12 w-[1216px] h-fit gap-12">
-            <div className="relative row-[1_/_2] col-[1_/_8] self-center w-full h-fit flex flex-col items-start gap-8 p-8 bg-white rounded-[48px] border border-solid border-[#c0c9bb1a]">
+            <motion.div
+              className="relative row-[1_/_2] col-[1_/_8] self-center w-full h-fit flex flex-col items-start gap-8 p-8 bg-white rounded-[48px] border border-solid border-[#c0c9bb1a]"
+              whileHover={{ scale: 1.01, y: -5 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            >
               <div className="absolute h-full top-0 left-0 rounded-[48px] shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] w-full bg-[#ffffff01]" />
               <div className="w-full space-y-6">
                 <div className="space-y-3">
@@ -413,7 +507,7 @@ export const HIW_Body = (): JSX.Element => {
                           className="flex flex-col gap-2"
                           initial={{ opacity: 0, y: 12 }}
                           whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true, amount: 0.2 }}
+                          viewport={{ once: false, amount: 0.45 }}
                           transition={{ duration: 0.35, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
                         >
                           <div className="h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
@@ -450,7 +544,7 @@ export const HIW_Body = (): JSX.Element => {
                           className="flex flex-col gap-2"
                           initial={{ opacity: 0, y: 12 }}
                           whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true, amount: 0.2 }}
+                          viewport={{ once: false, amount: 0.45 }}
                           transition={{ duration: 0.35, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
                         >
                           <div className="h-5 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
@@ -483,14 +577,14 @@ export const HIW_Body = (): JSX.Element => {
                   <ArrowRight className="relative h-[18px] w-[18px] text-white" aria-hidden="true" />
                 </div>
               </button>
-            </div>
+            </motion.div>
             <div className="relative row-[1_/_2] col-[8_/_13] self-center w-full h-fit flex flex-col items-start gap-6">
               <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">
                 <motion.div
                   className="flex w-12 h-12 items-center justify-center pt-[7.5px] pb-[8.5px] px-0 relative bg-[#7a5649] rounded-full"
                   initial={{ scale: 0.8, opacity: 0 }}
                   whileInView={{ scale: 1, opacity: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
+                  viewport={{ once: false, amount: 0.45 }}
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <div className="w-[14.5px] relative flex items-center justify-center h-8 mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-2xl text-center tracking-[0] leading-8 whitespace-nowrap">
@@ -533,7 +627,7 @@ export const HIW_Body = (): JSX.Element => {
           variants={sectionReveal}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.5 }}
         >
           <div className="relative row-[1_/_2] col-[1_/_6] self-center w-full h-fit flex flex-col items-start gap-6">
             <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">
@@ -541,7 +635,7 @@ export const HIW_Body = (): JSX.Element => {
                 className="flex w-12 h-12 items-center justify-center pt-[7.5px] pb-[8.5px] px-0 relative bg-[#003e63] rounded-full"
                 initial={{ scale: 0.8, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
+                viewport={{ once: false, amount: 0.45 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               >
                 <div className="w-[14.19px] relative flex items-center justify-center h-8 mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-white text-2xl text-center tracking-[0] leading-8 whitespace-nowrap">
@@ -572,8 +666,9 @@ export const HIW_Body = (): JSX.Element => {
                   className="flex items-center gap-4 p-4 relative self-stretch w-full flex-[0_0_auto] bg-[#dee5d6] rounded-[32px]"
                   initial={{ opacity: 0, y: 14 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
+                  viewport={{ once: false, amount: 0.45 }}
                   transition={{ duration: 0.4, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ scale: 1.02, y: -4 }}
                 >
                   <div
                     className={`${card.iconBg} flex w-12 h-12 items-center justify-center relative rounded-full shadow-[0px_1px_2px_#0000000d]`}
@@ -603,10 +698,15 @@ export const HIW_Body = (): JSX.Element => {
             </div>
           </div>
           <div className="grid grid-cols-2 grid-rows-[238px] h-fit gap-4 relative row-[1_/_2] col-[6_/_13] self-center w-full">
-            {forecastCards.map((card) => (
-              <div
+            {forecastCards.map((card, index) => (
+              <motion.div
                 key={card.title}
                 className={`${card.colClass} relative row-[1_/_2] h-[238px] bg-white rounded-[48px] border border-solid border-[#00450d0d]`}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false, amount: 0.45 }}
+                transition={{ duration: 0.45, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ scale: 1.02, y: -6 }}
               >
                 <div className="absolute w-full h-full top-0 left-0 bg-[#ffffff01] rounded-[48px] shadow-[0px_4px_6px_-4px_#0000001a,0px_10px_15px_-3px_#0000001a]" />
                 <div
@@ -630,7 +730,7 @@ export const HIW_Body = (): JSX.Element => {
                     {card.subtitle}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </motion.div>
