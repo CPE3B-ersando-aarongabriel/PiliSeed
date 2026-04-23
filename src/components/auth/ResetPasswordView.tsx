@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 
-export function ResetPasswordView() {
+
+function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = useMemo(() => searchParams.get("token") ?? "", [searchParams]);
   const email = useMemo(() => searchParams.get("email") ?? "", [searchParams]);
@@ -167,5 +168,21 @@ export function ResetPasswordView() {
         </div>
       </div>
     </section>
+  );
+}
+
+export function ResetPasswordView() {
+  return (
+    <Suspense 
+      fallback={
+        <section className="w-full flex items-center justify-center px-4 py-14 sm:py-20 bg-[#f5fced]">
+          <div className="w-full max-w-xl rounded-3xl bg-white shadow-sm border border-[#e6eddf] p-6 sm:p-8 flex items-center justify-center min-h-[400px]">
+            <p className="text-[#0d631b] font-semibold animate-pulse">Loading...</p>
+          </div>
+        </section>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
