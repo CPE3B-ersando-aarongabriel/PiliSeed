@@ -60,6 +60,35 @@ Error responses use:
 - Response data:
   - `uid`
 
+### POST /api/auth/forgot-password
+- Request JSON:
+  - `email` required string (email)
+- Response data:
+  - `email`
+  - `expiresAt` ISO string
+  - `emailDelivery`
+    - `delivered` boolean
+    - `reason` string
+  - `message`
+
+### POST /api/auth/reset-password
+- Request JSON:
+  - `email` required string (email)
+  - `token` required string
+  - `newPassword` required string (8..128)
+  - `confirmPassword` required string (8..128)
+- Response data:
+  - `message`
+
+### POST /api/auth/change-password
+- Auth: Bearer token required
+- Request JSON:
+  - `currentPassword` required string (8..128)
+  - `newPassword` required string (8..128)
+  - `confirmNewPassword` required string (8..128)
+- Response data:
+  - `message`
+
 ## Profile
 
 ### GET /api/profile
@@ -74,6 +103,18 @@ Error responses use:
   - `address` optional string
 - Response data:
   - `profile`
+
+## Upload
+
+### POST /api/upload/profile-image
+- Auth: Bearer token required
+- Content-Type: `multipart/form-data`
+- Form fields:
+  - `file` required image file (`image/jpeg`, `image/png`, `image/webp`)
+  - Max file size: 5MB
+- Response data:
+  - `profileImageUrl`
+  - `photoURL`
 
 ## Farms
 
@@ -207,7 +248,7 @@ Error responses use:
   - `weather`
   - `weatherSnapshot`
 
-### POST /api/farms/:farmId/weather/gitrefresh
+### POST /api/farms/:farmId/weather/refresh
 - Request JSON: none
 - Response data:
   - `farmId`
