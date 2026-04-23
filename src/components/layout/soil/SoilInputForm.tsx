@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { 
@@ -105,6 +105,12 @@ const npkFields = [
     name: "potassium" as const,
     placeholder: "mg/kg",
   },
+  {
+    id: "pH",
+    label: "Soil pH",
+    name: "pH" as const,
+    placeholder: "pH",
+  },
 ];
 
 const environmentalFields = [
@@ -113,12 +119,6 @@ const environmentalFields = [
     label: "Soil Moisture",
     name: "moistureContent" as const,
     placeholder: "%",
-  },
-  {
-    id: "pH",
-    label: "Soil pH (manual)",
-    name: "pH" as const,
-    placeholder: "pH",
   },
   {
     id: "lightLevel",
@@ -360,43 +360,46 @@ export default function SoilInputForm({
     }));
   }, [farm?.id]);
 
-  async function refreshDeviceStatus(farmId: string) {
-    if (!currentUser) {
-      setLinkedDeviceId(null);
-      setLinkedDeviceName(null);
-      return null;
-    }
-
-    const response = await fetchJsonWithAuth(
-      currentUser,
-      `/api/farms/${farmId}/soil/device`,
-    );
-    const responseBody: unknown = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const errorCode = getResponseCode(responseBody);
-
-      if (errorCode === "DEVICE_NOT_CONNECTED" || response.status === 404) {
+  const refreshDeviceStatus = useCallback(
+    async (farmId: string) => {
+      if (!currentUser) {
         setLinkedDeviceId(null);
         setLinkedDeviceName(null);
         return null;
       }
 
-      throw new Error(
-        getResponseMessage(
-          responseBody,
-          "Unable to check linked device status.",
-        ),
+      const response = await fetchJsonWithAuth(
+        currentUser,
+        `/api/farms/${farmId}/soil/device`,
       );
-    }
+      const responseBody: unknown = await response.json().catch(() => null);
 
-    const statusPayload = readDeviceStatusPayload(responseBody);
+      if (!response.ok) {
+        const errorCode = getResponseCode(responseBody);
 
-    setLinkedDeviceId(statusPayload?.device?.id?.trim() || null);
-    setLinkedDeviceName(statusPayload?.device?.name?.trim() || null);
+        if (errorCode === "DEVICE_NOT_CONNECTED" || response.status === 404) {
+          setLinkedDeviceId(null);
+          setLinkedDeviceName(null);
+          return null;
+        }
 
-    return statusPayload;
-  }
+        throw new Error(
+          getResponseMessage(
+            responseBody,
+            "Unable to check linked device status.",
+          ),
+        );
+      }
+
+      const statusPayload = readDeviceStatusPayload(responseBody);
+
+      setLinkedDeviceId(statusPayload?.device?.id?.trim() || null);
+      setLinkedDeviceName(statusPayload?.device?.name?.trim() || null);
+
+      return statusPayload;
+    },
+    [currentUser],
+  );
 
   useEffect(() => {
     let isCancelled = false;
@@ -434,7 +437,7 @@ export default function SoilInputForm({
     return () => {
       isCancelled = true;
     };
-  }, [farm?.id, currentUser]);
+  }, [farm?.id, currentUser, refreshDeviceStatus]);
 
   function applyDeviceReadings(
     readings: NonNullable<DeviceStatusPayload["readings"]>,
@@ -864,7 +867,7 @@ export default function SoilInputForm({
           </div>
           <div className="border-t border-[#C0C9BB1A] pt-6">
             <div className="flex items-center gap-3">
-              <Clover className="h-[18px] w-[18px] text-[#003E63]"/>
+              <Clover className="h-4.5 w-4.5 text-[#003E63]"/>
               <span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
                 PLANTING PLAN INPUTS
               </span>
@@ -951,9 +954,9 @@ export default function SoilInputForm({
 
               <div className="mt-6 flex flex-col gap-4 md:gap-6">
                 <div className="flex items-center gap-3">
-                  <FlaskRound className="h-[18px] w-[18px] text-[#41493E]"/>
+                  <FlaskRound className="h-4.5 w-4.5 text-[#41493E]"/>
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
-                    NPK inputs
+                    NPK and pH inputs
                   </span>
                 </div>
 
@@ -992,7 +995,7 @@ export default function SoilInputForm({
               <div className="mt-6">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <Droplet className="h-[18px] w-[18px] text-[#00450D]"/>
+                    <Droplet className="h-4.5 w-4.5 text-[#00450D]"/>
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                         Sensor inputs
@@ -1075,10 +1078,9 @@ export default function SoilInputForm({
 
           <div className="border-t border-[#C0C9BB1A] pt-6">
             <p className="text-xs leading-5 text-[#41493E]">
-              Environmental readings and soil chemistry are optional. Device
-              import currently includes moisture, light, temperature, and
-              humidity. Soil pH remains manually editable unless a connected
-              device sends it.
+              Environmental readings are optional and come from the connected
+              device. Device import currently includes moisture, light,
+              temperature, and humidity.
             </p>
           </div>
 

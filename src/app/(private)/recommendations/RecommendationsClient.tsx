@@ -517,7 +517,7 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
-						<div className="mb-12 rounded-[24px] sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
+						<div className="mb-12 rounded-3xl sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
 							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 								<div>
 									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">

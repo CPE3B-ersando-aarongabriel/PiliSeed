@@ -285,7 +285,7 @@ async function fetchAnomuraMarketPrice(cropType: string): Promise<ResolvedMarket
       });
 
     const matchedVariants = withScore
-      .filter((entry) => entry.score >= 40)
+      .filter((entry) => entry.score > 0)
       .map<ResolvedMarketMatch>(({ record, score }) => ({
         commodityName: toCommodityLabel(record),
         category: record.category,
@@ -302,13 +302,23 @@ async function fetchAnomuraMarketPrice(cropType: string): Promise<ResolvedMarket
       return null;
     }
 
+    const averagePrice = matchedVariants.reduce(
+      (total, variant) => total + variant.price,
+      0,
+    ) / matchedVariants.length;
+
+    const latestMatchedDate = matchedVariants
+      .map((variant) => variant.date)
+      .filter((date): date is string => typeof date === "string" && date.trim().length > 0)
+      .sort((first, second) => second.localeCompare(first))[0] ?? best.date;
+
     return {
       commodityName: best.commodityName,
       symbol: toMarketSymbol(cropType),
-      price: best.price,
+      price: Number(averagePrice.toFixed(2)),
       unit: "per kilo",
       currency: "PHP",
-      sourceDate: best.date,
+      sourceDate: latestMatchedDate,
       sourceProvider: "anomura.today",
       sourceDetail: {
         queryCropType: cropType,
@@ -317,6 +327,8 @@ async function fetchAnomuraMarketPrice(cropType: string): Promise<ResolvedMarket
         matchedSpecification: best.specification,
         matchedUnit: best.unit,
         matchedScore: best.score,
+        averagePrice: Number(averagePrice.toFixed(2)),
+        matchedCount: matchedVariants.length,
         candidates: records.length,
         matchedVariants,
       },

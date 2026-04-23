@@ -41,7 +41,7 @@ export default function SeasonalYieldChart({
       </div>
 
 
-      <div className="h-[350px] bg-[#Eff6e74C] rounded-[32px] p-4" style={{ minWidth: 0, minHeight: 0 }}>
+      <div className="h-87.5 bg-[#Eff6e74C] rounded-4xl p-4" style={{ minWidth: 0, minHeight: 0 }}>
         {mounted && hasData ? (
           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <AreaChart
