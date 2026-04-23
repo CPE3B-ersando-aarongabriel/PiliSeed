@@ -395,12 +395,14 @@ export default function RecommendationsClient() {
 		const storageKey = activeSessionStorageId
 			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
 			: `piliSeed.selectedCrop.${selectedFarmId}`;
+		const farmLevelStorageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
 		setConfirmedCrop(selectedCrop);
 		setShowCropPrompt(false);
 		setCropPromptError("");
 
 		if (typeof window !== "undefined") {
 			window.localStorage.setItem(storageKey, selectedCrop);
+			window.localStorage.setItem(farmLevelStorageKey, selectedCrop);
 		}
 	}
 
