@@ -201,6 +201,7 @@ type UserProfileUpdates = {
   name?: string;
   phone?: string;
   address?: string;
+  photoURL?: string;
 };
 
 type FarmCreateInput = {
@@ -862,6 +863,10 @@ export async function updateUserProfile(
 
   if (Object.prototype.hasOwnProperty.call(updates, "address")) {
     payload.address = normalizeText(updates.address, 180);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "photoURL")) {
+    payload.photoURL = normalizeText(updates.photoURL, 500);
   }
 
   if (!existingSnapshot.exists) {
