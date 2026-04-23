@@ -50,14 +50,21 @@ export async function fetchWithAuth(
 	init: RequestInit = {},
 ) {
 	const idToken = await user.getIdToken();
+	const headers = new Headers(init.headers ?? {});
+
+	headers.set("Authorization", `Bearer ${idToken}`);
+
+	if (
+		init.body !== undefined &&
+		!(init.body instanceof FormData) &&
+		!headers.has("Content-Type")
+	) {
+		headers.set("Content-Type", "application/json");
+	}
 
 	const response = await fetch(path, {
 		...init,
-		headers: {
-			Authorization: `Bearer ${idToken}`,
-			...(init.body ? { "Content-Type": "application/json" } : {}),
-			...(init.headers ?? {}),
-		},
+		headers,
 	});
 
 	const body: unknown = await response.json().catch(() => null);
