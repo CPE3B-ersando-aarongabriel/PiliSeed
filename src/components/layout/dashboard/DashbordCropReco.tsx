@@ -50,7 +50,7 @@ export default function CropRecommendationCard({
       <div className="flex-1"></div>
 
       <Link
-        href="/crop-recommendations"
+        href="/recommendations"
         className="text-[#00450D] text-xs sm:text-sm font-semibold bg-white rounded-full px-3 sm:px-4 py-1.5 sm:py-2 inline-block text-center hover:bg-white/90 transition flex items-center justify-center gap-2"
       >
         <span>View Full Analysis</span>
