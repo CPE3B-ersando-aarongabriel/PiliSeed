@@ -156,6 +156,11 @@ function buildNoCropSelectedMessage() {
   return "Select a crop in Recommendations first to generate a yield forecast.";
 }
 
+type SelectedCropChangedEventDetail = {
+  farmId?: string;
+  crop?: string | null;
+};
+
 function formatCurrencyPhp(amount: number | null) {
   if (amount === null || !Number.isFinite(amount)) {
     return "PHP --";
@@ -271,6 +276,48 @@ export default function YieldPrediction() {
 
     setPageError("");
     setSelectionMessage("");
+  }, [selectedFarmId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleSelectedCropChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<SelectedCropChangedEventDetail>;
+      const detail = customEvent.detail;
+
+      if (!detail || !selectedFarmId || detail.farmId !== selectedFarmId) {
+        return;
+      }
+
+      const nextCrop = detail.crop?.trim() || null;
+      setSelectedCropName(nextCrop);
+
+      if (!nextCrop) {
+        setYieldForecast(null);
+        setMarketSnapshot(null);
+        setMarketSource(null);
+        setSelectionMessage(buildNoCropSelectedMessage());
+        setPageError("");
+        return;
+      }
+
+      setSelectionMessage("");
+      setPageError("");
+    };
+
+    window.addEventListener(
+      "piliSeed:selectedCropChanged",
+      handleSelectedCropChanged as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "piliSeed:selectedCropChanged",
+        handleSelectedCropChanged as EventListener,
+      );
+    };
   }, [selectedFarmId]);
 
   useEffect(() => {

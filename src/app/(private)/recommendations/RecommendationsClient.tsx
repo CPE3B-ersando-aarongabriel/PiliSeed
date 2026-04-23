@@ -403,7 +403,38 @@ export default function RecommendationsClient() {
 		if (typeof window !== "undefined") {
 			window.localStorage.setItem(storageKey, selectedCrop);
 			window.localStorage.setItem(farmLevelStorageKey, selectedCrop);
+			window.dispatchEvent(
+				new CustomEvent("piliSeed:selectedCropChanged", {
+					detail: { farmId: selectedFarmId, crop: selectedCrop },
+				}),
+			);
 		}
+	}
+
+	function handleClearCropSelection() {
+		if (!selectedFarmId) {
+			return;
+		}
+
+		const storageKey = activeSessionStorageId
+			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
+			: `piliSeed.selectedCrop.${selectedFarmId}`;
+		const farmLevelStorageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+
+		if (typeof window !== "undefined") {
+			window.localStorage.removeItem(storageKey);
+			window.localStorage.removeItem(farmLevelStorageKey);
+			window.dispatchEvent(
+				new CustomEvent("piliSeed:selectedCropChanged", {
+					detail: { farmId: selectedFarmId, crop: null },
+				}),
+			);
+		}
+
+		setConfirmedCrop(null);
+		setSelectedCrop("");
+		setShowCropPrompt(true);
+		setCropPromptError("");
 	}
 
 	function handleChangeCropSelection() {
@@ -680,6 +711,7 @@ export default function RecommendationsClient() {
 											onChange={(event) => setSelectedCrop(event.target.value)}
 											className="mt-2 w-full rounded-full border border-[#C0C9BB] bg-white px-4 py-3 text-sm font-semibold text-[#171D14]"
 										>
+											<option value="">No crop selected</option>
 											{recommendedCrops.map((crop) => (
 												<option key={crop.crop} value={crop.crop}>
 													{crop.crop}
@@ -698,6 +730,12 @@ export default function RecommendationsClient() {
 											className="w-full md:w-auto rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
 										>
 											Confirm crop
+										</button>
+										<button
+											onClick={handleClearCropSelection}
+											className="w-full md:w-auto rounded-full border border-[#9C4A00] px-6 py-3 text-sm font-semibold text-[#9C4A00]"
+										>
+											Clear selection
 										</button>
 									</div>
 								</div>
