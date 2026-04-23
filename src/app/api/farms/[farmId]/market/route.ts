@@ -11,8 +11,10 @@ import {
   getFarmByIdForUser,
   getLatestCropRecommendationForFarm,
   getLatestMarketSnapshotForFarm,
+  getLatestYieldForecastForFarm,
   type CropRecommendation,
 } from "../../../../../lib/firestoreSchema";
+import { createOpenAIService } from "../../../../../lib/openaiService";
 
 export const runtime = "nodejs";
 
@@ -24,87 +26,70 @@ type FarmMarketContext = {
   params: Promise<{ farmId: string }>;
 };
 
-type CommodityApiPayload = {
-  success?: boolean;
-  date?: string;
-  base?: string;
-  symbol?: string;
-  rates?: Record<string, unknown>;
-  unit?: Record<string, unknown> | string;
+type AnomuraSearchPayload = {
+  query?: string;
+  count?: number;
+  results?: unknown[];
 };
 
-const RAPID_API_HOST = "commodity-rates-api.p.rapidapi.com";
-const RAPID_API_LATEST_ENDPOINT = `https://${RAPID_API_HOST}/latest`;
-const DEFAULT_CROP_SYMBOL = "RICE";
+type AnomuraCommodityRecord = {
+  name: string;
+  category: string | null;
+  specification: string | null;
+  unit: string | null;
+  price: number;
+  date?: string;
+};
 
-const cropToCommoditySymbolMap: Record<string, string> = {
+type ResolvedMarketPrice = {
+  commodityName: string;
+  symbol: string;
+  price: number;
+  unit: string;
+  currency: "PHP";
+  sourceDate: string | null;
+  sourceProvider: "anomura.today" | "openai";
+  sourceDetail: Record<string, unknown>;
+  variants?: ResolvedMarketMatch[];
+};
+
+type ResolvedMarketMatch = {
+  commodityName: string;
+  category: string | null;
+  specification: string | null;
+  unit: string | null;
+  price: number;
+  date: string | null;
+  score: number;
+};
+
+const ANOMURA_API_BASE_URL = "https://api.anomura.today";
+const DEFAULT_CROP_NAME = "Rice";
+
+const cropAliasMap: Record<string, string[]> = {
+  RICE: ["palay", "bigas"],
+  CORN: ["maize", "mais"],
+  EGGPLANT: ["talong"],
+  TOMATO: ["kamatis"],
+  ONION: ["sibuyas"],
+  CABBAGE: ["repolyo"],
+  MUNGBEAN: ["monggo", "mung bean"],
+};
+
+const cropToMarketSymbolMap: Record<string, string> = {
   RICE: "RICE",
   PALAY: "RICE",
   CORN: "CORN",
   MAIZE: "CORN",
   WHEAT: "WHEAT",
+  MUNGBEAN: "MUNGBEAN",
+  MONGO: "MUNGBEAN",
+  MONGGO: "MUNGBEAN",
+  EGGPLANT: "EGGPLANT",
+  TALONG: "EGGPLANT",
+  TOMATO: "TOMATO",
+  KAMATIS: "TOMATO",
 };
-
-const commodityDisplayNameMap: Record<string, string> = {
-  RICE: "Rice",
-  CORN: "Corn",
-  WHEAT: "Wheat",
-};
-
-// Conversion constants
-const CWT_TO_KG = 45.359; // 1 hundredweight (cwt) = 45.359 kg
-const USD_TO_PHP_RATE = 56; // Approximate exchange rate USD to PHP
-const KG_PER_LB = 0.453592;
-
-const commodityLocalRetailNormalizationFactor: Record<string, number> = {
-  RICE: 3.8,
-  CORN: 2.2,
-  WHEAT: 2.5,
-};
-
-function convertProviderRateToUsdPerKilo(
-  providerRate: number,
-  providerUnit: string,
-): number {
-  const normalizedUnit = providerUnit.trim().toLowerCase();
-
-  const usdPerProviderUnit =
-    providerRate > 0 && providerRate < 1 ? 1 / providerRate : providerRate;
-
-  if (normalizedUnit.includes("cwt")) {
-    return usdPerProviderUnit / CWT_TO_KG;
-  }
-
-  if (normalizedUnit.includes("lb") || normalizedUnit.includes("pound")) {
-    return usdPerProviderUnit / KG_PER_LB;
-  }
-
-  if (normalizedUnit.includes("kg") || normalizedUnit.includes("kilo")) {
-    return usdPerProviderUnit;
-  }
-
-  return usdPerProviderUnit;
-}
-
-function convertToPhpPerKilo(
-  symbol: string,
-  providerRate: number,
-  providerUnit: string,
-): { pricePhp: number; unit: string } {
-  const usdPerKilo = convertProviderRateToUsdPerKilo(
-    providerRate,
-    providerUnit,
-  );
-  const rawPhpPerKilo = usdPerKilo * USD_TO_PHP_RATE;
-  const normalizationFactor =
-    commodityLocalRetailNormalizationFactor[symbol] ?? 1;
-  const normalizedPhpPerKilo = rawPhpPerKilo * normalizationFactor;
-
-  return {
-    pricePhp: Number(normalizedPhpPerKilo.toFixed(2)),
-    unit: "per kilo",
-  };
-}
 
 function toUpperText(value: string | null | undefined): string {
   if (typeof value !== "string") {
@@ -114,169 +99,285 @@ function toUpperText(value: string | null | undefined): string {
   return value.trim().toUpperCase();
 }
 
-function resolvePrimaryCropSymbol(
+function toSearchText(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function toCommodityLabel(record: AnomuraCommodityRecord): string {
+  const baseName = record.name.trim().replace(/,+$/, "");
+
+  if (record.specification && record.specification.trim()) {
+    return `${baseName} (${record.specification.trim()})`;
+  }
+
+  return baseName;
+}
+
+function toMarketSymbol(cropType: string): string {
+  const upperCrop = toUpperText(cropType);
+  const mapped = cropToMarketSymbolMap[upperCrop];
+
+  if (mapped) {
+    return mapped;
+  }
+
+  const normalized = upperCrop.replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
+  return normalized || "UNKNOWN";
+}
+
+function getCropSearchTerms(cropType: string): string[] {
+  const upperCrop = toUpperText(cropType);
+  const aliases = cropAliasMap[upperCrop] ?? [];
+
+  return Array.from(new Set([cropType, ...aliases].map((item) => toSearchText(item)).filter(Boolean)));
+}
+
+function scoreAnomuraRecord(cropType: string, record: AnomuraCommodityRecord): number {
+  const haystack = toSearchText(
+    `${record.name} ${record.specification ?? ""} ${record.category ?? ""}`,
+  );
+  const terms = getCropSearchTerms(cropType);
+  let score = 0;
+
+  for (const term of terms) {
+    if (haystack === term) {
+      score = Math.max(score, 150);
+      continue;
+    }
+
+    if (haystack.startsWith(`${term} `)) {
+      score = Math.max(score, 130);
+      continue;
+    }
+
+    if (haystack.includes(term)) {
+      score = Math.max(score, 110);
+      continue;
+    }
+
+    if (term.length > 3 && term.includes(haystack)) {
+      score = Math.max(score, 40);
+    }
+  }
+
+  if (record.unit?.toLowerCase().includes("kg")) {
+    score += 5;
+  }
+
+  return score;
+}
+
+function toAnomuraRecord(payload: unknown): AnomuraCommodityRecord | null {
+  if (typeof payload !== "object" || payload === null) {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const rawPrice = record.price;
+
+  if (typeof record.name !== "string") {
+    return null;
+  }
+
+  if (typeof rawPrice !== "number" || !Number.isFinite(rawPrice) || rawPrice <= 0) {
+    return null;
+  }
+
+  return {
+    name: record.name,
+    category: typeof record.category === "string" ? record.category : null,
+    specification: typeof record.specification === "string" ? record.specification : null,
+    unit: typeof record.unit === "string" ? record.unit : null,
+    price: rawPrice,
+    date: typeof record.date === "string" ? record.date : undefined,
+  };
+}
+
+function resolvePrimaryCropName(
   recommendation: CropRecommendation | null,
 ): string {
   if (!recommendation || recommendation.recommendedCrops.length === 0) {
-    return DEFAULT_CROP_SYMBOL;
+    return DEFAULT_CROP_NAME;
   }
 
   const bestRecommendation = [...recommendation.recommendedCrops].sort(
     (first, second) => second.score - first.score,
   )[0];
 
-  const preferredCrop = toUpperText(bestRecommendation?.crop);
+  const preferredCrop = bestRecommendation?.crop?.trim();
 
-  return cropToCommoditySymbolMap[preferredCrop] ?? DEFAULT_CROP_SYMBOL;
+  return preferredCrop || DEFAULT_CROP_NAME;
 }
 
-async function fetchLatestCommodityRate(symbol: string) {
-  const apiKey = process.env.COMMODITY_API_KEY?.trim();
+function resolveRequestedCropType(input: {
+  request: Request;
+  yieldForecastCropType: string | null;
+  recommendation: CropRecommendation | null;
+}): string {
+  const url = new URL(input.request.url);
+  const queryCropType = url.searchParams.get("cropType")?.trim();
 
-  if (!apiKey) {
-    return {
-      error: errorResponse(
-        500,
-        "CONFIGURATION_ERROR",
-        "Commodity API key is not configured.",
-      ),
-      data: null,
-    } as const;
+  if (queryCropType) {
+    return queryCropType;
   }
 
-  const requestUrl = new URL(RAPID_API_LATEST_ENDPOINT);
-  requestUrl.searchParams.set("base", "USD");
-  requestUrl.searchParams.set("symbols", symbol);
+  if (input.yieldForecastCropType) {
+    return input.yieldForecastCropType;
+  }
+
+  return resolvePrimaryCropName(input.recommendation);
+}
+
+async function fetchAnomuraMarketPrice(cropType: string): Promise<ResolvedMarketPrice | null> {
+  const requestUrl = new URL("/api/search", ANOMURA_API_BASE_URL);
+  requestUrl.searchParams.set("q", cropType);
 
   const timeoutController = new AbortController();
-  const timeoutId = setTimeout(() => {
-    timeoutController.abort();
-  }, 12000);
+  const timeoutId = setTimeout(() => timeoutController.abort(), 12000);
 
   try {
     const response = await fetch(requestUrl.toString(), {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-rapidapi-host": RAPID_API_HOST,
-        "x-rapidapi-key": apiKey,
-      },
+      headers: { Accept: "application/json" },
       signal: timeoutController.signal,
       cache: "no-store",
     });
 
     if (!response.ok) {
-      const rawErrorBody = await response.text().catch(() => "");
-
-      return {
-        error: errorResponse(
-          502,
-          "EXTERNAL_SERVICE_ERROR",
-          "Commodity provider request failed.",
-          {
-            status: response.status,
-            response: rawErrorBody.slice(0, 500),
-          },
-        ),
-        data: null,
-      } as const;
+      return null;
     }
 
     const rawPayload: unknown = await response.json().catch(() => null);
 
-    if (typeof rawPayload !== "object" || rawPayload === null) {
-      return {
-        error: errorResponse(
-          502,
-          "INVALID_COMMODITY_RESPONSE",
-          "Commodity provider returned an invalid JSON payload.",
-        ),
-        data: null,
-      } as const;
+    if (typeof rawPayload !== "object" || rawPayload === null || Array.isArray(rawPayload)) {
+      return null;
     }
 
-    const payload = (
-      "data" in rawPayload &&
-      typeof (rawPayload as { data?: unknown }).data === "object" &&
-      (rawPayload as { data?: unknown }).data !== null
-        ? (rawPayload as { data: CommodityApiPayload }).data
-        : (rawPayload as CommodityApiPayload)
-    ) as CommodityApiPayload;
+    const payload = rawPayload as AnomuraSearchPayload;
+    const records = Array.isArray(payload.results)
+      ? payload.results.map((item) => toAnomuraRecord(item)).filter((item): item is AnomuraCommodityRecord => item !== null)
+      : [];
 
-    const rates = payload.rates;
-
-    if (typeof rates !== "object" || rates === null) {
-      return {
-        error: errorResponse(
-          502,
-          "INVALID_COMMODITY_RESPONSE",
-          "Commodity provider response did not include rates.",
-        ),
-        data: null,
-      } as const;
+    if (records.length === 0) {
+      return null;
     }
 
-    const directRate = rates[symbol];
-    const resolvedRate =
-      typeof directRate === "number"
-        ? directRate
-        : Object.entries(rates).find(
-            ([key, value]) =>
-              key.toUpperCase() === symbol && typeof value === "number",
-          )?.[1];
+    const withScore = records
+      .map((record) => ({
+        record,
+        score: scoreAnomuraRecord(cropType, record),
+      }))
+      .sort((first, second) => {
+        if (second.score !== first.score) {
+          return second.score - first.score;
+        }
 
-    if (typeof resolvedRate !== "number" || !Number.isFinite(resolvedRate)) {
-      return {
-        error: errorResponse(
-          502,
-          "MISSING_COMMODITY_RATE",
-          "Commodity provider response did not include a valid rate for the requested symbol.",
-        ),
-        data: null,
-      } as const;
+        const secondDate = second.record.date ?? "";
+        const firstDate = first.record.date ?? "";
+
+        return secondDate.localeCompare(firstDate);
+      });
+
+    const matchedVariants = withScore
+      .filter((entry) => entry.score >= 40)
+      .map<ResolvedMarketMatch>(({ record, score }) => ({
+        commodityName: toCommodityLabel(record),
+        category: record.category,
+        specification: record.specification,
+        unit: record.unit,
+        price: Number(record.price.toFixed(2)),
+        date: record.date ?? null,
+        score,
+      }));
+
+    const best = matchedVariants[0] ?? null;
+
+    if (!best) {
+      return null;
     }
-
-    const unitRaw = payload.unit;
-    const resolvedUnit =
-      typeof unitRaw === "object" && unitRaw !== null
-        ? unitRaw[symbol]
-        : typeof unitRaw === "string"
-          ? unitRaw
-          : null;
 
     return {
-      error: null,
-      data: {
-        date: typeof payload.date === "string" ? payload.date : null,
-        base: typeof payload.base === "string" ? payload.base : "USD",
-        symbol,
-        rate: resolvedRate,
-        unit:
-          typeof resolvedUnit === "string" && resolvedUnit.trim().length > 0
-            ? resolvedUnit.trim()
-            : "unit",
+      commodityName: best.commodityName,
+      symbol: toMarketSymbol(cropType),
+      price: best.price,
+      unit: "per kilo",
+      currency: "PHP",
+      sourceDate: best.date,
+      sourceProvider: "anomura.today",
+      sourceDetail: {
+        queryCropType: cropType,
+        matchedName: best.commodityName,
+        matchedCategory: best.category,
+        matchedSpecification: best.specification,
+        matchedUnit: best.unit,
+        matchedScore: best.score,
+        candidates: records.length,
+        matchedVariants,
       },
-    } as const;
-  } catch (error) {
-    const isAbortError =
-      typeof error === "object" &&
-      error !== null &&
-      "name" in error &&
-      (error as { name?: string }).name === "AbortError";
-
-    return {
-      error: errorResponse(
-        502,
-        "EXTERNAL_SERVICE_ERROR",
-        isAbortError
-          ? "Commodity provider request timed out."
-          : "Commodity provider request failed.",
-      ),
-      data: null,
-    } as const;
+      variants: matchedVariants,
+    };
+  } catch {
+    return null;
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+const llmMarketSuggestionSchema = z.object({
+  suggestedPricePhpPerKg: z.number().positive().max(100000),
+  priceTrend: z.string().trim().min(1).max(80),
+  localDemand: z.string().trim().min(1).max(80),
+  supplySignal: z.string().trim().min(1).max(80),
+  confidence: z.number().min(0).max(1),
+  reasoning: z.string().trim().min(1).max(600).optional(),
+});
+
+async function buildOpenAIFallbackMarketPrice(input: {
+  cropType: string;
+  farmLocation: string | null;
+}): Promise<ResolvedMarketPrice> {
+  const openAIService = createOpenAIService();
+  const prompt = [
+    "You are estimating Philippine wet-market commodity price data.",
+    "Return strict JSON only, no markdown and no additional text.",
+    "Values must be realistic Philippine Peso per kilogram estimates for the current period.",
+    "JSON schema:",
+    '{"suggestedPricePhpPerKg":number,"priceTrend":"string","localDemand":"string","supplySignal":"string","confidence":0-1,"reasoning":"string"}',
+    `Crop type: ${input.cropType}`,
+    `Farm location: ${input.farmLocation ?? "unknown"}`,
+    "Use conservative confidence when uncertain.",
+  ].join("\n");
+
+  const payload = await openAIService.generateJson(prompt);
+  const parsed = llmMarketSuggestionSchema.safeParse(payload);
+
+  if (!parsed.success) {
+    throw new Error("OpenAI fallback did not return a valid market suggestion payload.");
+  }
+
+  return {
+    commodityName: input.cropType,
+    symbol: toMarketSymbol(input.cropType),
+    price: Number(parsed.data.suggestedPricePhpPerKg.toFixed(2)),
+    unit: "per kilo",
+    currency: "PHP",
+    sourceDate: new Date().toISOString().slice(0, 10),
+    sourceProvider: "openai",
+    sourceDetail: {
+      queryCropType: input.cropType,
+      priceTrend: parsed.data.priceTrend,
+      localDemand: parsed.data.localDemand,
+      supplySignal: parsed.data.supplySignal,
+      confidence: parsed.data.confidence,
+      reasoning: parsed.data.reasoning ?? null,
+    },
+  };
 }
 
 export async function GET(request: Request, context: FarmMarketContext) {
@@ -298,73 +399,67 @@ export async function GET(request: Request, context: FarmMarketContext) {
       return errorResponse(404, "FARM_NOT_FOUND", "Farm not found.");
     }
 
-    const latestRecommendation = await getLatestCropRecommendationForFarm(
-      decodedToken.uid,
-      farm.id,
-    );
+    const [latestRecommendation, latestYieldForecast] = await Promise.all([
+      getLatestCropRecommendationForFarm(decodedToken.uid, farm.id),
+      getLatestYieldForecastForFarm(decodedToken.uid, farm.id),
+    ]);
 
-    const symbol = resolvePrimaryCropSymbol(latestRecommendation);
-    const latestRateResult = await fetchLatestCommodityRate(symbol);
+    const cropType = resolveRequestedCropType({
+      request,
+      yieldForecastCropType: latestYieldForecast?.cropType ?? null,
+      recommendation: latestRecommendation,
+    });
 
-    if (latestRateResult.error) {
-      return latestRateResult.error;
-    }
-
-    const latestRate = latestRateResult.data;
-
-    if (!latestRate) {
-      return errorResponse(
-        502,
-        "INVALID_COMMODITY_RESPONSE",
-        "Commodity provider returned an empty payload.",
-      );
-    }
+    const primaryMarket = await fetchAnomuraMarketPrice(cropType);
+    const resolvedMarket =
+      primaryMarket ??
+      (await buildOpenAIFallbackMarketPrice({
+        cropType,
+        farmLocation: farm.location,
+      }));
 
     const previousSnapshot = await getLatestMarketSnapshotForFarm(
       decodedToken.uid,
       farm.id,
-      symbol,
+      resolvedMarket.symbol,
     );
 
     const previousPrice = previousSnapshot?.price ?? null;
-
-    // Convert from USD per cwt to PHP per kilo
-    const converted = convertToPhpPerKilo(
-      symbol,
-      latestRate.rate,
-      latestRate.unit,
-    );
 
     const percentageChange =
       typeof previousPrice === "number" &&
       Number.isFinite(previousPrice) &&
       previousPrice > 0
-        ? ((converted.pricePhp - previousPrice) / previousPrice) * 100
+        ? ((resolvedMarket.price - previousPrice) / previousPrice) * 100
         : 0;
 
     await createMarketSnapshotForFarm(decodedToken.uid, farm.id, {
-      commodityName: commodityDisplayNameMap[symbol] ?? symbol,
-      symbol,
-      price: converted.pricePhp,
-      unit: converted.unit,
-      currency: "PHP",
-      sourceDate: latestRate.date,
+      commodityName: resolvedMarket.commodityName,
+      symbol: resolvedMarket.symbol,
+      price: resolvedMarket.price,
+      unit: resolvedMarket.unit,
+      currency: resolvedMarket.currency,
+      sourceDate: resolvedMarket.sourceDate,
     });
 
     return successResponse({
       farmId: farm.id,
       market: {
-        commodityName: commodityDisplayNameMap[symbol] ?? symbol,
-        symbol,
-        price: converted.pricePhp,
-        unit: converted.unit,
-        currency: "PHP",
+        cropType,
+        commodityName: resolvedMarket.commodityName,
+        symbol: resolvedMarket.symbol,
+        price: resolvedMarket.price,
+        unit: resolvedMarket.unit,
+        currency: resolvedMarket.currency,
         percentageChange,
         trendDirection: percentageChange > 0 ? "up" : "down",
+        variants: resolvedMarket.variants ?? [],
       },
       source: {
-        date: latestRate.date,
-        base: "USD",
+        date: resolvedMarket.sourceDate,
+        provider: resolvedMarket.sourceProvider,
+        usedFallback: resolvedMarket.sourceProvider === "openai",
+        detail: resolvedMarket.sourceDetail,
       },
     });
   } catch (error) {
