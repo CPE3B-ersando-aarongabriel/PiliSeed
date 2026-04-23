@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Line,
   XAxis,
@@ -11,6 +10,11 @@ import {
   Area,
   ComposedChart,
 } from "recharts";
+
+import type {
+  MarketSnapshot,
+  MarketSourceInfo,
+} from "@/lib/marketTypes";
 
 interface YieldDataPoint {
   month: string;
@@ -27,12 +31,19 @@ interface YieldPreview {
 interface YieldPredictionCardProps {
   yieldHistory?: YieldDataPoint[];
   yieldPreview?: YieldPreview | null;
+  marketSnapshot?: MarketSnapshot | null;
+  marketSource?: MarketSourceInfo | null;
   revenueValue?: string;
   percentageIncrease?: string;
   isLoading?: boolean;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+type CustomTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ value?: number }>;
+};
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-[#93CBFF] text-white px-4 py-2 rounded-full shadow-md text-sm font-medium">
@@ -46,12 +57,12 @@ const CustomTooltip = ({ active, payload }: any) => {
 export default function YieldPredictionCard({
   yieldHistory,
   yieldPreview,
+  marketSnapshot,
+  marketSource,
   revenueValue,
   percentageIncrease,
   isLoading = false,
 }: YieldPredictionCardProps) {
-  const [mounted, setMounted] = useState(false);
-
   const formatRevenuePhp = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined || !Number.isFinite(amount)) {
       return "PHP --";
@@ -94,10 +105,6 @@ export default function YieldPredictionCard({
 
   const resolvedRevenue = revenueValue ?? formatRevenuePhp(yieldPreview?.estimatedRevenuePhp);
   const resolvedIncrease = percentageIncrease ?? "Market data pending";
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
   const gradientId = "yieldGradient";
 
   if (isLoading) {
@@ -115,7 +122,7 @@ export default function YieldPredictionCard({
   if (displaySeries.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-md border border-[#41493E]/10 p-6">
-        <div className="h-[300px] flex items-center justify-center">
+        <div className="h-75 flex items-center justify-center">
           <p className="text-[#41493E]/60">No yield data available</p>
         </div>
       </div>
@@ -136,7 +143,7 @@ export default function YieldPredictionCard({
       </div>
 
       {yieldPreview && (
-        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+        <div className="mb-6 grid gap-3 sm:grid-cols-4">
           <div className="rounded-2xl border border-[#E3EBDC] bg-[#F7FAF2] p-4">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7B8776]">
               Expected Yield
@@ -164,67 +171,79 @@ export default function YieldPredictionCard({
               {resolvedIncrease}
             </p>
           </div>
+          {marketSnapshot ? (
+            <div className="rounded-2xl border border-[#E3EBDC] bg-[#F7FAF2] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7B8776]">
+                Market Price
+              </p>
+              <p className="mt-2 text-2xl font-bold text-[#00450D]">
+                PHP {marketSnapshot.price.toFixed(2)}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-[#7B8776]">
+                / {marketSnapshot.unit}
+              </p>
+              <p className="mt-1 text-[11px] text-[#7B8776]">
+                {marketSource?.provider === "openai" ? "OpenAI fallback" : "Anomura.today"}
+              </p>
+            </div>
+          ) : null}
         </div>
       )}
 
-      <div className="w-full h-[300px] sm:h-[350px] min-h-[300px]">
-        {mounted ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={displaySeries}>
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00450D" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#00450D" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+      <div className="w-full h-75 sm:h-87.5 min-h-75">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={displaySeries}>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#00450D" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#00450D" stopOpacity={0} />
+              </linearGradient>
+            </defs>
 
-              <CartesianGrid vertical={false} stroke="#E5E7EB" />
+            <CartesianGrid vertical={false} stroke="#E5E7EB" />
 
-              <XAxis
-                dataKey="month"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#6B7280", fontSize: 12 }}
-              />
+            <XAxis
+              dataKey="month"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#6B7280", fontSize: 12 }}
+            />
 
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "#6B7280", fontSize: 12 }}
-              />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: "#6B7280", fontSize: 12 }}
+            />
 
-              <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} />
 
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke="none"
-                fill={`url(#${gradientId})`}
-              />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="none"
+              fill={`url(#${gradientId})`}
+            />
 
-              <Line
-                type="natural"
-                dataKey="value"
-                stroke="#00450D"
-                strokeWidth={3}
-                dot={{
-                  r: 4,
-                  fill: "#00450D",
-                  stroke: "white",
-                  strokeWidth: 2,
-                }}
-                activeDot={{
-                  r: 7,
-                  fill: "#00450D",
-                }}
-                isAnimationActive={true}
-                animationDuration={800}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
-        ) : (
-          <div style={{ width: '100%', height: '100%' }} />
-        )}
+            <Line
+              type="natural"
+              dataKey="value"
+              stroke="#00450D"
+              strokeWidth={3}
+              dot={{
+                r: 4,
+                fill: "#00450D",
+                stroke: "white",
+                strokeWidth: 2,
+              }}
+              activeDot={{
+                r: 7,
+                fill: "#00450D",
+              }}
+              isAnimationActive={true}
+              animationDuration={800}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

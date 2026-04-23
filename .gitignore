@@ -53,3 +53,5 @@ firmware/
 # Explicit local hardware files (kept untracked)
 firmware/esp32/piliseed_soil_node/piliseed_soil_node.ino
 firmware/esp32/piliseed_soil_node/README.md
+
+sample/

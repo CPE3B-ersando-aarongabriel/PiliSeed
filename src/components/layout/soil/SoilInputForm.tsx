@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { 
@@ -105,6 +105,12 @@ const npkFields = [
     name: "potassium" as const,
     placeholder: "mg/kg",
   },
+  {
+    id: "pH",
+    label: "Soil pH",
+    name: "pH" as const,
+    placeholder: "pH",
+  },
 ];
 
 const environmentalFields = [
@@ -113,12 +119,6 @@ const environmentalFields = [
     label: "Soil Moisture",
     name: "moistureContent" as const,
     placeholder: "%",
-  },
-  {
-    id: "pH",
-    label: "Soil pH (manual)",
-    name: "pH" as const,
-    placeholder: "pH",
   },
   {
     id: "lightLevel",
@@ -143,15 +143,15 @@ const environmentalFields = [
 const planningFields = [
   {
     id: "landSize",
-    label: "Land Size (hectares)",
+    label: "Land Size",
     name: "landSize" as const,
-    placeholder: "e.g., 2.5 hectares",
+    placeholder: "e.g., 2.5",
   },
   {
     id: "plantingDuration",
     label: "Planting Duration",
     name: "plantingDuration" as const,
-    placeholder: "e.g., 90 days",
+    placeholder: "e.g., 90",
   },
   {
     id: "goal",
@@ -291,6 +291,7 @@ export default function SoilInputForm({
   const router = useRouter();
   const [values, setValues] = useState<SoilInputValues>(initialValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "analyzing" | "generating">("idle");
   const [isFetchingDevice, setIsFetchingDevice] = useState(false);
   const [isLinkingDevice, setIsLinkingDevice] = useState(false);
   const [isCheckingDeviceStatus, setIsCheckingDeviceStatus] = useState(false);
@@ -317,6 +318,11 @@ export default function SoilInputForm({
     values.nitrogen.trim().length > 0 &&
     values.phosphorus.trim().length > 0 &&
     values.potassium.trim().length > 0;
+  const hasRequiredPlanningInputs =
+    values.landSize.trim().length > 0 &&
+    values.plantingDuration.trim().length > 0 &&
+    values.goal.trim().length > 0 &&
+    values.budget.trim().length > 0;
   const anyNpkFilled =
     values.nitrogen.trim().length > 0 ||
     values.phosphorus.trim().length > 0 ||
@@ -329,6 +335,25 @@ export default function SoilInputForm({
   const deviceActionLabel = linkedDeviceId
     ? "Get Data from Device"
     : "Connect Device";
+  const submitStatusLabel =
+    submitPhase === "generating" ? "Generating Recommendation..." : "Analyzing Soil...";
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      return;
+    }
+
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isSubmitting]);
 
   useEffect(() => {
     if (!farm?.id) {
@@ -360,43 +385,46 @@ export default function SoilInputForm({
     }));
   }, [farm?.id]);
 
-  async function refreshDeviceStatus(farmId: string) {
-    if (!currentUser) {
-      setLinkedDeviceId(null);
-      setLinkedDeviceName(null);
-      return null;
-    }
-
-    const response = await fetchJsonWithAuth(
-      currentUser,
-      `/api/farms/${farmId}/soil/device`,
-    );
-    const responseBody: unknown = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      const errorCode = getResponseCode(responseBody);
-
-      if (errorCode === "DEVICE_NOT_CONNECTED" || response.status === 404) {
+  const refreshDeviceStatus = useCallback(
+    async (farmId: string) => {
+      if (!currentUser) {
         setLinkedDeviceId(null);
         setLinkedDeviceName(null);
         return null;
       }
 
-      throw new Error(
-        getResponseMessage(
-          responseBody,
-          "Unable to check linked device status.",
-        ),
+      const response = await fetchJsonWithAuth(
+        currentUser,
+        `/api/farms/${farmId}/soil/device`,
       );
-    }
+      const responseBody: unknown = await response.json().catch(() => null);
 
-    const statusPayload = readDeviceStatusPayload(responseBody);
+      if (!response.ok) {
+        const errorCode = getResponseCode(responseBody);
 
-    setLinkedDeviceId(statusPayload?.device?.id?.trim() || null);
-    setLinkedDeviceName(statusPayload?.device?.name?.trim() || null);
+        if (errorCode === "DEVICE_NOT_CONNECTED" || response.status === 404) {
+          setLinkedDeviceId(null);
+          setLinkedDeviceName(null);
+          return null;
+        }
 
-    return statusPayload;
-  }
+        throw new Error(
+          getResponseMessage(
+            responseBody,
+            "Unable to check linked device status.",
+          ),
+        );
+      }
+
+      const statusPayload = readDeviceStatusPayload(responseBody);
+
+      setLinkedDeviceId(statusPayload?.device?.id?.trim() || null);
+      setLinkedDeviceName(statusPayload?.device?.name?.trim() || null);
+
+      return statusPayload;
+    },
+    [currentUser],
+  );
 
   useEffect(() => {
     let isCancelled = false;
@@ -434,7 +462,7 @@ export default function SoilInputForm({
     return () => {
       isCancelled = true;
     };
-  }, [farm?.id, currentUser]);
+  }, [farm?.id, currentUser, refreshDeviceStatus]);
 
   function applyDeviceReadings(
     readings: NonNullable<DeviceStatusPayload["readings"]>,
@@ -689,7 +717,15 @@ export default function SoilInputForm({
       return;
     }
 
+    if (!hasRequiredPlanningInputs) {
+      setSubmitError(
+        "Complete Land Size, Planting Duration, Primary Goal, and Budget before getting recommendations.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
+    setSubmitPhase("analyzing");
     setSubmitError("");
 
     try {
@@ -754,8 +790,8 @@ export default function SoilInputForm({
         ...(values.goal.trim() ? { goal: values.goal.trim() } : {}),
         ...(values.budget.trim() ? { budget: values.budget.trim() } : {}),
       };
-      const hasPersonalizationInput =
-        Object.keys(recommendationPayload).length > 0;
+
+      setSubmitPhase("generating");
 
       const recommendationResponse = await fetchJsonWithAuth(
         currentUser,
@@ -778,29 +814,6 @@ export default function SoilInputForm({
         );
       }
 
-      if (hasPersonalizationInput) {
-        const personalizeResponse = await fetchJsonWithAuth(
-          currentUser,
-          `/api/farms/${farm.id}/recommendations/personalize`,
-          {
-            method: "POST",
-            body: JSON.stringify(recommendationPayload),
-          },
-        );
-        const personalizeBody: unknown = await personalizeResponse
-          .json()
-          .catch(() => null);
-
-        if (!personalizeResponse.ok) {
-          throw new Error(
-            getResponseMessage(
-              personalizeBody,
-              "Unable to personalize recommendations right now.",
-            ),
-          );
-        }
-      }
-
       router.push(`/recommendations?farmId=${farm.id}`);
     } catch (error) {
       const message =
@@ -810,6 +823,7 @@ export default function SoilInputForm({
       setSubmitError(message);
     } finally {
       setIsSubmitting(false);
+      setSubmitPhase("idle");
     }
   }
 
@@ -831,6 +845,25 @@ export default function SoilInputForm({
 
   return (
     <>
+      {isSubmitting && (
+        <div className="fixed inset-0 z-[80] bg-[#0B1209]/45 backdrop-blur-[1px]">
+          <div className="flex h-full items-center justify-center px-4">
+            <div className="w-full max-w-md rounded-3xl border border-[#C0C9BB] bg-white px-6 py-7 text-center shadow-[0px_25px_50px_-12px_#00000040]">
+              <div className="mx-auto h-11 w-11 animate-spin rounded-full border-4 border-[#C0C9BB] border-t-[#00450D]" />
+              <h3 className="mt-5 text-lg font-bold text-[#171D14]">
+                {submitPhase === "generating"
+                  ? "Generating Crop Recommendation"
+                  : "Analyzing Soil Data"}
+              </h3>
+              <p className="mt-2 text-sm font-semibold text-[#41493E]">
+                Please stay on this page while we complete your recommendation.
+              </p>
+              
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col items-start rounded-[48px] border border-solid border-[#C0C9BB1A] bg-white px-10 pb-14 pt-10">
         <div className="w-full space-y-10">
           <div className="flex flex-col gap-4">
@@ -862,30 +895,49 @@ export default function SoilInputForm({
               </p>
             )}
           </div>
-          <div className="border-t border-[#C0C9BB1A] pt-6">
-            <div className="flex items-center gap-3">
-              <Clover className="h-[18px] w-[18px] text-[#003E63]"/>
+          <div className="border-t border-[#C0C9BB1A] pt-4">
+            <div className="mb-4 flex items-center gap-3">
+              <Clover className="h-4.5 w-4.5 text-[#003E63]"/>
               <span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
                 PLANTING PLAN INPUTS
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {planningFields.map((field) => (
                 <div key={field.id} className="flex flex-col gap-2">
                   <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                     {field.label}
                   </label>
-                  <input
-                    type="text"
-                    name={field.name}
-                    value={values[field.name]}
-                    onChange={(event) =>
-                      handleFieldChange(field.name, event.target.value)
-                    }
-                    placeholder={field.placeholder}
-                    className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
-                  />
+
+                  {field.name === "landSize" || field.name === "plantingDuration" ? (
+                    <div className="flex overflow-hidden rounded-md bg-[#E3EBDC]">
+                      <input
+                        type="text"
+                        name={field.name}
+                        value={values[field.name]}
+                        onChange={(event) =>
+                          handleFieldChange(field.name, event.target.value)
+                        }
+                        placeholder={field.placeholder}
+                        className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+                      />
+                      <span className="inline-flex items-center border-l border-[#C0C9BB] px-4 text-sm font-semibold text-[#41493E]">
+                        {field.name === "landSize" ? "hectares" : "day/s"}
+                      </span>
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      name={field.name}
+                      value={values[field.name]}
+                      onChange={(event) =>
+                        handleFieldChange(field.name, event.target.value)
+                      }
+                      placeholder={field.placeholder}
+                      className="flex-1 rounded-md bg-[#E3EBDC] px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+                    />
+                  )}
                 </div>
               ))}
 
@@ -914,14 +966,25 @@ export default function SoilInputForm({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting || !currentUser || !hasFarmLocation}
+              disabled={
+                isSubmitting ||
+                !currentUser ||
+                !hasFarmLocation ||
+                !hasRequiredPlanningInputs
+              }
               className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#00450D] px-4 py-2.5 sm:py-4 text-xs sm:text-base shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]"/>
               <span className="text-center leading-tight whitespace-nowrap font-semibold text-white">
-                {isSubmitting ? "Analyzing Soil..." : "Get Crop Recommendation"}
+                {isSubmitting ? submitStatusLabel : "Get Crop Recommendation"}
               </span>
             </button>
+
+            {!hasRequiredPlanningInputs && (
+              <p className="mt-4 text-center text-xs font-semibold text-[#9C4A00]">
+                Land Size, Planting Duration, Primary Goal, and Budget are required.
+              </p>
+            )}
 
             {submitError && (
               <p className="mt-4 text-sm font-semibold text-[#9C4A00]">
@@ -951,9 +1014,9 @@ export default function SoilInputForm({
 
               <div className="mt-6 flex flex-col gap-4 md:gap-6">
                 <div className="flex items-center gap-3">
-                  <FlaskRound className="h-[18px] w-[18px] text-[#41493E]"/>
+                  <FlaskRound className="h-4.5 w-4.5 text-[#41493E]"/>
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
-                    NPK inputs
+                    NPK and pH inputs
                   </span>
                 </div>
 
@@ -990,9 +1053,9 @@ export default function SoilInputForm({
               </summary>
 
               <div className="mt-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <Droplet className="h-[18px] w-[18px] text-[#00450D]"/>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <div className="flex items-center gap-3 px-1 py-1.5">
+                    <Droplet className="h-4.5 w-4.5 text-[#00450D]"/>
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                         Sensor inputs
@@ -1008,7 +1071,7 @@ export default function SoilInputForm({
                     type="button"
                     onClick={handleDeviceSync}
                     disabled={isDeviceActionDisabled}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#00450D] px-4 py-2 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex self-start sm:self-center items-center gap-2 rounded-full bg-[#00450D] px-5 py-2.5 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isFetchingDevice ? (
                       <>
@@ -1026,10 +1089,10 @@ export default function SoilInputForm({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {environmentalFields.map((field) => (
                     <div key={field.id} className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
+                      <label className="px-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                         {field.label}
                       </label>
                       <input
@@ -1075,10 +1138,9 @@ export default function SoilInputForm({
 
           <div className="border-t border-[#C0C9BB1A] pt-6">
             <p className="text-xs leading-5 text-[#41493E]">
-              Environmental readings and soil chemistry are optional. Device
-              import currently includes moisture, light, temperature, and
-              humidity. Soil pH remains manually editable unless a connected
-              device sends it.
+              Environmental readings are optional and come from the connected
+              device. Device import currently includes moisture, light,
+              temperature, and humidity.
             </p>
           </div>
 
@@ -1091,7 +1153,7 @@ export default function SoilInputForm({
             >
               <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]" />
               <span className="text-center leading-tight whitespace-nowrap">
-                {isSubmitting ? "Analyzing Soil..." : "Get Crop Recommendation"}
+                {isSubmitting ? submitStatusLabel : "Get Crop Recommendation"}
               </span>
             </button>
 

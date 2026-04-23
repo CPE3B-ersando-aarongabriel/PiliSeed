@@ -10,6 +10,11 @@ import FeaturedCropCard from "@/components/layout/recommendations/FeatureCropCar
 import CropRecommendationCard from "@/components/layout/recommendations/CropRecommendationCard";
 import DiversificationCard from "@/components/layout/recommendations/Diversification";
 import { getClientAuth } from "@/lib/firebaseClient";
+import {
+	groupRecommendationsBySession,
+	type RecommendationSession,
+	type RecommendationSessionRecord,
+} from "@/lib/recommendationSessions";
 import { ChevronDown } from "lucide-react";
 
 type FarmOption = {
@@ -25,14 +30,9 @@ type RecommendationItem = {
 	reason: string;
 };
 
-type CropRecommendationRecord = {
-	id: string;
-	recommendedCrops: RecommendationItem[];
-	analysisText: string;
-	warningFlags: string[];
-	generatedBy: "deterministic" | "openai" | "hybrid";
-	createdAt: string | null;
-	updatedAt: string | null;
+type CropRecommendationRecord = RecommendationSessionRecord & {
+	sessionId: string;
+	sessionStartedAt: string | null;
 };
 
 type SoilProfile = {
@@ -46,6 +46,72 @@ type RecommendationsPayload = {
 	count: number;
 	limit: number;
 };
+
+type RecommendationsCacheRecord = {
+	storedAt: string;
+	recommendations: CropRecommendationRecord[];
+	soilProfile: SoilProfile | null;
+};
+
+const RECOMMENDATIONS_CACHE_TTL_MS = 1000 * 60 * 30;
+
+function getRecommendationsCacheKey(uid: string, farmId: string) {
+	return `piliSeed.recommendationsCache.${uid}.${farmId}`;
+}
+
+function readRecommendationsCache(
+	uid: string,
+	farmId: string,
+): RecommendationsCacheRecord | null {
+	if (typeof window === "undefined") {
+		return null;
+	}
+
+	const raw = window.localStorage.getItem(getRecommendationsCacheKey(uid, farmId));
+
+	if (!raw) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(raw) as RecommendationsCacheRecord;
+		const storedAt = new Date(parsed.storedAt);
+
+		if (Number.isNaN(storedAt.getTime())) {
+			return null;
+		}
+
+		if (Date.now() - storedAt.getTime() > RECOMMENDATIONS_CACHE_TTL_MS) {
+			return null;
+		}
+
+		return parsed;
+	} catch {
+		return null;
+	}
+}
+
+function writeRecommendationsCache(
+	uid: string,
+	farmId: string,
+	recommendations: CropRecommendationRecord[],
+	soilProfile: SoilProfile | null,
+) {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	const payload: RecommendationsCacheRecord = {
+		storedAt: new Date().toISOString(),
+		recommendations,
+		soilProfile,
+	};
+
+	window.localStorage.setItem(
+		getRecommendationsCacheKey(uid, farmId),
+		JSON.stringify(payload),
+	);
+}
 
 function getErrorMessage(body: unknown, fallbackMessage: string) {
 	if (
@@ -92,7 +158,7 @@ export default function RecommendationsClient() {
 	const [soilProfile, setSoilProfile] = useState<SoilProfile | null>(null);
 	const [isFarmDropdownOpen, setIsFarmDropdownOpen] = useState(false);
 	const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 	const [farmError, setFarmError] = useState("");
 	const [dataError, setDataError] = useState("");
 	const [sortBy, setSortBy] = useState("Suitability Score");
@@ -117,6 +183,8 @@ export default function RecommendationsClient() {
 			}
 
 			try {
+				setFarmError("");
+				setDataError("");
 				const token = await user.getIdToken();
 				const farmsResponse = await fetch("/api/farms", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -147,6 +215,16 @@ export default function RecommendationsClient() {
 				if (!nextSelectedFarmId) {
 					setIsLoading(false);
 					return;
+				}
+
+				const cached = readRecommendationsCache(user.uid, nextSelectedFarmId);
+
+				if (cached) {
+					setRecommendations(cached.recommendations);
+					setSoilProfile(cached.soilProfile);
+					setIsLoading(false);
+				} else {
+					setIsLoading(true);
 				}
 
 				const [recommendationsResponse, soilResponse] = await Promise.all([
@@ -190,12 +268,16 @@ export default function RecommendationsClient() {
 
 				setRecommendations(recommendationList);
 				setSoilProfile(soilData);
+				writeRecommendationsCache(
+					user.uid,
+					nextSelectedFarmId,
+					recommendationList,
+					soilData,
+				);
 			} catch (error) {
 				const message =
 					error instanceof Error ? error.message : "Unable to load recommendations right now.";
 				setDataError(message);
-				setRecommendations([]);
-				setSoilProfile(null);
 			} finally {
 				setIsLoading(false);
 			}
@@ -211,10 +293,27 @@ export default function RecommendationsClient() {
 	}, [selectedFarmIdFromQuery]);
 
 	const selectedFarm = farms.find((farm) => farm.id === selectedFarmId) ?? null;
-	const selectedRecommendation = recommendations[0] ?? null;
+	const recommendationSessions = useMemo(
+		() => groupRecommendationsBySession(recommendations),
+		[recommendations],
+	);
+	const selectedSession: RecommendationSession | null = useMemo(() => {
+		if (!recommendationSessions.length) {
+			return null;
+		}
+
+		return recommendationSessions[0];
+	}, [recommendationSessions]);
+	const sessionRecommendations = selectedSession?.records ?? [];
+	const activeSessionStorageId =
+		selectedSession?.sessionId || selectedFarmId;
+	const activeSessionLabel = selectedSession?.sessionCreatedAt
+		? new Date(selectedSession.sessionCreatedAt).toLocaleString()
+		: null;
+	const selectedRecommendation = sessionRecommendations[0] ?? null;
 	const recommendedCrops = useMemo(() => {
 		const seen = new Set<string>();
-		const combined = recommendations.flatMap((record) => record.recommendedCrops);
+		const combined = sessionRecommendations.flatMap((record) => record.recommendedCrops);
 		const unique = combined.filter((crop) => {
 			const key = crop.crop.trim().toLowerCase();
 			if (seen.has(key)) {
@@ -239,7 +338,7 @@ export default function RecommendationsClient() {
 
 			return first.crop.localeCompare(second.crop);
 		});
-	}, [recommendations, sortBy]);
+	}, [sessionRecommendations, sortBy]);
 
 	useEffect(() => {
 		if (!selectedFarmId || recommendedCrops.length === 0) {
@@ -249,7 +348,9 @@ export default function RecommendationsClient() {
 			return;
 		}
 
-		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		const storageKey = activeSessionStorageId
+			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
+			: `piliSeed.selectedCrop.${selectedFarmId}`;
 		const storedSelection = typeof window !== "undefined"
 			? window.localStorage.getItem(storageKey)
 			: null;
@@ -266,7 +367,7 @@ export default function RecommendationsClient() {
 		setConfirmedCrop(null);
 		setShowCropPrompt(true);
 		setCropPromptError("");
-	}, [recommendedCrops, selectedFarmId]);
+	}, [activeSessionStorageId, recommendedCrops, selectedFarmId]);
 
 	function handleFarmChange(farmId: string) {
 		setSelectedFarmId(farmId);
@@ -291,14 +392,49 @@ export default function RecommendationsClient() {
 			return;
 		}
 
-		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		const storageKey = activeSessionStorageId
+			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
+			: `piliSeed.selectedCrop.${selectedFarmId}`;
+		const farmLevelStorageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
 		setConfirmedCrop(selectedCrop);
 		setShowCropPrompt(false);
 		setCropPromptError("");
 
 		if (typeof window !== "undefined") {
 			window.localStorage.setItem(storageKey, selectedCrop);
+			window.localStorage.setItem(farmLevelStorageKey, selectedCrop);
+			window.dispatchEvent(
+				new CustomEvent("piliSeed:selectedCropChanged", {
+					detail: { farmId: selectedFarmId, crop: selectedCrop },
+				}),
+			);
 		}
+	}
+
+	function handleClearCropSelection() {
+		if (!selectedFarmId) {
+			return;
+		}
+
+		const storageKey = activeSessionStorageId
+			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
+			: `piliSeed.selectedCrop.${selectedFarmId}`;
+		const farmLevelStorageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+
+		if (typeof window !== "undefined") {
+			window.localStorage.removeItem(storageKey);
+			window.localStorage.removeItem(farmLevelStorageKey);
+			window.dispatchEvent(
+				new CustomEvent("piliSeed:selectedCropChanged", {
+					detail: { farmId: selectedFarmId, crop: null },
+				}),
+			);
+		}
+
+		setConfirmedCrop(null);
+		setSelectedCrop("");
+		setShowCropPrompt(true);
+		setCropPromptError("");
 	}
 
 	function handleChangeCropSelection() {
@@ -345,25 +481,39 @@ export default function RecommendationsClient() {
 				"data" in responseBody &&
 				typeof (responseBody as { data?: unknown }).data === "object"
 					? ((responseBody as { data?: {
+						sessionId?: string;
 						recommendation?: CropRecommendationRecord;
-						recommendationRecord?: { id?: string };
+						recommendationRecord?: CropRecommendationRecord;
 						metadata?: { generatedBy?: "deterministic" | "openai" | "hybrid" };
 					} }).data ?? null)
 					: null;
 
-			if (responseData?.recommendation) {
-				const nowIso = new Date().toISOString();
+			if (responseData?.recommendationRecord) {
 				const newRecord: CropRecommendationRecord = {
-					id: responseData.recommendationRecord?.id ?? `rec-${nowIso}`,
-					recommendedCrops: responseData.recommendation.recommendedCrops,
-					analysisText: responseData.recommendation.analysisText,
-					warningFlags: responseData.recommendation.warningFlags ?? [],
-					generatedBy: responseData.metadata?.generatedBy ?? "openai",
-					createdAt: nowIso,
-					updatedAt: nowIso,
+					...responseData.recommendationRecord,
+					sessionId:
+						responseData.recommendationRecord.sessionId ||
+						responseData.sessionId ||
+						responseData.recommendationRecord.id,
+					sessionStartedAt:
+						responseData.recommendationRecord.sessionStartedAt ??
+						responseData.recommendationRecord.createdAt,
 				};
 
-				setRecommendations((previous) => [newRecord, ...previous]);
+				setRecommendations((previous) => {
+					const next = [newRecord, ...previous];
+
+					if (currentUser) {
+						writeRecommendationsCache(
+							currentUser.uid,
+							selectedFarmId,
+							next,
+							soilProfile,
+						);
+					}
+
+					return next;
+				});
 				return;
 			}
 
@@ -391,6 +541,14 @@ export default function RecommendationsClient() {
 					: [];
 
 			setRecommendations(refreshedList);
+			if (currentUser) {
+				writeRecommendationsCache(
+					currentUser.uid,
+					selectedFarmId,
+					refreshedList,
+					soilProfile,
+				);
+			}
 		} catch (error) {
 			const message =
 				error instanceof Error
@@ -517,7 +675,12 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
-						<div className="mb-12 rounded-[24px] sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
+						{activeSessionLabel && (
+							<div className="mb-6 rounded-3xl border border-[#C0C9BB1A] bg-white px-5 py-4 text-sm text-[#41493E]">
+								Session started {activeSessionLabel}
+							</div>
+						)}
+						<div className="mb-12 rounded-3xl sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
 							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 								<div>
 									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">
@@ -531,41 +694,51 @@ export default function RecommendationsClient() {
 									</p>
 								</div>
 								{confirmedCrop && !showCropPrompt && (
-									<div className="self-start md:self-auto rounded-full bg-[#00450D]/10 px-3 sm:px-4 py-2 text-xs font-semibold text-[#00450D] max-w-full truncate">
+									<div className="self-start md:self-auto rounded-full bg-[#00450D]/15 px-4 sm:px-5 py-2.5 text-sm sm:text-base font-bold text-[#00450D] max-w-full truncate">
 										Selected: {confirmedCrop}
 									</div>
 								)}
 							</div>
 
 							{showCropPrompt ? (
-								<div className="mt-5 flex flex-col gap-4 md:flex-row md:items-center">
-									<div className="flex-1">
+								<div className="mt-6 flex flex-col gap-4 md:flex-row md:items-end md:gap-5">
+									<div className="flex-1 px-0.5">
 										<label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#41493E]">
 											Select crop
 										</label>
-										<select
-											value={selectedCrop}
-											onChange={(event) => setSelectedCrop(event.target.value)}
-											className="mt-2 w-full rounded-full border border-[#C0C9BB] bg-white px-4 py-3 text-sm font-semibold text-[#171D14]"
-										>
-											{recommendedCrops.map((crop) => (
-												<option key={crop.crop} value={crop.crop}>
-													{crop.crop}
-												</option>
-											))}
-										</select>
+										<div className="relative mt-2">
+											<select
+												value={selectedCrop}
+												onChange={(event) => setSelectedCrop(event.target.value)}
+												className="h-13 w-full appearance-none rounded-full border border-[#C0C9BB] bg-white px-6 pr-12 py-3 text-sm font-semibold text-[#171D14]"
+											>
+												<option value="">No crop selected</option>
+												{recommendedCrops.map((crop) => (
+													<option key={crop.crop} value={crop.crop}>
+														{crop.crop}
+													</option>
+												))}
+											</select>
+											<ChevronDown className="pointer-events-none absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#171D14]" />
+										</div>
 										{cropPromptError && (
 											<p className="mt-2 text-xs font-semibold text-[#9C4A00]">
 												{cropPromptError}
 											</p>
 										)}
 									</div>
-									<div className="flex w-full md:w-auto items-center gap-3">
+									<div className="flex w-full md:w-auto items-center gap-3 md:pb-0.5">
 										<button
 											onClick={handleConfirmCropSelection}
-											className="w-full md:w-auto rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
+											className="h-13 w-full md:w-auto rounded-full bg-[#00450D] px-8 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
 										>
 											Confirm crop
+										</button>
+										<button
+											onClick={handleClearCropSelection}
+											className="h-13 w-full md:w-auto rounded-full border border-[#9C4A00] px-8 py-3 text-sm font-semibold text-[#9C4A00]"
+										>
+											Clear selection
 										</button>
 									</div>
 								</div>

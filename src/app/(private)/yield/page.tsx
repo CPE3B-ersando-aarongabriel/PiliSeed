@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -11,6 +11,11 @@ import EstimatedRevenueCard from "@/components/layout/yield/EstimatedRevenue";
 import MarketPriceTrendsCard from "@/components/layout/yield/MarketPriceTrends";
 import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
+import type {
+  FarmMarketApiData,
+  MarketSnapshot,
+  MarketSourceInfo,
+} from "@/lib/marketTypes";
 
 interface MarketPrice {
   label: string;
@@ -35,19 +40,8 @@ type YieldForecast = {
   warningFlags?: string[];
 };
 
-type MarketSnapshot = {
-  commodityName: string;
-  symbol: string;
-  price: number;
-  unit: string;
-  currency: string;
-  percentageChange: number;
-  trendDirection: "up" | "down";
-};
-
 const FORECAST_DAYS = 90;
 const DEFAULT_YIELD_REQUEST = {
-  cropType: "Rice",
   season: "Wet Season",
   forecastPeriod: "Next 90 days",
 };
@@ -57,6 +51,7 @@ type YieldCacheRecord = {
   cropName: string;
   yieldForecast: YieldForecast | null;
   marketSnapshot: MarketSnapshot | null;
+  marketSource: MarketSourceInfo | null;
 };
 
 const YIELD_CACHE_TTL_MS = 1000 * 60 * 60 * 24;
@@ -112,6 +107,7 @@ function writeYieldCache(
   cropName: string,
   yieldForecast: YieldForecast | null,
   marketSnapshot: MarketSnapshot | null,
+  marketSource: MarketSourceInfo | null,
 ) {
   if (!farmId || typeof window === "undefined") {
     return;
@@ -122,12 +118,27 @@ function writeYieldCache(
     cropName,
     yieldForecast,
     marketSnapshot,
+    marketSource,
   };
 
   window.localStorage.setItem(
     getYieldCacheKey(farmId, cropName),
     JSON.stringify(payload),
   );
+}
+
+function buildMarketRequestPath(farmId: string, cropName: string) {
+  const searchParams = new URLSearchParams();
+
+  if (cropName.trim()) {
+    searchParams.set("cropType", cropName.trim());
+  }
+
+  const queryString = searchParams.toString();
+
+  return queryString
+    ? `/api/farms/${farmId}/market?${queryString}`
+    : `/api/farms/${farmId}/market`;
 }
 
 function getStoredSelectedCrop(farmId: string) {
@@ -140,6 +151,13 @@ function getStoredSelectedCrop(farmId: string) {
 
   return stored?.trim() ? stored : null;
 }
+
+
+
+type SelectedCropChangedEventDetail = {
+  farmId?: string;
+  crop?: string | null;
+};
 
 function formatCurrencyPhp(amount: number | null) {
   if (amount === null || !Number.isFinite(amount)) {
@@ -186,10 +204,10 @@ export default function YieldPrediction() {
   const [selectedCropName, setSelectedCropName] = useState<string | null>(null);
   const [yieldForecast, setYieldForecast] = useState<YieldForecast | null>(null);
   const [marketSnapshot, setMarketSnapshot] = useState<MarketSnapshot | null>(null);
+  const [marketSource, setMarketSource] = useState<MarketSourceInfo | null>(null);
   const [isFarmDropdownOpen, setIsFarmDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [pageError, setPageError] = useState("");
-  const [selectionMessage, setSelectionMessage] = useState("");
   const [lastPredictionKey, setLastPredictionKey] = useState("");
 
   useEffect(() => {
@@ -238,7 +256,6 @@ export default function YieldPrediction() {
   useEffect(() => {
     if (!selectedFarmId) {
       setSelectedCropName(null);
-      setSelectionMessage("");
       return;
     }
 
@@ -246,13 +263,53 @@ export default function YieldPrediction() {
     setSelectedCropName(stored);
 
     if (!stored) {
-      setSelectionMessage(
-        "Using the default crop until a selection is made in Recommendations.",
-      );
+      setYieldForecast(null);
+      setMarketSnapshot(null);
+      setMarketSource(null);
       return;
     }
 
-    setSelectionMessage("");
+    setPageError("");
+  }, [selectedFarmId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleSelectedCropChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<SelectedCropChangedEventDetail>;
+      const detail = customEvent.detail;
+
+      if (!detail || !selectedFarmId || detail.farmId !== selectedFarmId) {
+        return;
+      }
+
+      const nextCrop = detail.crop?.trim() || null;
+      setSelectedCropName(nextCrop);
+
+      if (!nextCrop) {
+        setYieldForecast(null);
+        setMarketSnapshot(null);
+        setMarketSource(null);
+        setPageError("");
+        return;
+      }
+
+      setPageError("");
+    };
+
+    window.addEventListener(
+      "piliSeed:selectedCropChanged",
+      handleSelectedCropChanged as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "piliSeed:selectedCropChanged",
+        handleSelectedCropChanged as EventListener,
+      );
+    };
   }, [selectedFarmId]);
 
   useEffect(() => {
@@ -261,12 +318,22 @@ export default function YieldPrediction() {
         return;
       }
 
-      const resolvedCropName = selectedCropName ?? DEFAULT_YIELD_REQUEST.cropType;
+      if (!selectedCropName) {
+        setYieldForecast(null);
+        setMarketSnapshot(null);
+        setMarketSource(null);
+        setPageError("");
+        setIsLoading(false);
+        return;
+      }
+
+      const resolvedCropName = selectedCropName;
       const cached = readYieldCache(selectedFarmId, resolvedCropName);
 
       if (cached) {
         setYieldForecast(cached.yieldForecast);
         setMarketSnapshot(cached.marketSnapshot);
+        setMarketSource(cached.marketSource);
         setPageError("");
         return;
       }
@@ -277,7 +344,10 @@ export default function YieldPrediction() {
       try {
         const [yieldResponse, marketResponse] = await Promise.all([
           fetchWithAuth(currentUser, `/api/farms/${selectedFarmId}/yield`),
-          fetchWithAuth(currentUser, `/api/farms/${selectedFarmId}/market`),
+          fetchWithAuth(
+            currentUser,
+            buildMarketRequestPath(selectedFarmId, resolvedCropName),
+          ),
         ]);
 
         let nextYieldForecast: YieldForecast | null = null;
@@ -303,16 +373,21 @@ export default function YieldPrediction() {
         }
 
         let nextMarketSnapshot: MarketSnapshot | null = null;
+        let nextMarketSource: MarketSourceInfo | null = null;
 
         if (!marketResponse.response.ok) {
           setMarketSnapshot(null);
+          setMarketSource(null);
           nextMarketSnapshot = null;
+          nextMarketSource = null;
         } else {
-          const marketData = extractApiData<{ market: MarketSnapshot }>(
+          const marketData = extractApiData<FarmMarketApiData>(
             marketResponse.body,
           );
           nextMarketSnapshot = marketData?.market ?? null;
+          nextMarketSource = marketData?.source ?? null;
           setMarketSnapshot(nextMarketSnapshot);
+          setMarketSource(nextMarketSource);
         }
 
         writeYieldCache(
@@ -320,6 +395,7 @@ export default function YieldPrediction() {
           resolvedCropName,
           nextYieldForecast,
           nextMarketSnapshot,
+          nextMarketSource,
         );
       } catch (error) {
         const message =
@@ -333,7 +409,7 @@ export default function YieldPrediction() {
     };
 
     loadYieldData();
-  }, [currentUser, selectedFarmId]);
+  }, [currentUser, selectedFarmId, selectedCropName]);
 
   const dailySeries = useMemo(() => {
     if (!yieldForecast?.expectedYield) {
@@ -345,12 +421,14 @@ export default function YieldPrediction() {
 
   const selectedFarm = farms.find((farm) => farm.id === selectedFarmId) ?? null;
   const selectedFarmName = selectedFarm?.name ?? "Select a farm";
-  const activeCropName = selectedCropName ?? DEFAULT_YIELD_REQUEST.cropType;
+  const activeCropName = selectedCropName ?? null;
+  const hasSelectedCrop = Boolean(activeCropName);
 
   const marketPrices: MarketPrice[] = marketSnapshot
+    && activeCropName
     ? [
         {
-          label: `${(selectedCropName ?? marketSnapshot.commodityName).toUpperCase()} (${marketSnapshot.symbol})`,
+          label: `${activeCropName.toUpperCase()} (${marketSnapshot.symbol})`,
           price: `PHP ${marketSnapshot.price.toFixed(2)} / ${marketSnapshot.unit}`,
           change: formatPercent(marketSnapshot.percentageChange),
           changeColor: marketSnapshot.percentageChange >= 0 ? "text-[#00450d]" : "text-[#ba1a1a]",
@@ -360,6 +438,10 @@ export default function YieldPrediction() {
     : [];
 
   const revenueSource = useMemo(() => {
+    if (!activeCropName) {
+      return null;
+    }
+
     if (yieldForecast?.estimatedRevenuePhp !== null &&
       yieldForecast?.estimatedRevenuePhp !== undefined) {
       return yieldForecast.estimatedRevenuePhp;
@@ -372,20 +454,25 @@ export default function YieldPrediction() {
     const fallbackRevenue = yieldForecast.expectedYield * 1000 * marketSnapshot.price;
 
     return Number.isFinite(fallbackRevenue) ? fallbackRevenue : null;
-  }, [yieldForecast, marketSnapshot]);
+  }, [yieldForecast, marketSnapshot, activeCropName]);
 
   const revenueValue = formatCurrencyPhp(revenueSource);
   const progressPercent = yieldForecast?.expectedYield
     ? `${Math.min(100, Math.max(20, (yieldForecast.expectedYield / 20) * 100)).toFixed(0)}%`
     : "20%";
 
-  const runYieldPrediction = async (cropName: string, options?: { auto?: boolean }) => {
+  const runYieldPrediction = useCallback(async (cropName: string, options?: { auto?: boolean }) => {
     if (!currentUser || !selectedFarmId) {
       setPageError("Select a farm before running a new analysis.");
       return;
     }
 
-    const resolvedCropName = cropName || DEFAULT_YIELD_REQUEST.cropType;
+    const resolvedCropName = cropName.trim();
+
+    if (!resolvedCropName) {
+      setPageError("Select a crop in Recommendations first.");
+      return;
+    }
 
     if (options?.auto) {
       const cached = readYieldCache(selectedFarmId, resolvedCropName);
@@ -393,6 +480,7 @@ export default function YieldPrediction() {
       if (cached) {
         setYieldForecast(cached.yieldForecast);
         setMarketSnapshot(cached.marketSnapshot);
+        setMarketSource(cached.marketSource);
         setLastPredictionKey(`${selectedFarmId}:${resolvedCropName}`);
         return;
       }
@@ -400,7 +488,6 @@ export default function YieldPrediction() {
 
     setIsLoading(true);
     setPageError("");
-    setSelectionMessage("");
 
     try {
       const requestBody = {
@@ -429,16 +516,19 @@ export default function YieldPrediction() {
 
       const marketResponse = await fetchWithAuth(
         currentUser,
-        `/api/farms/${selectedFarmId}/market`,
+        buildMarketRequestPath(selectedFarmId, resolvedCropName),
       );
       let nextMarketSnapshot: MarketSnapshot | null = null;
+      let nextMarketSource: MarketSourceInfo | null = null;
 
       if (marketResponse.response.ok) {
-        const marketData = extractApiData<{ market: MarketSnapshot }>(
+        const marketData = extractApiData<FarmMarketApiData>(
           marketResponse.body,
         );
         nextMarketSnapshot = marketData?.market ?? null;
+        nextMarketSource = marketData?.source ?? null;
         setMarketSnapshot(nextMarketSnapshot);
+        setMarketSource(nextMarketSource);
       }
 
       writeYieldCache(
@@ -446,6 +536,7 @@ export default function YieldPrediction() {
         resolvedCropName,
         nextYieldForecast,
         nextMarketSnapshot,
+        nextMarketSource,
       );
     } catch (error) {
       const message =
@@ -456,14 +547,23 @@ export default function YieldPrediction() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentUser, selectedFarmId]);
 
   const handleRunAnalysis = async () => {
+    if (!activeCropName) {
+      setPageError("Select a crop in Recommendations first.");
+      return;
+    }
+
     await runYieldPrediction(activeCropName);
   };
 
   useEffect(() => {
     if (!currentUser || !selectedFarmId) {
+      return;
+    }
+
+    if (!activeCropName) {
       return;
     }
 
@@ -474,7 +574,7 @@ export default function YieldPrediction() {
     }
 
     runYieldPrediction(activeCropName, { auto: true });
-  }, [currentUser, selectedFarmId, activeCropName, lastPredictionKey, yieldForecast]);
+  }, [currentUser, selectedFarmId, activeCropName, lastPredictionKey, yieldForecast, runYieldPrediction]);
 
   return (
     <div className="min-h-screen bg-[#EFF6E7] py-8">
@@ -490,35 +590,54 @@ export default function YieldPrediction() {
           farmOptions={farms}
         />
 
-        {(pageError || selectionMessage) && (
+        {pageError && (
           <p className="mb-4 text-sm font-semibold text-[#9C4A00]">
-            {pageError || selectionMessage}
+            {pageError}
           </p>
         )}
 
         {/* Responsive layout: stack on mobile, side-by-side on large screens */}
-        <div className="flex flex-col lg:flex-row gap-6 w-full">
+        {!hasSelectedCrop ? (
+          <div className="rounded-[48px] bg-white px-6 py-10 text-[#41493E] shadow-sm border border-[#C0C9BB1A]">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#00450D]">
+              Select crop first
+            </p>
+            <p className="mt-3 text-base leading-7">
+              Choose a crop in Recommendations first. Yield prediction will use that selected crop instead of guessing a default.
+            </p>
+          </div>
+        ) : (
+        <div className="flex flex-col lg:flex-row gap-6 w-full items-stretch">
           {/* Graph Card */}
-          <div className="w-full lg:w-2/3 flex-shrink-0">
+          <div className="w-full lg:w-2/3 shrink-0 h-full">
             <SeasonalYieldChart
               dailyData={dailySeries}
               legendLabel={`Projected Yield (${activeCropName})`}
             />
           </div>
           {/* Side Cards */}
-          <div className="w-full lg:w-1/3 flex flex-col gap-6 mt-0">
-            <EstimatedRevenueCard
-              revenue={revenueValue}
-              percentageIncrease={
-                marketSnapshot
-                  ? `${formatPercent(marketSnapshot.percentageChange)} market shift`
-                  : "Market data pending"
-              }
-              progressWidth={progressPercent}
-            />
-            <MarketPriceTrendsCard prices={marketPrices} />
+          <div className="w-full lg:w-1/3 flex flex-col gap-6 mt-0 h-full min-h-0 lg:h-130 overflow-hidden">
+            <div className="shrink-0">
+              <EstimatedRevenueCard
+                revenue={revenueValue}
+                percentageIncrease={
+                  marketSnapshot
+                    ? `${formatPercent(marketSnapshot.percentageChange)} market shift`
+                    : "Market data pending"
+                }
+                progressWidth={progressPercent}
+              />
+            </div>
+            <div className="flex-1 min-h-0">
+              <MarketPriceTrendsCard
+                prices={marketPrices}
+                marketSnapshot={marketSnapshot}
+                marketSource={marketSource}
+              />
+            </div>
           </div>
         </div>
+        )}
          <QuickNavigation currentPage="yield-prediction" />
       </div>
     </div>

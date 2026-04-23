@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -94,50 +94,12 @@ type WeatherForecastPayload = {
   };
 };
 
-const mockWeatherData: WeatherData = {
-  current: {
-    condition: "Partly Cloudy",
-    temperature: 24,
-    feelsLike: 18,
-    humidity: 68,
-    uvIndex: "Moderate",
-    dewPoint: 18.4,
-    pressure: 1012,
-  },
-  forecast: [
-    { day: "MONDAY", high: 26, low: 18, condition: "sunny" },
-    { day: "TUESDAY", high: 24, low: 17, condition: "cloudy" },
-    { day: "WEDNESDAY", high: 21, low: 16, condition: "rainy" },
-    { day: "THURSDAY", high: 19, low: 14, condition: "cloudy" },
-    { day: "FRIDAY", high: 23, low: 16, condition: "partly-cloudy" },
-    { day: "SATURDAY", high: 27, low: 19, condition: "sunny" },
-    { day: "SUNDAY", high: 28, low: 20, condition: "sunny" },
-  ],
-  temperatureEvolution: [
-    { day: "Mon", high: 26, low: 18 },
-    { day: "Tue", high: 24, low: 17 },
-    { day: "Wed", high: 21, low: 16 },
-    { day: "Thu", high: 19, low: 14 },
-    { day: "Fri", high: 23, low: 16 },
-    { day: "Sat", high: 27, low: 19 },
-    { day: "Sun", high: 28, low: 20 },
-  ],
-  precipitation: [
-    { day: "M", amount: 0 },
-    { day: "T", amount: 0 },
-    { day: "W", amount: 25 },
-    { day: "T", amount: 0 },
-    { day: "F", amount: 0 },
-    { day: "S", amount: 0 },
-    { day: "S", amount: 0 },
-  ],
-  farmContext: {
-    slopeAspect: "NE (22°)",
-    soilRetention: "High (Loam)",
-    description:
-      "Showing moisture distribution across Section B-12. The topography in the north-east quadrant is trapping higher humidity levels than the valley floor.",
-    satelliteImage: undefined,
-  },
+const defaultFarmContext: WeatherData["farmContext"] = {
+  slopeAspect: "NE (22°)",
+  soilRetention: "High (Loam)",
+  description:
+    "Showing moisture distribution across Section B-12. The topography in the north-east quadrant is trapping higher humidity levels than the valley floor.",
+  satelliteImage: undefined,
 };
 
 type WeatherCacheRecord = {
@@ -212,7 +174,7 @@ export default function WeatherAnalysis() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [farms, setFarms] = useState<FarmOption[]>([]);
   const [selectedFarmId, setSelectedFarmId] = useState("");
-  const [data, setData] = useState(mockWeatherData);
+  const [data, setData] = useState<WeatherData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFarmDropdownOpen, setIsFarmDropdownOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
@@ -372,11 +334,11 @@ export default function WeatherAnalysis() {
       forecast,
       temperatureEvolution,
       precipitation,
-      farmContext: mockWeatherData.farmContext,
+      farmContext: defaultFarmContext,
     };
   };
 
-  const fetchWeatherData = async (mode: "initial" | "refresh" = "initial") => {
+  const fetchWeatherData = useCallback(async (mode: "initial" | "refresh" = "initial") => {
     if (!currentUser || !selectedFarmId) {
       return;
     }
@@ -482,18 +444,18 @@ export default function WeatherAnalysis() {
         setWarnings(cached.warnings);
       } else {
         setStatusMessage(message);
-        setData(mockWeatherData);
+        setData(null);
       }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentUser, selectedFarmId]);
 
   useEffect(() => {
     if (selectedFarmId) {
       fetchWeatherData();
     }
-  }, [selectedFarmId, currentUser]);
+  }, [selectedFarmId, currentUser, fetchWeatherData]);
 
   return (
     <div className="min-h-screen bg-[#EFF6E7] py-2 sm:py-4 lg:py-8">
@@ -502,7 +464,9 @@ export default function WeatherAnalysis() {
           selectedFarmId={selectedFarmId}
           selectedFarmName={selectedFarmName}
           onFarmChange={setSelectedFarmId}
-          onRefresh={() => fetchWeatherData("refresh")}
+          onRefresh={() => {
+            void fetchWeatherData("refresh");
+          }}
           isLoading={isLoading}
           isFarmDropdownOpen={isFarmDropdownOpen}
           setIsFarmDropdownOpen={setIsFarmDropdownOpen}
@@ -518,14 +482,25 @@ export default function WeatherAnalysis() {
           </div>
         )}
 
-        <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mt-6 sm:mt-8 min-h-0 min-w-0">
-          <CurrentConditionCard {...data.current} />
-          <TemperatureChart data={data.temperatureEvolution} />
-          <ForecastCard data={data.forecast} />
-          <PrecipitationChart data={data.precipitation} />
-          <AtmosphericBalance {...data.current} />
-          <HyperLocalContext data={data.farmContext} />
-        </div>
+        {data ? (
+          <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mt-6 sm:mt-8 min-h-0 min-w-0">
+            <CurrentConditionCard
+              condition={data.current.condition}
+              temperature={data.current.temperature}
+              feelsLike={data.current.feelsLike}
+              humidity={data.current.humidity}
+            />
+            <TemperatureChart data={data.temperatureEvolution} />
+            <ForecastCard data={data.forecast} />
+            <PrecipitationChart data={data.precipitation} />
+            <AtmosphericBalance {...data.current} />
+            <HyperLocalContext data={data.farmContext} />
+          </div>
+        ) : (
+          <div className="mt-6 sm:mt-8 rounded-2xl sm:rounded-3xl border border-[#C0C9BB] bg-white px-4 sm:px-6 py-5 sm:py-6 text-sm font-semibold text-[#41493E]">
+            {isLoading ? "Loading weather data..." : "No weather data available yet."}
+          </div>
+        )}
         <QuickNavigation currentPage="weather-analysis" />
       </div>
     </div>
