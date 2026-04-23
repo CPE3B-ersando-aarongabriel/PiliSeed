@@ -297,7 +297,7 @@ export default function RecommendationsHistoryClient() {
 					</div>
 				) : (
 					<div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-						<div className="space-y-4">
+						<div className="space-y-4 max-h-[500px] overflow-y-auto">
 							{recommendationSessions.map((session) => {
 								const firstCrop = session.latestRecord.recommendedCrops[0]?.crop ?? "Mixed crops";
 								const selectedCropForSession = readSelectedCrop(selectedFarmId, session.sessionId) ?? firstCrop;
@@ -306,10 +306,10 @@ export default function RecommendationsHistoryClient() {
 									<Link
 										key={session.sessionId}
 										href={`/history?farmId=${selectedFarmId}&sessionId=${session.sessionId}`}
-										className={`block rounded-3xl border px-5 py-4 transition-colors ${
+										className={`block rounded-3xl border px-5 py-4 transition-colors bg-white shadow-md ${
 											session.sessionId === selectedSession?.sessionId
-												? "border-[#00450D] bg-white"
-												: "border-[#C0C9BB1A] bg-white/80 hover:border-[#00450D]/40"
+												? "border-[#00450D]"
+												: "border-[#C0C9BB1A] hover:border-[#00450D]/40"
 										}`}
 									>
 										<p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#00450D]">
@@ -327,7 +327,7 @@ export default function RecommendationsHistoryClient() {
 							})}
 						</div>
 
-						<div className="rounded-[48px] bg-white p-6 sm:p-8 shadow-[0px_25px_50px_-12px_#00000020]">
+						<div className="rounded-[48px] bg-white p-6 sm:p-8 shadow-[0px_25px_50px_-12px_#00000020] h-[500px] overflow-y-auto">
 							{selectedSession ? (
 								<div className="space-y-6">
 									<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -360,7 +360,7 @@ export default function RecommendationsHistoryClient() {
 										</div>
 									</div>
 
-									<div className="space-y-4">
+									<div className="space-y-4 max-h-[400px] overflow-y-auto">
 										{selectedSession.records.map((record, index) => (
 											<div key={record.id} className="rounded-3xl border border-[#C0C9BB1A] p-4">
 												<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">
