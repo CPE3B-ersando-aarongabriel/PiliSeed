@@ -80,11 +80,11 @@ export default function AtmosphericBalance({
         <div className="grid grid-cols-2 gap-4 mt-auto">
           <div>
             <span className="text-[10px] font-semibold text-[#41493E]">DEW POINT</span>
-            <p className="text-lg sm:text-xl font-semibold">{dewPoint}°C</p>
+            <p className="text-lg sm:text-xl font-semibold text-[#171D14]">{dewPoint}°C</p>
           </div>
           <div>
             <span className="text-[10px] font-semibold text-[#41493E]">PRESSURE</span>
-            <p className="text-lg sm:text-xl font-semibold">{pressure} hPa</p>
+            <p className="text-lg sm:text-xl font-semibold text-[#171D14]">{pressure} hPa</p>
           </div>
         </div>
       </div>

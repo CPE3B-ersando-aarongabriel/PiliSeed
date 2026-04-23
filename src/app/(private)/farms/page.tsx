@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { onAuthStateChanged } from "firebase/auth";
+import { MapPin } from "lucide-react";
+import { toast } from "sonner";
 
-import FarmCard from "@/components/layout/farms/FarmCard";
 import AddFarmCard from "@/components/layout/farms/AddFarmCard";
-import AddFarmForm from "@/components/layout/farms/AddFarmForm";
+import FarmCard from "@/components/layout/farms/FarmCard";
 import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
-import { MapPin } from "lucide-react";
 
 const MAX_FARMS = 5;
-const FARM_CARD_BG = "#e9f0e1";
+const FARM_CARD_STRIP_COLORS = ["#CFE6B8", "#E8DFA3"];
 
 type FarmRecord = {
   id: string;
@@ -24,11 +24,21 @@ type FarmRecord = {
 export default function FarmsPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [farms, setFarms] = useState<FarmRecord[]>([]);
-  const [farmName, setFarmName] = useState("");
-  const [locationText, setLocationText] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [pageError, setPageError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<FarmRecord | null>(null);
+
+  const loadFarms = useCallback(async (user: User) => {
+    const { response, body } = await fetchWithAuth(user, "/api/farms");
+
+    if (!response.ok) {
+      throw new Error(getApiErrorMessage(body, "Unable to load farms right now."));
+    }
+
+    const data = extractApiData<{ farms: FarmRecord[] }>(body);
+    return data?.farms ?? [];
+  }, []);
 
   useEffect(() => {
     const auth = getClientAuth();
@@ -46,16 +56,8 @@ export default function FarmsPage() {
       setPageError("");
 
       try {
-        const { response, body } = await fetchWithAuth(user, "/api/farms");
-
-        if (!response.ok) {
-          throw new Error(
-            getApiErrorMessage(body, "Unable to load farms right now."),
-          );
-        }
-
-        const data = extractApiData<{ farms: FarmRecord[] }>(body);
-        setFarms(data?.farms ?? []);
+        const farmList = await loadFarms(user);
+        setFarms(farmList);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unable to load farms right now.";
@@ -67,11 +69,76 @@ export default function FarmsPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [loadFarms]);
 
   const handleToggle = async (id: string) => {
     if (!currentUser) {
       setPageError("Sign in to update farms.");
+      return;
+    }
+
+    const selectedFarm = farms.find((farm) => farm.id === id);
+
+    if (!selectedFarm) {
+      setPageError("Farm not found.");
+      return;
+    }
+
+    setIsSaving(true);
+    setPageError("");
+
+    try {
+      const { response, body } = selectedFarm.isActive
+        ? await fetchWithAuth(currentUser, `/api/farms/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ isActive: false }),
+          })
+        : await fetchWithAuth(currentUser, `/api/farms/${id}/activate`, {
+            method: "POST",
+          });
+
+      if (!response.ok) {
+        throw new Error(
+          getApiErrorMessage(body, "Unable to update the active farm."),
+        );
+      }
+
+      if (selectedFarm.isActive) {
+        setFarms((prevFarms) =>
+          prevFarms.map((farm) =>
+            farm.id === selectedFarm.id ? { ...farm, isActive: false } : farm,
+          ),
+        );
+      } else {
+        const data = extractApiData<{ farm: FarmRecord }>(body);
+
+        if (!data?.farm) {
+          throw new Error("Active farm response did not include farm data.");
+        }
+
+        setFarms((prevFarms) =>
+          prevFarms.map((farm) => ({
+            ...farm,
+            isActive: farm.id === data.farm.id,
+          })),
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update the active farm.";
+      setPageError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteFarm = (id: string) => {
+    const farmToDelete = farms.find((farm) => farm.id === id) ?? null;
+    setDeleteTarget(farmToDelete);
+  };
+
+  const confirmDeleteFarm = async () => {
+    if (!currentUser || !deleteTarget) {
       return;
     }
 
@@ -81,31 +148,22 @@ export default function FarmsPage() {
     try {
       const { response, body } = await fetchWithAuth(
         currentUser,
-        `/api/farms/${id}/activate`,
-        { method: "POST" },
+        `/api/farms/${deleteTarget.id}`,
+        { method: "DELETE" },
       );
 
       if (!response.ok) {
         throw new Error(
-          getApiErrorMessage(body, "Unable to update the active farm."),
+          getApiErrorMessage(body, "Unable to delete the farm right now."),
         );
       }
 
-      const data = extractApiData<{ farm: FarmRecord }>(body);
-
-      if (!data?.farm) {
-        throw new Error("Active farm response did not include farm data.");
-      }
-
-      setFarms((prevFarms) =>
-        prevFarms.map((farm) => ({
-          ...farm,
-          isActive: farm.id === data.farm.id,
-        })),
-      );
+      toast.success("Farm deleted successfully");
+      setFarms((prevFarms) => prevFarms.filter((farm) => farm.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to update the active farm.";
+        error instanceof Error ? error.message : "Unable to delete the farm right now.";
       setPageError(message);
     } finally {
       setIsSaving(false);
@@ -165,35 +223,12 @@ export default function FarmsPage() {
   };
 
   const handleAddFarmFromModal = (name: string, location: string) => {
-    if (farms.length >= MAX_FARMS) {
-      alert(`Maximum ${MAX_FARMS} farms allowed`);
-      return;
-    }
-
     if (isDuplicateFarm(name, location)) {
-      alert("A farm with this name or location already exists");
+      toast.error("A farm with this name or location already exists");
       return;
     }
 
     createFarm(name, location);
-  };
-
-  const handleAddFarmFromForm = () => {
-    if (farms.length >= MAX_FARMS) {
-      alert(`Maximum ${MAX_FARMS} farms allowed`);
-      return;
-    }
-
-    if (!farmName.trim()) return;
-
-    if (isDuplicateFarm(farmName, locationText)) {
-      alert("A farm with this name or location already exists");
-      return;
-    }
-
-    createFarm(farmName, locationText);
-    setFarmName("");
-    setLocationText("");
   };
 
   return (
@@ -209,25 +244,82 @@ export default function FarmsPage() {
         </div>
       </div>
 
-      {(isLoading || isSaving) && (
-        <p className="text-sm font-semibold text-[#00450D]">
-          {isLoading ? "Loading farms..." : "Updating farms..."}
-        </p>
-      )}
-      {pageError && (
-        <p className="text-sm font-semibold text-[#9C4A00]">{pageError}</p>
+      <div className="min-h-6" aria-live="polite">
+        {(isLoading || isSaving) && (
+          <p className="text-sm font-semibold text-[#00450D]">
+            {isLoading ? "Loading farms..." : "Updating farms..."}
+          </p>
+        )}
+      </div>
+
+      {pageError && <p className="text-sm font-semibold text-[#9C4A00]">{pageError}</p>}
+
+      {deleteTarget && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setDeleteTarget(null)}
+          />
+
+          <div className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-4 shadow-xl sm:p-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-[#00450D]">
+                  Delete Farm?
+                </h2>
+                <p className="mt-1 text-sm text-[#41493E]">
+                  This will permanently remove {deleteTarget.name}. This action cannot be undone.
+                </p>
+              </div>
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="text-[#41493E]/50 text-2xl hover:text-[#41493E]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mb-6 rounded-xl border border-[#DDE5D3] bg-[#F4F8EF] p-4">
+              <p className="text-xs font-semibold tracking-[0.12em] text-[#B3261E]">
+                FARM TO BE DELETED
+              </p>
+              <p className="mt-1 text-base font-bold text-[#171D14]">
+                {deleteTarget.name}
+              </p>
+              <div className="mt-1 flex items-center gap-1.5 text-sm text-[#41493E]">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span>{deleteTarget.location ?? "Location pending"}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="flex-1 rounded-full border border-[#41493E]/20 px-4 py-3 font-semibold text-[#41493E] transition hover:bg-gray-50"
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteFarm}
+                className="flex-1 rounded-full bg-[#C62828] px-4 py-3 font-semibold text-white transition hover:bg-[#B71C1C] disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={isSaving}
+              >
+                {isSaving ? "Deleting..." : "Delete Farm"}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       <div className="flex w-full flex-row flex-wrap gap-4 sm:gap-6 lg:gap-8">
-    
-        <AddFarmCard 
+        <AddFarmCard
           onAdd={handleAddFarmFromModal}
           currentFarmCount={farms.length}
           maxFarms={MAX_FARMS}
         />
-        
-      
-        {farms.map((farm) => (
+
+        {farms.map((farm, index) => (
           <FarmCard
             key={farm.id}
             id={farm.id}
@@ -235,36 +327,25 @@ export default function FarmsPage() {
             location={farm.location}
             isActive={farm.isActive}
             locationIcon={MapPin}
-            bgColor={FARM_CARD_BG}
+            bgColor={FARM_CARD_STRIP_COLORS[index % FARM_CARD_STRIP_COLORS.length]}
             onToggle={handleToggle}
+            onDelete={handleDeleteFarm}
           />
         ))}
       </div>
 
-      <div className="flex flex-col items-start px-4 py-8 sm:px-6 sm:py-10 lg:px-12 lg:py-12 relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[24px] sm:rounded-[36px] lg:rounded-[48px]">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-center gap-8 lg:gap-12 relative self-stretch w-full flex-[0_0_auto]">
-          <div className="flex flex-col items-start gap-4 relative flex-1 grow">
-            <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-              <div className="relative flex items-center self-stretch mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-2xl sm:text-3xl tracking-[-0.75px] leading-tight">
-                Connect a New Plot
-              </div>
+      {farms.length >= MAX_FARMS && (
+        <div className="flex flex-col items-start px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10 relative self-stretch w-full flex-[0_0_auto] bg-[#e3ebdc] rounded-[24px] sm:rounded-[32px] lg:rounded-[40px]">
+          <div className="flex flex-col gap-3 relative self-stretch w-full">
+            <div className="relative flex items-center mt-[-1.00px] [font-family:'Inter-ExtraBold',Helvetica] font-extrabold text-[#00450d] text-xl sm:text-2xl tracking-[-0.75px] leading-tight">
+              Maximum Farms Reached
             </div>
-            <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-              <p className="relative self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#41493e] text-sm sm:text-base tracking-[0] leading-6 sm:leading-[26px]">
-                Enter your farm details to begin satellite synchronization and soil health monitoring.
-              </p>
-            </div>
+            <p className="relative mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#7a5649] text-sm sm:text-base tracking-[0] leading-6">
+              You've reached the maximum of {MAX_FARMS} farms. Remove a farm to add a new one.
+            </p>
           </div>
-
-          <AddFarmForm
-            farmName={farmName}
-            locationCoords={locationText}
-            onFarmNameChange={setFarmName}
-            onLocationChange={setLocationText}
-            onSubmit={handleAddFarmFromForm}
-          />
         </div>
-      </div>
+      )}
     </div>
   );
 }

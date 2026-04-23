@@ -33,7 +33,7 @@ export default function TemperatureChart({ data }: TemperatureChartProps) {
 
   return (
     <div className="col-span-12 lg:col-span-8 min-w-0 min-h-0">
-      <div className="p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm h-full flex flex-col min-h-0">
+      <div className="h-full p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm flex flex-col min-h-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h3 className="text-lg sm:text-xl font-bold text-[#171D14]">Temperature Evolution</h3>
           <div className="flex gap-2 flex-wrap">
