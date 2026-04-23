@@ -33,7 +33,6 @@ export default function FeaturedCropCard({
         )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-
       
         <div className="absolute top-5 left-5 bg-white px-6 py-3 rounded-xl flex items-center gap-3 shadow-lg">
           <span className="text-2xl font-extrabold text-[#00450D]">
@@ -48,10 +47,6 @@ export default function FeaturedCropCard({
 
         <div className="absolute bottom-5 left-5 text-white">
           <h2 className="text-3xl font-bold mb-2">{cropName}</h2>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[#FFFFFF] opacity-90"/>
-            <p className="text-sm opacity-90">Optimal Planting: Next 14 Days</p>
-          </div>
         </div>
       </div>
 
