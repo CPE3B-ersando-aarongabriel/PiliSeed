@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       return errorResponse(
         400,
         "MISSING_FILE",
-        "Profile image is required in form field \"file\".",
+        'Profile image is required in form field "file".',
       );
     }
 

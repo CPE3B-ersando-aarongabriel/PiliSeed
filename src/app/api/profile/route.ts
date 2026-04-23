@@ -106,24 +106,28 @@ export async function PATCH(request: Request) {
       updatesPayload.phone = validationResult.data.phone;
     }
 
-    if (Object.prototype.hasOwnProperty.call(validationResult.data, "address")) {
+    if (
+      Object.prototype.hasOwnProperty.call(validationResult.data, "address")
+    ) {
       updatesPayload.address = validationResult.data.address;
     }
 
-    if (Object.prototype.hasOwnProperty.call(validationResult.data, "photoURL")) {
+    if (
+      Object.prototype.hasOwnProperty.call(validationResult.data, "photoURL")
+    ) {
       updatesPayload.photoURL = validationResult.data.photoURL;
     }
 
     if (
-      Object.prototype.hasOwnProperty.call(validationResult.data, "profileImageUrl")
+      Object.prototype.hasOwnProperty.call(
+        validationResult.data,
+        "profileImageUrl",
+      )
     ) {
       updatesPayload.photoURL = validationResult.data.profileImageUrl;
     }
 
-    const profile = await updateUserProfile(
-      decodedToken.uid,
-      updatesPayload,
-    );
+    const profile = await updateUserProfile(decodedToken.uid, updatesPayload);
 
     return successResponse({ profile: withProfileImageUrl(profile) });
   } catch (error) {

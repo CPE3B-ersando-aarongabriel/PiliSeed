@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { User, Upload, Camera, LogOut } from "lucide-react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 
-import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
+import {
+  fetchWithAuth,
+  extractApiData,
+  getApiErrorMessage,
+} from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
 
 type ProfileData = {
@@ -57,11 +61,14 @@ export default function ProfilePage() {
   const photoInputId = useId();
 
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const [initialProfilePhoto, setInitialProfilePhoto] = useState<string | null>(null);
+  const [initialProfilePhoto, setInitialProfilePhoto] = useState<string | null>(
+    null,
+  );
   const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<ProfileData>(DEFAULT_PROFILE);
-  const [initialProfile, setInitialProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [initialProfile, setInitialProfile] =
+    useState<ProfileData>(DEFAULT_PROFILE);
   const [memberSinceLabel, setMemberSinceLabel] = useState("New member");
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -137,7 +144,9 @@ export default function ProfilePage() {
         setInitialProfile(nextProfile);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unable to load your profile right now.";
+          error instanceof Error
+            ? error.message
+            : "Unable to load your profile right now.";
         setErrorMessage(message);
       } finally {
         setIsLoading(false);
@@ -197,15 +206,23 @@ export default function ProfilePage() {
 
       if (!response.ok) {
         throw new Error(
-          getApiErrorMessage(body, "Unable to upload your profile image right now."),
+          getApiErrorMessage(
+            body,
+            "Unable to upload your profile image right now.",
+          ),
         );
       }
 
-      const data = extractApiData<{ profileImageUrl?: string; photoURL?: string }>(body);
+      const data = extractApiData<{
+        profileImageUrl?: string;
+        photoURL?: string;
+      }>(body);
       const uploadedImageUrl = data?.profileImageUrl ?? data?.photoURL ?? "";
 
       if (!uploadedImageUrl) {
-        throw new Error("Upload succeeded but no profile image URL was returned.");
+        throw new Error(
+          "Upload succeeded but no profile image URL was returned.",
+        );
       }
 
       return uploadedImageUrl;
@@ -256,19 +273,28 @@ export default function ProfilePage() {
       let uploadedProfileImageUrl = profilePhoto;
 
       if (selectedPhotoFile) {
-        uploadedProfileImageUrl = await uploadProfilePhoto(currentUser, selectedPhotoFile);
+        uploadedProfileImageUrl = await uploadProfilePhoto(
+          currentUser,
+          selectedPhotoFile,
+        );
         payload.profileImageUrl = uploadedProfileImageUrl;
       }
 
       if (Object.keys(payload).length === 0) {
-        setErrorMessage("No changes detected. Update a field or choose a new image.");
+        setErrorMessage(
+          "No changes detected. Update a field or choose a new image.",
+        );
         return;
       }
 
-      const { response, body } = await fetchWithAuth(currentUser, "/api/profile", {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
+      const { response, body } = await fetchWithAuth(
+        currentUser,
+        "/api/profile",
+        {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        },
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -280,7 +306,10 @@ export default function ProfilePage() {
       const profile = data?.profile ?? null;
       const phoneParts = splitPhone(profile?.phone ?? payload.phone ?? null);
       const resolvedProfilePhoto =
-        profile?.profileImageUrl ?? profile?.photoURL ?? uploadedProfileImageUrl ?? null;
+        profile?.profileImageUrl ??
+        profile?.photoURL ??
+        uploadedProfileImageUrl ??
+        null;
       const nextProfile: ProfileData = {
         name: profile?.name ?? formData.name,
         email: formData.email,
@@ -302,7 +331,9 @@ export default function ProfilePage() {
       setSuccessMessage("Profile updated successfully.");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to update your profile right now.";
+        error instanceof Error
+          ? error.message
+          : "Unable to update your profile right now.";
       setErrorMessage(message);
     } finally {
       setIsSaving(false);
@@ -347,7 +378,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {isLoading && ( 
+      {isLoading && (
         <p className="px-4 md:px-8 text-sm font-semibold text-[#00450D]">
           Loading profile...
         </p>
@@ -442,7 +473,12 @@ export default function ProfilePage() {
                       className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -471,7 +507,12 @@ export default function ProfilePage() {
                       <select
                         className="w-full border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-sm p-0 outline-none cursor-pointer"
                         value={formData.countryCode}
-                        onChange={(e) => setFormData(prev => ({ ...prev, countryCode: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            countryCode: e.target.value,
+                          }))
+                        }
                       >
                         <option value="+1">+1</option>
                         <option value="+44">+44</option>
@@ -483,7 +524,12 @@ export default function ProfilePage() {
                         className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
                       />
                     </div>
                   </div>
@@ -497,7 +543,12 @@ export default function ProfilePage() {
                       className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                       type="text"
                       value={formData.address}
-                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          address: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </div>
