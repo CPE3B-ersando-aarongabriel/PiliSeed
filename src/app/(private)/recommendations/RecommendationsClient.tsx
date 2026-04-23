@@ -562,7 +562,7 @@ export default function RecommendationsClient() {
 
 	return (
 		<div className="min-h-screen bg-[#EFF6E7]">
-			<main className="max-w-300 mx-auto px-4 sm:px-6 py-6 sm:py-8">
+			<main className="max-w-300 mx-auto px-4 sm:px-6 ">
 				<div className="mb-8 sm:mb-10 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 					<div className="max-w-2xl space-y-4">
 						<h1 className="text-3xl sm:text-4xl lg:text-5xl leading-tight font-extrabold text-[#171d14]">
@@ -675,12 +675,7 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
-						{activeSessionLabel && (
-							<div className="mb-6 rounded-3xl border border-[#C0C9BB1A] bg-white px-5 py-4 text-sm text-[#41493E]">
-								Session started {activeSessionLabel}
-							</div>
-						)}
-						<div className="mb-12 rounded-3xl sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
+						<div className="mb-5 rounded-3xl sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
 							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 								<div>
 									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">
@@ -742,6 +737,7 @@ export default function RecommendationsClient() {
 										</button>
 									</div>
 								</div>
+								
 							) : (
 								<button
 									onClick={handleChangeCropSelection}
@@ -751,6 +747,11 @@ export default function RecommendationsClient() {
 								</button>
 							)}
 						</div>
+						{activeSessionLabel && (
+							<div className="mb-5 rounded-3xl border border-[#C0C9BB1A] bg-white px-5 py-4 text-sm text-[#41493E]">
+								Session started {activeSessionLabel}
+							</div>
+						)}
 
 						<div className="grid grid-cols-1 gap-6 mb-12">
 							<FeaturedCropCard
