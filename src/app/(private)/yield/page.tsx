@@ -152,9 +152,7 @@ function getStoredSelectedCrop(farmId: string) {
   return stored?.trim() ? stored : null;
 }
 
-function buildNoCropSelectedMessage() {
-  return "Select a crop in Recommendations first to generate a yield forecast.";
-}
+
 
 type SelectedCropChangedEventDetail = {
   farmId?: string;
@@ -210,7 +208,6 @@ export default function YieldPrediction() {
   const [isFarmDropdownOpen, setIsFarmDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [pageError, setPageError] = useState("");
-  const [selectionMessage, setSelectionMessage] = useState("");
   const [lastPredictionKey, setLastPredictionKey] = useState("");
 
   useEffect(() => {
@@ -259,7 +256,6 @@ export default function YieldPrediction() {
   useEffect(() => {
     if (!selectedFarmId) {
       setSelectedCropName(null);
-      setSelectionMessage("");
       return;
     }
 
@@ -267,7 +263,6 @@ export default function YieldPrediction() {
     setSelectedCropName(stored);
 
     if (!stored) {
-      setSelectionMessage(buildNoCropSelectedMessage());
       setYieldForecast(null);
       setMarketSnapshot(null);
       setMarketSource(null);
@@ -275,7 +270,6 @@ export default function YieldPrediction() {
     }
 
     setPageError("");
-    setSelectionMessage("");
   }, [selectedFarmId]);
 
   useEffect(() => {
@@ -298,12 +292,10 @@ export default function YieldPrediction() {
         setYieldForecast(null);
         setMarketSnapshot(null);
         setMarketSource(null);
-        setSelectionMessage(buildNoCropSelectedMessage());
         setPageError("");
         return;
       }
 
-      setSelectionMessage("");
       setPageError("");
     };
 
@@ -331,7 +323,6 @@ export default function YieldPrediction() {
         setMarketSnapshot(null);
         setMarketSource(null);
         setPageError("");
-        setSelectionMessage(buildNoCropSelectedMessage());
         setIsLoading(false);
         return;
       }
@@ -479,7 +470,7 @@ export default function YieldPrediction() {
     const resolvedCropName = cropName.trim();
 
     if (!resolvedCropName) {
-      setPageError(buildNoCropSelectedMessage());
+      setPageError("Select a crop in Recommendations first.");
       return;
     }
 
@@ -497,7 +488,6 @@ export default function YieldPrediction() {
 
     setIsLoading(true);
     setPageError("");
-    setSelectionMessage("");
 
     try {
       const requestBody = {
@@ -561,7 +551,7 @@ export default function YieldPrediction() {
 
   const handleRunAnalysis = async () => {
     if (!activeCropName) {
-      setPageError(buildNoCropSelectedMessage());
+      setPageError("Select a crop in Recommendations first.");
       return;
     }
 
@@ -600,9 +590,9 @@ export default function YieldPrediction() {
           farmOptions={farms}
         />
 
-        {(pageError || selectionMessage) && (
+        {pageError && (
           <p className="mb-4 text-sm font-semibold text-[#9C4A00]">
-            {pageError || selectionMessage}
+            {pageError}
           </p>
         )}
 

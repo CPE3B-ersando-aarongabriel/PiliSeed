@@ -53,7 +53,7 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
 
   return (
     <div className="col-span-12 lg:col-span-6 min-w-0 min-h-0">
-      <div className="p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm flex flex-col min-h-0">
+      <div className="h-full p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-6 sm:mb-10 gap-3">
           <h3 className="text-lg sm:text-xl font-bold text-[#171D14]">Precipitation Accumulation</h3>
           <div className="flex items-center gap-2 px-4 py-3 bg-[#E3EBDC] rounded-full">
@@ -61,7 +61,8 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
           </div>
         </div>
 
-        <div className="h-48 w-full min-w-0 min-h-0">
+        <div className="flex-1 flex items-center w-full min-w-0 min-h-0">
+          <div className="h-52 sm:h-60 w-full min-w-0 min-h-0">
           {mounted ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
@@ -84,6 +85,7 @@ export default function PrecipitationChart({ data }: PrecipitationChartProps) {
           ) : (
             <div style={{ width: "100%", height: "100%" }} />
           )}
+          </div>
         </div>
 
         <div className="flex justify-between mt-2 px-2">

@@ -37,6 +37,9 @@ Core shared libraries:
 - src/lib/soilService.ts
 - src/lib/marketService.ts
 - src/lib/openaiService.ts
+- src/lib/passwordSecurity.ts
+- src/lib/emailjsConfig.ts
+- src/lib/emailjsService.ts
 
 Security and boundary enforcement:
 - src/proxy.ts
@@ -47,10 +50,15 @@ Security and boundary enforcement:
 Main collections:
 - users
 - farms
+- farmDevices
 - soilProfiles
 - weatherSnapshots
 - cropRecommendations
 - yieldForecasts
+- marketSnapshots
+
+Auth security collection:
+- passwordResetTokens
 
 Ownership model:
 - Every farm-scoped collection document stores uid and farmId.
@@ -105,6 +113,7 @@ Primary reference:
 ### Phase 1 - Profile
 Purpose:
 - Authenticated profile retrieval and update with scaffold guarantees.
+- Includes private password change lifecycle via authenticated endpoint.
 
 Primary reference:
 - docs/backend/Phase 1 - Profile Notes.md
@@ -115,6 +124,20 @@ Purpose:
 
 Primary reference:
 - docs/backend/Phase 2 - Farms and Soil Notes.md
+
+### Auth Password Lifecycle (Current Implementation)
+Purpose:
+- Public forgot/reset password flow plus authenticated change-password flow.
+- Optional EmailJS delivery of reset links using server-side configuration.
+
+Endpoints:
+- POST /api/auth/forgot-password
+- POST /api/auth/reset-password
+- POST /api/auth/change-password
+
+Supporting references:
+- docs/backend/API JSON Input Output Summary.md
+- docs/backend/EmailJS Configuration.md
 
 ### Phase 3 - Weather Forecast
 Purpose:
@@ -209,6 +232,7 @@ Recommended runtime checks:
 - Unauthorized request check on protected routes.
 - Ownership check using non-owned farm ids.
 - Farm creation and activation flow.
+- Auth password flow: forgot -> reset token use -> change password.
 - Soil analyze (manual NPK and API fallback).
 - Recommendation and yield generation.
 - Dashboard summary, analytics, and activity consistency.

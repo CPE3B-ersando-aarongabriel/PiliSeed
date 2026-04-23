@@ -43,12 +43,17 @@ File: [src/proxy.ts](../src/proxy.ts)
 Files:
 - [src/lib/authMiddleware.ts](../src/lib/authMiddleware.ts)
 - [src/lib/firebaseAdmin.ts](../src/lib/firebaseAdmin.ts)
+- [src/lib/passwordSecurity.ts](../src/lib/passwordSecurity.ts)
+- [src/lib/emailjsConfig.ts](../src/lib/emailjsConfig.ts)
+- [src/lib/emailjsService.ts](../src/lib/emailjsService.ts)
 
 Responsibilities:
 - Parse and validate Bearer tokens.
 - Verify Firebase ID tokens.
 - Expose decoded claims for ownership and user-scaffold operations.
 - Initialize Firebase Admin auth/firestore using server credentials.
+- Handle reset token creation, hashing, expiry checks, and password digest metadata writes.
+- Handle optional EmailJS delivery for password reset links.
 
 ### 4. Response envelope and error mapping
 
@@ -99,10 +104,15 @@ Files:
 Collections managed by schema layer:
 - users
 - farms
+- farmDevices
 - soilProfiles
 - weatherSnapshots
 - cropRecommendations
 - yieldForecasts
+- marketSnapshots
+
+Additional auth-security collection used by auth routes:
+- passwordResetTokens
 
 Schema layer responsibilities:
 - Ownership-safe CRUD helpers.
@@ -120,6 +130,9 @@ Rules responsibilities:
 Primary user onboarding is handled through:
 - [src/app/api/auth/signup/route.ts](../src/app/api/auth/signup/route.ts)
 - [src/app/api/auth/login/route.ts](../src/app/api/auth/login/route.ts)
+- [src/app/api/auth/forgot-password/route.ts](../src/app/api/auth/forgot-password/route.ts)
+- [src/app/api/auth/reset-password/route.ts](../src/app/api/auth/reset-password/route.ts)
+- [src/app/api/auth/change-password/route.ts](../src/app/api/auth/change-password/route.ts)
 - [src/lib/firestoreSchema.ts](../src/lib/firestoreSchema.ts)
 
 ensureUserScaffold behavior:
