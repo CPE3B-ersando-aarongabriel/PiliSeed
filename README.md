@@ -134,85 +134,85 @@ npm run build
 
 | Mobile                                              | Guide                                                                                               |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| <img src="public/landing/Problem.png" width="220"/> | Entry page for product overview, problem framing, and navigation to login/signup and feature pages. |
+| <img src="public/assets/landing.png" width="220"/> | Entry page for product overview, problem framing, and navigation to login/signup and feature pages. |
 
 ### Public Page: About (/about)
 
 | Mobile                                          | Guide                                                                |
 | ----------------------------------------------- | -------------------------------------------------------------------- |
-| <img src="public/about/About.png" width="220"/> | Presents team, product context, and background details for PiliSeed. |
+| <img src="public/assets/about.png" width="220"/> | Presents team, product context, and background details for PiliSeed. |
 
 ### Public Page: Features (/features)
 
 | Mobile                                            | Guide                                                                     |
 | ------------------------------------------------- | ------------------------------------------------------------------------- |
-| <img src="public/features/Grid.png" width="220"/> | Shows major product capabilities and value propositions in feature cards. |
+| <img src="public/assets/features.png" width="220"/> | Shows major product capabilities and value propositions in feature cards. |
 
 ### Public Page: How It Works (/how-it-works)
 
 | Mobile                                                | Guide                                                                           |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------- |
-| <img src="public/how-it-works/HIW2.png" width="220"/> | Explains the end-to-end flow from data input to recommendations and monitoring. |
+| <img src="public/assets/how-it-works.png" width="220"/> | Explains the end-to-end flow from data input to recommendations and monitoring. |
 
 ### Public Page: Login (/login)
 
 | Mobile                                          | Guide                                                                                   |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------- |
-| <img src="public/login/Login.png" width="220"/> | Authenticates users through Firebase-backed sign-in flow before private feature access. |
+| <img src="public/assets/login.png" width="220"/> | Authenticates users through Firebase-backed sign-in flow before private feature access. |
 
 ### Public Page: Signup (/signup)
 
 | Mobile                                            | Guide                                                                             |
 | ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <img src="public/signup/Signup.png" width="220"/> | Registers new users and creates the initial profile scaffold for farm onboarding. |
+| <img src="public/assets/signup.png" width="220"/> | Registers new users and creates the initial profile scaffold for farm onboarding. |
 
 ### Private Tab: Dashboard (/dashboard)
 
 | Mobile                                               | Guide                                                                                             |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| <img src="public/how-it-works/HIW.png" width="220"/> | Aggregates summary insights across weather, soil, recommendations, and yield for the active farm. |
+| <img src="public/assets/dashboard.png" width="220"/> | Aggregates summary insights across weather, soil, recommendations, and yield for the active farm. |
 
 ### Private Tab: Farms (/farms)
 
 | Mobile                                              | Guide                                                                                                  |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| <img src="public/soil/soildatabg.png" width="220"/> | Manage farm records, location details, and active farm selection used by analytics and dashboard APIs. |
+| <img src="public/assets/farms.png" width="220"/> | Manage farm records, location details, and active farm selection used by analytics and dashboard APIs. |
 
 ### Private Tab: Recommendations (/recommendations)
 
 | Mobile                                              | Guide                                                                                          |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| <img src="public/features/Grid_2.png" width="220"/> | Displays ranked crops, recommendation analysis text, warning flags, and latest session output. |
+| <img src="public/assets/recommendations.png" width="220"/> | Displays ranked crops, recommendation analysis text, warning flags, and latest session output. |
 
 ### Private Tab: Weather (/weather)
 
 | Mobile                                                | Guide                                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="public/how-it-works/HIW2.png" width="220"/> | Visualizes current and forecast weather signals that feed recommendation and yield context. |
+| <img src="public/assets/weather.png" width="220"/> | Visualizes current and forecast weather signals that feed recommendation and yield context. |
 
 ### Private Tab: Yield (/yield)
 
 | Mobile                                                     | Guide                                                                                       |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="public/features/Hero_features.png" width="220"/> | Presents expected yield and revenue signals derived from soil, weather, and market context. |
+| <img src="public/assets/yield.png" width="220"/> | Presents expected yield and revenue signals derived from soil, weather, and market context. |
 
 ### Private Tab: Profile (/profile)
 
 | Mobile                                            | Guide                                                                                |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| <img src="public/about/About_2.png" width="220"/> | Allows user profile updates including identity details and profile image management. |
+| <img src="public/assets/profile.png" width="220"/> | Allows user profile updates including identity details and profile image management. |
 
 ### Private Tab: Parameters (/parameters)
 
 | Mobile                                                     | Guide                                                                                |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| <img src="public/features/Hero_features.png" width="220"/> | Hosts configurable preferences and operational parameters used by private workflows. |
+| <img src="public/assets/parameters.png" width="220"/> | Hosts configurable preferences and operational parameters used by private workflows. |
 
 ### Private Tab: History (/history)
 
 | Mobile                                            | Guide                                                                             |
 | ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <img src="public/features/Grid.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
+| <img src="public/assets/history.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
 
 ## Project Architecture
 

@@ -17,7 +17,7 @@ interface FarmCardProps {
 
 export default function FarmCard({ farm }: FarmCardProps) {
   return (
-    <div className="flex-1 bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-md border border-[#41493E]/10 flex flex-col">
+    <div className="w-full h-full bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-md border border-[#41493E]/10 flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="rounded-2xl bg-[#FDCDBC] p-2">

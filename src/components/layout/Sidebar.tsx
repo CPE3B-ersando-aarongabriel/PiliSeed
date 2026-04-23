@@ -6,30 +6,68 @@ import { usePathname, useRouter } from "next/navigation";
 import { getClientAuth } from "@/lib/firebaseClient";
 import { onAuthStateChanged } from "firebase/auth";
 import {
-    LayoutDashboard,
-    Tractor,
-    FlaskConical,
-    Sprout,
-    CloudSun,
-    TrendingUp,
+  LayoutDashboard,
+  Tractor,
+  FlaskConical,
+  Sprout,
+  CloudSun,
+  TrendingUp,
   History,
-    Settings,
-    LogOut,
-}from "lucide-react";
+  Settings,
+  LogOut,
+} from "lucide-react";
+import { fetchWithAuth, extractApiData } from "@/lib/apiClient";
+
+type SidebarProfile = {
+  name: string | null;
+  photoURL: string | null;
+  profileImageUrl: string | null;
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = useState("Farmer");
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const auth = getClientAuth();
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const name = user.displayName || user.email?.split("@")[0] || "Farmer";
-        setUserName(name);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setUserName("Farmer");
+        setProfilePhoto(null);
+        return;
+      }
+
+      const fallbackName =
+        user.displayName || user.email?.split("@")[0] || "Farmer";
+      setUserName(fallbackName);
+      setProfilePhoto(user.photoURL ?? null);
+
+      try {
+        const { response, body } = await fetchWithAuth(user, "/api/profile");
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = extractApiData<{ profile: SidebarProfile }>(body);
+        const profile = data?.profile ?? null;
+
+        const resolvedPhoto =
+          profile?.profileImageUrl ??
+          profile?.photoURL ??
+          user.photoURL ??
+          null;
+
+        const resolvedName = profile?.name || fallbackName;
+
+        setUserName(resolvedName);
+        setProfilePhoto(resolvedPhoto);
+      } catch {
+        // Keep Firebase fallback values if profile fetch fails
       }
     });
 
@@ -37,111 +75,49 @@ export default function Sidebar() {
   }, []);
 
   const navItems = [
-    {
-      name: "Dashboard",
-      path: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Weather Analysis",
-      path: "/weather",
-      icon: CloudSun,
-    },
-    {
-      name: "Farms",
-      path: "/farms",
-      icon: Tractor,
-    },
-    {
-      name: "Parameters",
-      path: "/parameters",
-      icon: FlaskConical,
-    },
-    {
-      name: "Crop Recommendations",
-      path: "/recommendations",
-      icon: Sprout,
-    },
-    {
-      name: "Yield Prediction",
-      path: "/yield",
-      icon: TrendingUp,
-    },
-    {
-      name: "History",
-      path: "/history",
-      icon: History,
-    },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Weather Analysis", path: "/weather", icon: CloudSun },
+    { name: "Farms", path: "/farms", icon: Tractor },
+    { name: "Parameters", path: "/parameters", icon: FlaskConical },
+    { name: "Crop Recommendations", path: "/recommendations", icon: Sprout },
+    { name: "Yield Prediction", path: "/yield", icon: TrendingUp },
+    { name: "History", path: "/history", icon: History },
   ];
 
   const mobileNavItems = [
-    {
-      name: "Dashboard",
-      path: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Weather",
-      path: "/weather",
-      icon: CloudSun,
-    },
-    {
-      name: "Farms",
-      path: "/farms",
-      icon: Tractor,
-    },
-    {
-      name: "Params",
-      path: "/parameters",
-      icon: FlaskConical,
-    },
-    {
-      name: "Recs",
-      path: "/recommendations",
-      icon: Sprout,
-    },
-    {
-      name: "Yield",
-      path: "/yield",
-      icon: TrendingUp,
-    },
-    {
-      name: "History",
-      path: "/history",
-      icon: History,
-    },
-    {
-      name: "Profile",
-      path: "/profile",
-      icon: Settings,
-    },
+    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { name: "Weather", path: "/weather", icon: CloudSun },
+    { name: "Farms", path: "/farms", icon: Tractor },
+    { name: "Params", path: "/parameters", icon: FlaskConical },
+    { name: "Recs", path: "/recommendations", icon: Sprout },
+    { name: "Yield", path: "/yield", icon: TrendingUp },
+    { name: "History", path: "/history", icon: History },
+    { name: "Profile", path: "/profile", icon: Settings },
   ];
 
-      const handleLogout = async () => {
-        setIsLoggingOut(true);
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
 
-        try {
-          const auth = getClientAuth();
-          await auth.signOut();
-          router.push("/");
-        } catch (error) {
-          console.error("Logout failed:", error);
-        } finally {
-          setIsLoggingOut(false);
-        }
-      };
+    try {
+      const auth = getClientAuth();
+      await auth.signOut();
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <>
-      <div
-        className={`
-            hidden lg:flex lg:sticky top-0 left-0 z-50
-            h-screen w-72 bg-[#E9F0E1] border-r border-gray-200 flex-col
-        `}
-      >
-        <div className="px-6 pt-8 pb-6 border-gray-100 flex justify-between items-center">
+      <div className="hidden lg:flex lg:sticky top-0 left-0 z-50 h-screen w-72 bg-[#E9F0E1] border-r border-gray-200 flex-col">
+        <div className="px-6 pt-8 pb-6 flex justify-between items-center">
           <div>
-            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+            <Link
+              href="/"
+              className="flex items-center gap-2 transition-opacity hover:opacity-80"
+            >
               <img
                 src="/Pili-logo-main.png"
                 alt="PiliSeed logo"
@@ -160,6 +136,7 @@ export default function Sidebar() {
           <ul className="space-y-1.5">
             {navItems.map((item) => {
               const isActive = pathname === item.path;
+              const Icon = item.icon;
 
               return (
                 <li key={item.name}>
@@ -171,18 +148,13 @@ export default function Sidebar() {
                         : "text-[#171D14]/70 font-medium hover:bg-white hover:text-[#00450D] hover:font-semibold"
                     }`}
                   >
-                   
-                    {(() => {
-                      const Icon = item.icon as any;
-                      return (
-                        <Icon
-                          className={`w-5.5 h-5.5 transition-colors duration-200 ${
-                            isActive ? "text-[#00450D]" : "text-[#171D14]/70 group-hover:text-[#00450D]"
-                          }`}
-                        />
-                      );
-                    })()}
-
+                    <Icon
+                      className={`w-5.5 h-5.5 transition-colors duration-200 ${
+                        isActive
+                          ? "text-[#00450D]"
+                          : "text-[#171D14]/70 group-hover:text-[#00450D]"
+                      }`}
+                    />
                     {item.name}
                   </Link>
                 </li>
@@ -193,15 +165,26 @@ export default function Sidebar() {
 
         <div className="px-4 pb-6 mt-auto">
           <div className="flex items-center gap-2">
-            <Link href="/profile" className="flex-1 bg-white/50 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between border border-[#171D14]/5 shadow-sm hover:bg-white/80 transition-all duration-200 cursor-pointer">
+            <Link
+              href="/profile"
+              className="flex-1 bg-white/50 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between border border-[#171D14]/5 shadow-sm hover:bg-white/80 transition-all duration-200 cursor-pointer"
+            >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#00450D] to-[#008822] flex items-center justify-center shadow-sm shrink-0">
-                  <span className="text-white font-semibold text-sm">
-                    {userName.charAt(0).toUpperCase()}
-                  </span>
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#00450D] to-[#008822] flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                  {profilePhoto ? (
+                    <img
+                      src={profilePhoto}
+                      alt={`${userName} profile photo`}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-semibold text-sm">
+                      {userName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
 
-                <p className="text-sm font-semibold text-[#171D14] wrap-break-word">
+                <p className="text-sm font-semibold text-[#171D14] break-words">
                   {userName}
                 </p>
               </div>
@@ -227,7 +210,7 @@ export default function Sidebar() {
         <ul className="flex items-end gap-1 overflow-x-auto whitespace-nowrap pb-1">
           {mobileNavItems.map((item) => {
             const isActive = pathname === item.path;
-            const Icon = item.icon as any;
+            const Icon = item.icon;
 
             return (
               <li key={item.name} className="min-w-[74px] shrink-0">
@@ -245,6 +228,7 @@ export default function Sidebar() {
               </li>
             );
           })}
+
           <li className="min-w-[74px] shrink-0">
             <button
               type="button"

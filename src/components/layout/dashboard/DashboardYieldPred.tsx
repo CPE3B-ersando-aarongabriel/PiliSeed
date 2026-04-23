@@ -46,7 +46,7 @@ type CustomTooltipProps = {
 const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#93CBFF] text-white px-4 py-2 rounded-full shadow-md text-sm font-medium">
+      <div className="bg-[#93CBFF] text-[#000000] px-4 py-2 rounded-full shadow-md text-sm-semibold font-medium">
         Predicted: {payload[0].value} MT
       </div>
     );
