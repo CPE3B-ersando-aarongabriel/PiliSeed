@@ -12,6 +12,7 @@ import {
   getApiErrorMessage,
 } from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
+import Link from "next/link";
 
 type ProfileData = {
   name: string;
@@ -635,6 +636,15 @@ export default function ProfilePage() {
                 </div>
               </div>
             </section>
+
+            <div className="w-full flex justify-end -mt-2">
+              <Link
+                href="/forgot-password"
+                className="text-sm font-semibold text-[#0d631b] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0d631b] rounded-sm"
+              >
+                Forgot Password?
+              </Link>
+            </div>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-3 w-full">
               <div className="text-sm font-semibold text-[#9C4A00]">
