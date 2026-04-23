@@ -2,8 +2,9 @@
 
 import { FormEvent, useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Upload, Camera, LogOut } from "lucide-react";
+import { User, Upload, Camera, LogOut, Eye, EyeOff, Lock } from "lucide-react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+import { toast } from "sonner";
 
 import {
   fetchWithAuth,
@@ -74,8 +75,19 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
+  const [passwordSuccessMessage, setPasswordSuccessMessage] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [passwordFormData, setPasswordFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
 
   useEffect(() => {
     return () => {
@@ -353,6 +365,69 @@ export default function ProfilePage() {
     setSuccessMessage("");
   };
 
+  const handleChangePassword = async () => {
+
+    if (!currentUser) {
+      const message = "Sign in to change your password.";
+      setPasswordErrorMessage(message);
+      setPasswordSuccessMessage("");
+      toast.error(message);
+      return;
+    }
+
+    if (passwordFormData.newPassword.length < 8) {
+      const message = "New password must be at least 8 characters.";
+      setPasswordErrorMessage(message);
+      setPasswordSuccessMessage("");
+      toast.error(message);
+      return;
+    }
+
+    if (passwordFormData.newPassword !== passwordFormData.confirmNewPassword) {
+      const message = "New passwords do not match.";
+      setPasswordErrorMessage(message);
+      setPasswordSuccessMessage("");
+      toast.error(message);
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setPasswordErrorMessage("");
+    setPasswordSuccessMessage("");
+
+    try {
+      const { response, body } = await fetchWithAuth(currentUser, "/api/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify(passwordFormData),
+      });
+
+      if (!response.ok) {
+        const message = getApiErrorMessage(body, "Unable to change password right now.");
+        setPasswordErrorMessage(message);
+        toast.error(message);
+        return;
+      }
+
+      const message = "Password updated successfully.";
+      setPasswordSuccessMessage(message);
+      setPasswordFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmNewPassword: "",
+      });
+      toast.success(message);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to change password right now.";
+      setPasswordErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       const auth = getClientAuth();
@@ -551,6 +626,140 @@ export default function ProfilePage() {
                       }
                     />
                   </div>
+                </div>
+              </div>
+            </section>
+
+            <section
+              aria-labelledby="private-security-heading"
+              className="flex flex-col items-start gap-6 p-4 md:p-6 w-full bg-white rounded-[32px] shadow-[0px_1px_2px_#0000000d]"
+            >
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full">
+                <div className="w-10 h-10 justify-center bg-[#e4e4cc] rounded-2xl flex items-center">
+                  <Lock className="w-5 h-5 text-[#1b1d0e]" />
+                </div>
+                <div className="flex flex-col items-start">
+                  <h2
+                    className="w-fit [font-family:'Epilogue-Bold',Helvetica] font-bold text-[#1b1d0e] text-lg leading-7 whitespace-nowrap flex items-center tracking-[0]"
+                    id="private-security-heading"
+                  >
+                    Private: Change Password
+                  </h2>
+                  <p className="w-fit [font-family:'Manrope-Regular',Helvetica] font-normal text-[#75584d] text-sm leading-5 whitespace-nowrap flex items-center tracking-[0]">
+                    Update your account password securely.
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2 w-full">
+                  <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
+                    CURRENT PASSWORD
+                  </label>
+                  <div className="px-4 py-3 flex items-center gap-2 bg-[#eaead1] rounded-xl overflow-hidden">
+                    <input
+                      className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none"
+                      type={showCurrentPassword ? "text" : "password"}
+                      value={passwordFormData.currentPassword}
+                      onChange={(e) =>
+                        setPasswordFormData((prev) => ({
+                          ...prev,
+                          currentPassword: e.target.value,
+                        }))
+                      }
+                      autoComplete="current-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="text-[#5f6a59]"
+                      onClick={() => setShowCurrentPassword((value) => !value)}
+                      aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                    >
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 w-full">
+                  <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
+                    NEW PASSWORD
+                  </label>
+                  <div className="px-4 py-3 flex items-center gap-2 bg-[#eaead1] rounded-xl overflow-hidden">
+                    <input
+                      className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none"
+                      type={showNewPassword ? "text" : "password"}
+                      value={passwordFormData.newPassword}
+                      onChange={(e) =>
+                        setPasswordFormData((prev) => ({
+                          ...prev,
+                          newPassword: e.target.value,
+                        }))
+                      }
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="text-[#5f6a59]"
+                      onClick={() => setShowNewPassword((value) => !value)}
+                      aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 w-full">
+                  <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
+                    CONFIRM NEW PASSWORD
+                  </label>
+                  <div className="px-4 py-3 flex items-center gap-2 bg-[#eaead1] rounded-xl overflow-hidden">
+                    <input
+                      className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none"
+                      type={showConfirmNewPassword ? "text" : "password"}
+                      value={passwordFormData.confirmNewPassword}
+                      onChange={(e) =>
+                        setPasswordFormData((prev) => ({
+                          ...prev,
+                          confirmNewPassword: e.target.value,
+                        }))
+                      }
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="text-[#5f6a59]"
+                      onClick={() => setShowConfirmNewPassword((value) => !value)}
+                      aria-label={showConfirmNewPassword ? "Hide confirm password" : "Show confirm password"}
+                    >
+                      {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="md:col-span-3 flex flex-col md:flex-row items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-[#9C4A00] w-full md:w-auto">
+                    {passwordErrorMessage}
+                  </div>
+                  <div className="text-sm font-semibold text-[#00450D] w-full md:w-auto">
+                    {passwordSuccessMessage}
+                  </div>
+                </div>
+
+                <div className="md:col-span-3 flex justify-end">
+                  <button
+                    className="all-[unset] box-border inline-flex flex-col items-center justify-center px-8 py-3 relative flex-[0_0_auto] bg-[#0d631b] rounded-2xl cursor-pointer"
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword || isLoading || isSaving || isUploadingPhoto}
+                  >
+                    <div className="absolute top-0 left-0 w-full h-full bg-[#ffffff01] rounded-2xl shadow-[0px_8px_10px_-6px_#0d631b33,0px_20px_25px_-5px_#0d631b33]" />
+                    <div className="justify-center w-fit mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-base text-center leading-6 whitespace-nowrap relative flex items-center tracking-[0]">
+                      {isChangingPassword ? "Changing Password..." : "Change Password"}
+                    </div>
+                  </button>
                 </div>
               </div>
             </section>
