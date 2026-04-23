@@ -80,6 +80,61 @@ export interface DashboardData {
   yieldHistory?: { month: string; value: number }[];
 }
 
+type DashboardCacheRecord = {
+  storedAt: string;
+  data: DashboardData;
+  marketSnapshot: MarketSnapshot | null;
+  marketSource: MarketSourceInfo | null;
+};
+
+const DASHBOARD_CACHE_TTL_MS = 1000 * 60 * 30;
+
+function getDashboardCacheKey(uid: string) {
+  return `piliSeed.dashboardCache.${uid}`;
+}
+
+function readDashboardCache(uid: string): DashboardCacheRecord | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(getDashboardCacheKey(uid));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as DashboardCacheRecord;
+    const storedAt = new Date(parsed.storedAt);
+
+    if (Number.isNaN(storedAt.getTime())) {
+      return null;
+    }
+
+    if (Date.now() - storedAt.getTime() > DASHBOARD_CACHE_TTL_MS) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeDashboardCache(uid: string, payload: Omit<DashboardCacheRecord, "storedAt">) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const cacheRecord: DashboardCacheRecord = {
+    storedAt: new Date().toISOString(),
+    ...payload,
+  };
+
+  window.localStorage.setItem(getDashboardCacheKey(uid), JSON.stringify(cacheRecord));
+}
+
 function formatCurrencyPhp(amount: number | null) {
   if (amount === null || !Number.isFinite(amount)) {
     return "PHP --";
@@ -163,8 +218,20 @@ export default function DashboardPage() {
             "Farmer",
         );
 
+        const cached = readDashboardCache(firebaseUser.uid);
+
+        if (cached) {
+          setData(cached.data);
+          setMarketSnapshot(cached.marketSnapshot);
+          setMarketSource(cached.marketSource);
+          setError(null);
+          setLoading(false);
+        }
+
         try {
-          setLoading(true);
+          if (!cached) {
+            setLoading(true);
+          }
           setError(null);
 
           const apiData = await fetchWithAuth<DashboardSummaryApiData>(
@@ -174,6 +241,7 @@ export default function DashboardPage() {
           console.log("API Data:", apiData);
 
           let nextMarketSnapshot: MarketSnapshot | null = null;
+          let nextMarketSource: MarketSourceInfo | null = null;
 
           if (apiData.activeFarm && apiData.yieldPreview) {
             try {
@@ -182,9 +250,11 @@ export default function DashboardPage() {
                 firebaseUser,
               );
               nextMarketSnapshot = marketData?.market ?? null;
-              setMarketSource(marketData?.source ?? null);
+              nextMarketSource = marketData?.source ?? null;
+              setMarketSource(nextMarketSource);
             } catch {
               nextMarketSnapshot = null;
+              nextMarketSource = null;
               setMarketSource(null);
             }
           }
@@ -206,10 +276,17 @@ export default function DashboardPage() {
 
           setData(dashboardData);
           setMarketSnapshot(nextMarketSnapshot);
+          writeDashboardCache(firebaseUser.uid, {
+            data: dashboardData,
+            marketSnapshot: nextMarketSnapshot,
+            marketSource: nextMarketSource,
+          });
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : "Something went wrong";
           console.error("Dashboard error:", err);
-          setError(message);
+          if (!cached) {
+            setError(message);
+          }
         } finally {
           setLoading(false);
         }
