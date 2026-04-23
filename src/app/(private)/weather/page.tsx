@@ -484,7 +484,12 @@ export default function WeatherAnalysis() {
 
         {data ? (
           <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mt-6 sm:mt-8 min-h-0 min-w-0">
-            <CurrentConditionCard {...data.current} />
+            <CurrentConditionCard
+              condition={data.current.condition}
+              temperature={data.current.temperature}
+              feelsLike={data.current.feelsLike}
+              humidity={data.current.humidity}
+            />
             <TemperatureChart data={data.temperatureEvolution} />
             <ForecastCard data={data.forecast} />
             <PrecipitationChart data={data.precipitation} />

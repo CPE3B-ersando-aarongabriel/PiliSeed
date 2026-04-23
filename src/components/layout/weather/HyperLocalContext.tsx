@@ -18,13 +18,13 @@ export default function HyperLocalContext({ data }: HyperLocalContextProps) {
   return (
     <div className="col-span-12">
       <div className="relative w-full h-[360px] sm:h-[400px] rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-800 to-green-600">
-          {data.satelliteImage ? (
-            <img src={data.satelliteImage} alt="Farm satellite view" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center" />
-          )}
-        </div>
+        <Image
+          src="/Satellite.png"
+          alt="Farm landscape background"
+          fill
+          priority
+          className="object-cover"
+        />
 
         <div className="absolute inset-0 bg-gradient-to-t from-[#00450D]/80 to-transparent" />
 

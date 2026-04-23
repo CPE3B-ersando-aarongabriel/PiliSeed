@@ -14,7 +14,6 @@ interface CurrentConditionCardProps {
   temperature: number;
   feelsLike: number;
   humidity: number;
-  uvIndex: string;
 }
 
 const getWeatherIcon = (condition: string): { icon: LucideIcon; color: string } => {
@@ -28,7 +27,7 @@ const getWeatherIcon = (condition: string): { icon: LucideIcon; color: string } 
     "clear": { icon: Sun, color: "text-[#00450D]" },
     "overcast": { icon: Cloudy, color: "text-[#00450D]" },
   };
-  return icons[condition] || { icon: Cloud, color: "text-[#003E63]" };; 
+  return icons[normalizedCondition] || { icon: Cloud, color: "text-[#003E63]" };
 };
 
 export default function CurrentConditionCard({
@@ -36,12 +35,11 @@ export default function CurrentConditionCard({
   temperature,
   feelsLike,
   humidity,
-  uvIndex,
 }: CurrentConditionCardProps) {
   const { icon: WeatherIconComponent, color } = getWeatherIcon(condition);
   return (
     <div className="col-span-12 lg:col-span-4 min-w-0">
-      <div className="p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm">
+      <div className="h-full p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm flex flex-col">
         <div className="flex items-start justify-between mb-6 sm:mb-8">
           <div>
             <span className="text-sm font-medium text-[#41493E]">Current Condition</span>
@@ -55,14 +53,10 @@ export default function CurrentConditionCard({
           <span className="text-lg sm:text-xl font-medium text-[#41493E]">/ {feelsLike}°</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="mt-auto">
           <div className="p-4 bg-[#Eff6E7] rounded-[32px]">
             <span className="text-[10px] font-semibold text-[#41493E]">HUMIDITY</span>
             <p className="text-xl font-semibold text-[#003E63]">{humidity}%</p>
-          </div>
-          <div className="p-4 bg-[#Eff6E7] rounded-[32px]">
-            <span className="text-[10px] font-semibold text-[#41493E]">UV INDEX</span>
-            <p className="text-xl font-semibold text-[#AA5649]">{uvIndex}</p>
           </div>
         </div>
       </div>

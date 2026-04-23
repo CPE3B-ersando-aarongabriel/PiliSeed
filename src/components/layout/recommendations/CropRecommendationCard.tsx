@@ -34,8 +34,8 @@ export default function CropRecommendationCard({
       </div>
 
       <div className="p-4 flex-1 flex flex-col">
-        <h3 className="font-semibold text-sm mb-1">{cropName}</h3>
-        <p className="text-s text-[#41493E] mb-2">{description}</p>
+        <h3 className="font-semibold text-sm text-[#171D14] mb-1">{cropName}</h3>
+        <p className="text-sm text-[#171D14] mb-2">{description}</p>
       </div>
     </div>
   );

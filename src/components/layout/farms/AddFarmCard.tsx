@@ -53,27 +53,25 @@ export default function AddFarmCard({
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="relative w-full sm:w-[277.33px] min-h-[320px] sm:h-[498px] inline-flex flex-col items-center justify-center px-8 sm:px-[48.66px] py-14 sm:py-[153px] bg-[#00450D] rounded-[28px] sm:rounded-[48px] overflow-hidden shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] cursor-pointer hover:bg-[#005610] transition-colors"
+        className="relative w-full sm:w-[236px] sm:h-[236px] inline-flex flex-col items-center justify-center px-4 sm:px-5 py-4 bg-[#00450D] rounded-[20px] sm:rounded-[36px] overflow-hidden shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] cursor-pointer hover:bg-[#005610] transition-colors"
       >
-        <div className="inline-flex pt-0 pb-6 px-0 relative flex-[0_0_auto] flex-col items-start">
-          <div className="inline-flex flex-col items-center p-6 relative flex-[0_0_auto] bg-[#FFFFFF1a] rounded-full">
-            <Plus className=" h-7 w-7 text-[#FFFFFF]"/>
+        <div className="inline-flex pt-0 pb-3 px-0 relative flex-[0_0_auto] flex-col items-center">
+          <div className="inline-flex flex-col items-center p-4 relative flex-[0_0_auto] bg-[#FFFFFF1a] rounded-full">
+            <Plus className="h-5 w-5 text-[#FFFFFF]" />
           </div>
         </div>
 
-        <div className="inline-flex items-start pt-0 pb-2 px-0 flex-col relative flex-[0_0_auto]">
-          <div className="inline-flex items-center flex-col relative flex-[0_0_auto]">
-            <div className="relative flex items-center justify-center h-8 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-xl sm:text-2xl text-center tracking-[0] leading-8 whitespace-nowrap">
-              Add New Farm
-            </div>
+        <div className="inline-flex items-center pt-1 pb-1.5 px-0 flex-col relative flex-[0_0_auto]">
+          <div className="relative flex items-center justify-center h-6 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-base text-center tracking-[0] leading-6">
+            Add Farm
           </div>
         </div>
 
-        <div className="inline-flex flex-col max-w-[180px] items-center px-[12.62px] py-0 relative flex-[0_0_auto]">
-          <div className="relative h-10 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#ffffffb2] text-sm text-center tracking-[0] leading-5">
-            Expand your digital
+        <div className="inline-flex flex-col max-w-[170px] items-center px-2 py-0 relative flex-[0_0_auto]">
+          <div className="relative [font-family:'Inter-Regular',Helvetica] font-normal text-[#ffffffb2] text-xs text-center tracking-[0] leading-4">
+            Expand your
             <br />
-            greenhouse ecosystem
+            digital greenhouse
           </div>
         </div>
       </button>
@@ -118,7 +116,7 @@ export default function AddFarmCard({
               </label>
               <input
                 type="text"
-                placeholder="City, State or Coordinates"
+                placeholder="City and state"
                 className="w-full text-[#000000] px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}

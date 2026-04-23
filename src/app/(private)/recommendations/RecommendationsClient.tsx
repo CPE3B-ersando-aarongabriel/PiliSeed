@@ -694,46 +694,49 @@ export default function RecommendationsClient() {
 									</p>
 								</div>
 								{confirmedCrop && !showCropPrompt && (
-									<div className="self-start md:self-auto rounded-full bg-[#00450D]/10 px-3 sm:px-4 py-2 text-xs font-semibold text-[#00450D] max-w-full truncate">
+									<div className="self-start md:self-auto rounded-full bg-[#00450D]/15 px-4 sm:px-5 py-2.5 text-sm sm:text-base font-bold text-[#00450D] max-w-full truncate">
 										Selected: {confirmedCrop}
 									</div>
 								)}
 							</div>
 
 							{showCropPrompt ? (
-								<div className="mt-5 flex flex-col gap-4 md:flex-row md:items-center">
-									<div className="flex-1">
+								<div className="mt-6 flex flex-col gap-4 md:flex-row md:items-end md:gap-5">
+									<div className="flex-1 px-0.5">
 										<label className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#41493E]">
 											Select crop
 										</label>
-										<select
-											value={selectedCrop}
-											onChange={(event) => setSelectedCrop(event.target.value)}
-											className="mt-2 w-full rounded-full border border-[#C0C9BB] bg-white px-4 py-3 text-sm font-semibold text-[#171D14]"
-										>
-											<option value="">No crop selected</option>
-											{recommendedCrops.map((crop) => (
-												<option key={crop.crop} value={crop.crop}>
-													{crop.crop}
-												</option>
-											))}
-										</select>
+										<div className="relative mt-2">
+											<select
+												value={selectedCrop}
+												onChange={(event) => setSelectedCrop(event.target.value)}
+												className="h-13 w-full appearance-none rounded-full border border-[#C0C9BB] bg-white px-6 pr-12 py-3 text-sm font-semibold text-[#171D14]"
+											>
+												<option value="">No crop selected</option>
+												{recommendedCrops.map((crop) => (
+													<option key={crop.crop} value={crop.crop}>
+														{crop.crop}
+													</option>
+												))}
+											</select>
+											<ChevronDown className="pointer-events-none absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#171D14]" />
+										</div>
 										{cropPromptError && (
 											<p className="mt-2 text-xs font-semibold text-[#9C4A00]">
 												{cropPromptError}
 											</p>
 										)}
 									</div>
-									<div className="flex w-full md:w-auto items-center gap-3">
+									<div className="flex w-full md:w-auto items-center gap-3 md:pb-0.5">
 										<button
 											onClick={handleConfirmCropSelection}
-											className="w-full md:w-auto rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
+											className="h-13 w-full md:w-auto rounded-full bg-[#00450D] px-8 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
 										>
 											Confirm crop
 										</button>
 										<button
 											onClick={handleClearCropSelection}
-											className="w-full md:w-auto rounded-full border border-[#9C4A00] px-6 py-3 text-sm font-semibold text-[#9C4A00]"
+											className="h-13 w-full md:w-auto rounded-full border border-[#9C4A00] px-8 py-3 text-sm font-semibold text-[#9C4A00]"
 										>
 											Clear selection
 										</button>
