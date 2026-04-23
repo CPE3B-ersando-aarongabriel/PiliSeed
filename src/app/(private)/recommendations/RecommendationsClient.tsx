@@ -47,6 +47,72 @@ type RecommendationsPayload = {
 	limit: number;
 };
 
+type RecommendationsCacheRecord = {
+	storedAt: string;
+	recommendations: CropRecommendationRecord[];
+	soilProfile: SoilProfile | null;
+};
+
+const RECOMMENDATIONS_CACHE_TTL_MS = 1000 * 60 * 30;
+
+function getRecommendationsCacheKey(uid: string, farmId: string) {
+	return `piliSeed.recommendationsCache.${uid}.${farmId}`;
+}
+
+function readRecommendationsCache(
+	uid: string,
+	farmId: string,
+): RecommendationsCacheRecord | null {
+	if (typeof window === "undefined") {
+		return null;
+	}
+
+	const raw = window.localStorage.getItem(getRecommendationsCacheKey(uid, farmId));
+
+	if (!raw) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(raw) as RecommendationsCacheRecord;
+		const storedAt = new Date(parsed.storedAt);
+
+		if (Number.isNaN(storedAt.getTime())) {
+			return null;
+		}
+
+		if (Date.now() - storedAt.getTime() > RECOMMENDATIONS_CACHE_TTL_MS) {
+			return null;
+		}
+
+		return parsed;
+	} catch {
+		return null;
+	}
+}
+
+function writeRecommendationsCache(
+	uid: string,
+	farmId: string,
+	recommendations: CropRecommendationRecord[],
+	soilProfile: SoilProfile | null,
+) {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	const payload: RecommendationsCacheRecord = {
+		storedAt: new Date().toISOString(),
+		recommendations,
+		soilProfile,
+	};
+
+	window.localStorage.setItem(
+		getRecommendationsCacheKey(uid, farmId),
+		JSON.stringify(payload),
+	);
+}
+
 function getErrorMessage(body: unknown, fallbackMessage: string) {
 	if (
 		typeof body !== "object" ||
@@ -92,7 +158,7 @@ export default function RecommendationsClient() {
 	const [soilProfile, setSoilProfile] = useState<SoilProfile | null>(null);
 	const [isFarmDropdownOpen, setIsFarmDropdownOpen] = useState(false);
 	const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 	const [farmError, setFarmError] = useState("");
 	const [dataError, setDataError] = useState("");
 	const [sortBy, setSortBy] = useState("Suitability Score");
@@ -117,6 +183,8 @@ export default function RecommendationsClient() {
 			}
 
 			try {
+				setFarmError("");
+				setDataError("");
 				const token = await user.getIdToken();
 				const farmsResponse = await fetch("/api/farms", {
 					headers: { Authorization: `Bearer ${token}` },
@@ -147,6 +215,16 @@ export default function RecommendationsClient() {
 				if (!nextSelectedFarmId) {
 					setIsLoading(false);
 					return;
+				}
+
+				const cached = readRecommendationsCache(user.uid, nextSelectedFarmId);
+
+				if (cached) {
+					setRecommendations(cached.recommendations);
+					setSoilProfile(cached.soilProfile);
+					setIsLoading(false);
+				} else {
+					setIsLoading(true);
 				}
 
 				const [recommendationsResponse, soilResponse] = await Promise.all([
@@ -190,12 +268,16 @@ export default function RecommendationsClient() {
 
 				setRecommendations(recommendationList);
 				setSoilProfile(soilData);
+				writeRecommendationsCache(
+					user.uid,
+					nextSelectedFarmId,
+					recommendationList,
+					soilData,
+				);
 			} catch (error) {
 				const message =
 					error instanceof Error ? error.message : "Unable to load recommendations right now.";
 				setDataError(message);
-				setRecommendations([]);
-				setSoilProfile(null);
 			} finally {
 				setIsLoading(false);
 			}
@@ -363,7 +445,20 @@ export default function RecommendationsClient() {
 					updatedAt: nowIso,
 				};
 
-				setRecommendations((previous) => [newRecord, ...previous]);
+				setRecommendations((previous) => {
+					const next = [newRecord, ...previous];
+
+					if (currentUser) {
+						writeRecommendationsCache(
+							currentUser.uid,
+							selectedFarmId,
+							next,
+							soilProfile,
+						);
+					}
+
+					return next;
+				});
 				return;
 			}
 
@@ -391,6 +486,14 @@ export default function RecommendationsClient() {
 					: [];
 
 			setRecommendations(refreshedList);
+			if (currentUser) {
+				writeRecommendationsCache(
+					currentUser.uid,
+					selectedFarmId,
+					refreshedList,
+					soilProfile,
+				);
+			}
 		} catch (error) {
 			const message =
 				error instanceof Error
@@ -517,7 +620,7 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
-						<div className="mb-12 rounded-[24px] sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
+						<div className="mb-12 rounded-3xl sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
 							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 								<div>
 									<p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00450D]">

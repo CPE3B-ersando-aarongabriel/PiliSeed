@@ -8,6 +8,11 @@ import DashboardFarm from "@/components/layout/dashboard/DashboardFarm";
 import DashboardWeather from "@/components/layout/dashboard/DashboardWeather";
 import DashboardYieldPred from "@/components/layout/dashboard/DashboardYieldPred";
 import { CloudSun, Sparkles } from "lucide-react";
+import type {
+  FarmMarketApiData,
+  MarketSnapshot,
+  MarketSourceInfo,
+} from "@/lib/marketTypes";
 export interface FarmData {
   id: string;
   name: string;
@@ -49,10 +54,13 @@ export interface YieldPreview {
   updatedAt: string;
 }
 
-export interface MarketSnapshot {
-  price: number;
-  unit: string;
-  percentageChange: number;
+interface DashboardSummaryApiData {
+  activeFarm: FarmData | null;
+  weather: WeatherData | null;
+  soilStatus: SoilStatus | null;
+  recommendationPreview: RecommendationPreview | null;
+  yieldPreview: YieldPreview | null;
+  messages: string[];
 }
 
 export interface CropRecommendation {
@@ -70,6 +78,61 @@ export interface DashboardData {
   messages: string[];
   cropRecommendation: CropRecommendation | null;
   yieldHistory?: { month: string; value: number }[];
+}
+
+type DashboardCacheRecord = {
+  storedAt: string;
+  data: DashboardData;
+  marketSnapshot: MarketSnapshot | null;
+  marketSource: MarketSourceInfo | null;
+};
+
+const DASHBOARD_CACHE_TTL_MS = 1000 * 60 * 30;
+
+function getDashboardCacheKey(uid: string) {
+  return `piliSeed.dashboardCache.${uid}`;
+}
+
+function readDashboardCache(uid: string): DashboardCacheRecord | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const raw = window.localStorage.getItem(getDashboardCacheKey(uid));
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as DashboardCacheRecord;
+    const storedAt = new Date(parsed.storedAt);
+
+    if (Number.isNaN(storedAt.getTime())) {
+      return null;
+    }
+
+    if (Date.now() - storedAt.getTime() > DASHBOARD_CACHE_TTL_MS) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeDashboardCache(uid: string, payload: Omit<DashboardCacheRecord, "storedAt">) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const cacheRecord: DashboardCacheRecord = {
+    storedAt: new Date().toISOString(),
+    ...payload,
+  };
+
+  window.localStorage.setItem(getDashboardCacheKey(uid), JSON.stringify(cacheRecord));
 }
 
 function formatCurrencyPhp(amount: number | null) {
@@ -90,7 +153,7 @@ function formatPercent(value: number) {
 }
 
 
-async function fetchWithAuth(url: string, user: User) {
+async function fetchWithAuth<T>(url: string, user: User): Promise<T> {
   const token = await user.getIdToken();
 
   const res = await fetch(url, {
@@ -110,7 +173,7 @@ async function fetchWithAuth(url: string, user: User) {
     throw new Error(result.error || "API returned unsuccessful response");
   }
 
-  return result.data;
+  return result.data as T;
 }
 
 export default function DashboardPage() {
@@ -120,7 +183,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [userName, setUserName] = useState<string>("Farmer");
   const [marketSnapshot, setMarketSnapshot] = useState<MarketSnapshot | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [marketSource, setMarketSource] = useState<MarketSourceInfo | null>(null);
 
   const yieldPreview = data?.yieldPreview ?? null;
 
@@ -143,19 +206,6 @@ export default function DashboardPage() {
     return Number.isFinite(fallbackRevenue) ? fallbackRevenue : null;
   }, [yieldPreview, marketSnapshot]);
 
-  const handleMenuClick = () => {
-    const sidebar = document.querySelector("aside");
-    if (sidebar) {
-      const isOpen = sidebar.classList.contains("translate-x-0");
-      if (isOpen) {
-        sidebar.classList.add("-translate-x-full");
-        sidebar.classList.remove("translate-x-0");
-      } else {
-        sidebar.classList.remove("-translate-x-full");
-        sidebar.classList.add("translate-x-0");
-      }
-    }
-  };
   useEffect(() => {
     const auth = getClientAuth();
 
@@ -168,27 +218,44 @@ export default function DashboardPage() {
             "Farmer",
         );
 
+        const cached = readDashboardCache(firebaseUser.uid);
+
+        if (cached) {
+          setData(cached.data);
+          setMarketSnapshot(cached.marketSnapshot);
+          setMarketSource(cached.marketSource);
+          setError(null);
+          setLoading(false);
+        }
+
         try {
-          setLoading(true);
+          if (!cached) {
+            setLoading(true);
+          }
           setError(null);
 
-          const apiData = await fetchWithAuth(
+          const apiData = await fetchWithAuth<DashboardSummaryApiData>(
             "/api/dashboard/summary",
             firebaseUser,
           );
           console.log("API Data:", apiData);
 
           let nextMarketSnapshot: MarketSnapshot | null = null;
+          let nextMarketSource: MarketSourceInfo | null = null;
 
           if (apiData.activeFarm && apiData.yieldPreview) {
             try {
-              const marketData = await fetchWithAuth(
+              const marketData = await fetchWithAuth<FarmMarketApiData>(
                 `/api/farms/${apiData.activeFarm.id}/market`,
                 firebaseUser,
               );
               nextMarketSnapshot = marketData?.market ?? null;
+              nextMarketSource = marketData?.source ?? null;
+              setMarketSource(nextMarketSource);
             } catch {
               nextMarketSnapshot = null;
+              nextMarketSource = null;
+              setMarketSource(null);
             }
           }
 
@@ -209,9 +276,17 @@ export default function DashboardPage() {
 
           setData(dashboardData);
           setMarketSnapshot(nextMarketSnapshot);
-        } catch (err: any) {
+          writeDashboardCache(firebaseUser.uid, {
+            data: dashboardData,
+            marketSnapshot: nextMarketSnapshot,
+            marketSource: nextMarketSource,
+          });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : "Something went wrong";
           console.error("Dashboard error:", err);
-          setError(err.message || "Something went wrong");
+          if (!cached) {
+            setError(message);
+          }
         } finally {
           setLoading(false);
         }
@@ -281,9 +356,6 @@ export default function DashboardPage() {
   }
 
   const revenueValue = formatCurrencyPhp(revenueSource);
-  const progressPercent = yieldPreview?.expectedYield
-    ? `${Math.min(100, Math.max(20, (yieldPreview.expectedYield / 20) * 100)).toFixed(0)}%`
-    : "20%";
   const percentageIncrease = marketSnapshot
     ? `${formatPercent(marketSnapshot.percentageChange)} market shift`
     : "Market data pending";
@@ -383,6 +455,8 @@ export default function DashboardPage() {
           <DashboardYieldPred
             yieldHistory={data.yieldHistory}
             yieldPreview={data.yieldPreview}
+            marketSnapshot={marketSnapshot}
+            marketSource={marketSource}
             revenueValue={revenueValue}
             percentageIncrease={percentageIncrease}
           />

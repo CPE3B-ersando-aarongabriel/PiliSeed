@@ -17,21 +17,21 @@ type FarmOption = {
 
 const metrics = [
   {
-    icon: <Droplet className="h-[20px] w-[20px] text-[#00450D]" />,
+    icon: <Droplet className="h-5 w-5 text-[#00450D]" />,
     iconBg: "bg-[#00450d1a]",
     title: "Moisture Balance",
     description:
       "Proper hydration prevents root rot while ensuring nutrient transport from soil to stalk.",
   },
   {
-    icon: <Diamond className="h-[20px] w-[20px] text-[#7A5649]" />,
+    icon: <Diamond className="h-5 w-5 text-[#7A5649]" />,
     iconBg: "bg-[#fdcdbc4c]",
     title: "pH Equilibrium",
     description:
       "Solubility of nutrients is directly linked to pH. Most cereal crops thrive between 6.0 and 7.5.",
   },
   {
-    icon: <Clover className="h-[20px] w-[20px] text-[#003E63]" />,
+    icon: <Clover className="h-5 w-5 text-[#003E63]" />,
     iconBg: "bg-[#cee5ff]",
     title: "NPK Vitality",
     description:
@@ -223,7 +223,7 @@ export default function ParametersPage() {
           />
         </div>
 
-        <div className="w-full lg:w-[380px] flex flex-col gap-6 lg:gap-8">
+        <div className="w-full lg:w-95 flex flex-col gap-6 lg:gap-8">
           <div className="rounded-[48px] overflow-hidden shadow-[0px_25px_50px_-12px_#00000040]">
             <div className="h-40 sm:h-44 md:h-48 lg:h-52 bg-[url(/soil/soildatabg.png)] bg-cover bg-center" />
             <div className="p-6 bg-linear-to-t from-black/60 to-transparent -mt-16 relative">
