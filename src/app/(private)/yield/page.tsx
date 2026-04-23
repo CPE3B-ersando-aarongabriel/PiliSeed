@@ -42,7 +42,6 @@ type YieldForecast = {
 
 const FORECAST_DAYS = 90;
 const DEFAULT_YIELD_REQUEST = {
-  cropType: "Rice",
   season: "Wet Season",
   forecastPeriod: "Next 90 days",
 };
@@ -153,6 +152,15 @@ function getStoredSelectedCrop(farmId: string) {
   return stored?.trim() ? stored : null;
 }
 
+function buildNoCropSelectedMessage() {
+  return "Select a crop in Recommendations first to generate a yield forecast.";
+}
+
+type SelectedCropChangedEventDetail = {
+  farmId?: string;
+  crop?: string | null;
+};
+
 function formatCurrencyPhp(amount: number | null) {
   if (amount === null || !Number.isFinite(amount)) {
     return "PHP --";
@@ -259,13 +267,57 @@ export default function YieldPrediction() {
     setSelectedCropName(stored);
 
     if (!stored) {
-      setSelectionMessage(
-        "Using the default crop until a selection is made in Recommendations.",
-      );
+      setSelectionMessage(buildNoCropSelectedMessage());
+      setYieldForecast(null);
+      setMarketSnapshot(null);
+      setMarketSource(null);
       return;
     }
 
+    setPageError("");
     setSelectionMessage("");
+  }, [selectedFarmId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleSelectedCropChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<SelectedCropChangedEventDetail>;
+      const detail = customEvent.detail;
+
+      if (!detail || !selectedFarmId || detail.farmId !== selectedFarmId) {
+        return;
+      }
+
+      const nextCrop = detail.crop?.trim() || null;
+      setSelectedCropName(nextCrop);
+
+      if (!nextCrop) {
+        setYieldForecast(null);
+        setMarketSnapshot(null);
+        setMarketSource(null);
+        setSelectionMessage(buildNoCropSelectedMessage());
+        setPageError("");
+        return;
+      }
+
+      setSelectionMessage("");
+      setPageError("");
+    };
+
+    window.addEventListener(
+      "piliSeed:selectedCropChanged",
+      handleSelectedCropChanged as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "piliSeed:selectedCropChanged",
+        handleSelectedCropChanged as EventListener,
+      );
+    };
   }, [selectedFarmId]);
 
   useEffect(() => {
@@ -274,7 +326,17 @@ export default function YieldPrediction() {
         return;
       }
 
-      const resolvedCropName = selectedCropName ?? DEFAULT_YIELD_REQUEST.cropType;
+      if (!selectedCropName) {
+        setYieldForecast(null);
+        setMarketSnapshot(null);
+        setMarketSource(null);
+        setPageError("");
+        setSelectionMessage(buildNoCropSelectedMessage());
+        setIsLoading(false);
+        return;
+      }
+
+      const resolvedCropName = selectedCropName;
       const cached = readYieldCache(selectedFarmId, resolvedCropName);
 
       if (cached) {
@@ -368,12 +430,14 @@ export default function YieldPrediction() {
 
   const selectedFarm = farms.find((farm) => farm.id === selectedFarmId) ?? null;
   const selectedFarmName = selectedFarm?.name ?? "Select a farm";
-  const activeCropName = selectedCropName ?? DEFAULT_YIELD_REQUEST.cropType;
+  const activeCropName = selectedCropName ?? null;
+  const hasSelectedCrop = Boolean(activeCropName);
 
   const marketPrices: MarketPrice[] = marketSnapshot
+    && activeCropName
     ? [
         {
-          label: `${(selectedCropName ?? marketSnapshot.commodityName).toUpperCase()} (${marketSnapshot.symbol})`,
+          label: `${activeCropName.toUpperCase()} (${marketSnapshot.symbol})`,
           price: `PHP ${marketSnapshot.price.toFixed(2)} / ${marketSnapshot.unit}`,
           change: formatPercent(marketSnapshot.percentageChange),
           changeColor: marketSnapshot.percentageChange >= 0 ? "text-[#00450d]" : "text-[#ba1a1a]",
@@ -383,6 +447,10 @@ export default function YieldPrediction() {
     : [];
 
   const revenueSource = useMemo(() => {
+    if (!activeCropName) {
+      return null;
+    }
+
     if (yieldForecast?.estimatedRevenuePhp !== null &&
       yieldForecast?.estimatedRevenuePhp !== undefined) {
       return yieldForecast.estimatedRevenuePhp;
@@ -395,7 +463,7 @@ export default function YieldPrediction() {
     const fallbackRevenue = yieldForecast.expectedYield * 1000 * marketSnapshot.price;
 
     return Number.isFinite(fallbackRevenue) ? fallbackRevenue : null;
-  }, [yieldForecast, marketSnapshot]);
+  }, [yieldForecast, marketSnapshot, activeCropName]);
 
   const revenueValue = formatCurrencyPhp(revenueSource);
   const progressPercent = yieldForecast?.expectedYield
@@ -408,7 +476,12 @@ export default function YieldPrediction() {
       return;
     }
 
-    const resolvedCropName = cropName || DEFAULT_YIELD_REQUEST.cropType;
+    const resolvedCropName = cropName.trim();
+
+    if (!resolvedCropName) {
+      setPageError(buildNoCropSelectedMessage());
+      return;
+    }
 
     if (options?.auto) {
       const cached = readYieldCache(selectedFarmId, resolvedCropName);
@@ -487,11 +560,20 @@ export default function YieldPrediction() {
   }, [currentUser, selectedFarmId]);
 
   const handleRunAnalysis = async () => {
+    if (!activeCropName) {
+      setPageError(buildNoCropSelectedMessage());
+      return;
+    }
+
     await runYieldPrediction(activeCropName);
   };
 
   useEffect(() => {
     if (!currentUser || !selectedFarmId) {
+      return;
+    }
+
+    if (!activeCropName) {
       return;
     }
 
@@ -525,6 +607,16 @@ export default function YieldPrediction() {
         )}
 
         {/* Responsive layout: stack on mobile, side-by-side on large screens */}
+        {!hasSelectedCrop ? (
+          <div className="rounded-[48px] bg-white px-6 py-10 text-[#41493E] shadow-sm border border-[#C0C9BB1A]">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#00450D]">
+              Select crop first
+            </p>
+            <p className="mt-3 text-base leading-7">
+              Choose a crop in Recommendations first. Yield prediction will use that selected crop instead of guessing a default.
+            </p>
+          </div>
+        ) : (
         <div className="flex flex-col lg:flex-row gap-6 w-full items-stretch">
           {/* Graph Card */}
           <div className="w-full lg:w-2/3 shrink-0 h-full">
@@ -534,7 +626,7 @@ export default function YieldPrediction() {
             />
           </div>
           {/* Side Cards */}
-          <div className="w-full lg:w-1/3 flex flex-col gap-6 mt-0 h-full min-h-0 lg:h-[520px] overflow-hidden">
+          <div className="w-full lg:w-1/3 flex flex-col gap-6 mt-0 h-full min-h-0 lg:h-130 overflow-hidden">
             <div className="shrink-0">
               <EstimatedRevenueCard
                 revenue={revenueValue}
@@ -555,6 +647,7 @@ export default function YieldPrediction() {
             </div>
           </div>
         </div>
+        )}
          <QuickNavigation currentPage="yield-prediction" />
       </div>
     </div>

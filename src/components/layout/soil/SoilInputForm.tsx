@@ -757,8 +757,6 @@ export default function SoilInputForm({
         ...(values.goal.trim() ? { goal: values.goal.trim() } : {}),
         ...(values.budget.trim() ? { budget: values.budget.trim() } : {}),
       };
-      const hasPersonalizationInput =
-        Object.keys(recommendationPayload).length > 0;
 
       const recommendationResponse = await fetchJsonWithAuth(
         currentUser,
@@ -779,29 +777,6 @@ export default function SoilInputForm({
             "Unable to generate crop recommendation right now.",
           ),
         );
-      }
-
-      if (hasPersonalizationInput) {
-        const personalizeResponse = await fetchJsonWithAuth(
-          currentUser,
-          `/api/farms/${farm.id}/recommendations/personalize`,
-          {
-            method: "POST",
-            body: JSON.stringify(recommendationPayload),
-          },
-        );
-        const personalizeBody: unknown = await personalizeResponse
-          .json()
-          .catch(() => null);
-
-        if (!personalizeResponse.ok) {
-          throw new Error(
-            getResponseMessage(
-              personalizeBody,
-              "Unable to personalize recommendations right now.",
-            ),
-          );
-        }
       }
 
       router.push(`/recommendations?farmId=${farm.id}`);

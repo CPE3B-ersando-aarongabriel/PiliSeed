@@ -12,6 +12,7 @@ import {
     Sprout,
     CloudSun,
     TrendingUp,
+  History,
     Menu,
     Settings,
     X,
@@ -55,6 +56,11 @@ export default function Sidebar() {
       name: "Crop Recommendations",
       path: "/recommendations",
       icon: Sprout,
+    },
+    {
+      name: "History",
+      path: "/history",
+      icon: History,
     },
     {
       name: "Weather Analysis",
@@ -157,13 +163,13 @@ export default function Sidebar() {
         <div className="px-4 pb-6 mt-auto">
           <Link href="/profile" className="w-full bg-white/50 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center justify-between border border-[#171D14]/5 shadow-sm hover:bg-white/80 transition-all duration-200 cursor-pointer">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00450D] to-[#008822] flex items-center justify-center shadow-sm shrink-0">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#00450D] to-[#008822] flex items-center justify-center shadow-sm shrink-0">
                 <span className="text-white font-semibold text-sm">
                   {userName.charAt(0).toUpperCase()}
                 </span>
               </div>
 
-              <p className="text-sm font-semibold text-[#171D14] break-words">
+              <p className="text-sm font-semibold text-[#171D14] wrap-break-word">
                 {userName}
               </p>
             </div>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 
 import {
   errorResponse,
@@ -211,28 +212,44 @@ function buildPersonalizeOpenAIPrompt(input: {
   contextSummary: ReturnType<typeof summarizeAnalysisInput>;
   previousRecommendations: RecommendationItem[];
 }) {
+  const priceTrend = toPriceTrend(input.userInput.demandSignal, input.userInput.supplySignal);
+  const hasMarketContext = input.userInput.demandSignal || input.userInput.supplySignal;
+  
   return [
-    "You are an agricultural crop recommendation engine.",
-    "Use only provided farm context. Do not invent measurements.",
-    "Return strict JSON only, no markdown and no extra text.",
-    "JSON schema:",
-    '{"recommendedCrops":[{"crop":"string","score":0-100,"reason":"string"}],"analysisText":"string","warningFlags":["string"]}',
+    "You are an agricultural crop recommendation engine optimizing for market & personalization.",
+    "Use ONLY the provided farm context. Do not invent measurements or make assumptions.",
+    "RETURN STRICT JSON ONLY. No markdown, no explanation text, no extra formatting.",
+    "",
+    "Expected JSON format (strict):",
+    "{",
+    '  "recommendedCrops": [',
+    '    {"crop": "crop name (string)", "score": number 0-100, "reason": "explanation (max 300 chars)"},',
+    '    ...',
+    "  ],",
+    '  "analysisText": "full analysis (max 1200 chars)",',
+    '  "warningFlags": ["warning 1", "warning 2"]',
+    "}",
+    "",
     `Farm: ${input.farmName}`,
     `Farm location: ${input.farmLocation ?? "unknown"}`,
-    `User input: ${JSON.stringify(input.userInput)}`,
-    "User input fields include budget, demandSignal, supplySignal, goal, landSize, and plantingDuration.",
-    `Soil context: ${JSON.stringify(input.soil)}`,
-    `Weather context: ${JSON.stringify(input.weather)}`,
+    `User inputs: ${JSON.stringify(input.userInput)}`,
+    `Soil data: ${JSON.stringify(input.soil)}`,
+    `Weather data: ${JSON.stringify(input.weather)}`,
     `Has soil context: ${input.contextSummary.hasSoil}`,
     `Has weather context: ${input.contextSummary.hasWeather}`,
-    `Previous recommended crops: ${JSON.stringify(input.previousRecommendations.map((item) => item.crop))}`,
-    "This request came from a personalization workflow after initial recommendations.",
-    "Re-rank crops based on user constraints and market signals.",
-    "Requirements:",
-    "1) recommendedCrops must be sorted highest score first.",
-    "2) Provide at least 3 crops when possible.",
-    "3) Keep reasons practical and tied to provided context.",
-    "4) warningFlags should mention data gaps or risk.",
+    hasMarketContext ? `Market trend: ${priceTrend} (based on demand/supply signals)` : "Market context: not provided",
+    `Previously recommended crops: ${JSON.stringify(input.previousRecommendations.map((item) => item.crop))}`,
+    "",
+    "CRITICAL CONSTRAINTS:",
+    "- Score must be a number between 0 and 100 (inclusive)",
+    "- Crop name max 80 characters",
+    "- Reason max 300 characters",
+    "- Analysis text max 1200 characters",
+    "- Provide minimum 3 crops when possible, maximum 10",
+    "- MANDATORY: Only recommend crops that can realistically grow within the specified plantingDuration",
+    "- MANDATORY: Consider market trends (demand/supply/budget) in scoring",
+    "- warningFlags array: list data gaps or risks",
+    "- Sort crops by score (highest first)",
   ].join("\n");
 }
 
@@ -292,6 +309,11 @@ async function generatePersonalizedRecommendation(input: {
 
 function sanitizeRecommendationRecord(input: {
   farmId: string;
+  sessionId: string;
+  sessionStartedAt: string;
+  farmName: string;
+  farmLocation: string | null;
+  inputSnapshot: z.infer<typeof personalizeSchema>;
   recommendation: RecommendationResult;
   generatedBy: "deterministic" | "hybrid" | "openai";
   contextSummary: ReturnType<typeof summarizeAnalysisInput>;
@@ -299,8 +321,13 @@ function sanitizeRecommendationRecord(input: {
 }) {
   return {
     farmId: input.farmId,
-    generatedBy: input.generatedBy,
+    sessionId: input.sessionId,
+    sessionStartedAt: input.sessionStartedAt,
+    farmName: input.farmName,
+    farmLocation: input.farmLocation,
     mode: "personalized",
+    inputSnapshot: input.inputSnapshot,
+    generatedBy: input.generatedBy,
     previousRecommendationId: input.previousRecommendationId,
     recommendedCrops: input.recommendation.recommendedCrops,
     warningFlags: input.recommendation.warningFlags,
@@ -471,6 +498,13 @@ export async function POST(
     const soil = toNormalizedSoilSnapshot(latestSoilProfile);
     const weather = toNormalizedWeatherSnapshot(latestWeatherSnapshot);
     const contextSummary = summarizeAnalysisInput({ soil, weather, market: null });
+    const sessionId =
+      latestRecommendation?.sessionId ||
+      (typeof latestRecommendation?.recommendationJson?.sessionId === "string"
+        ? latestRecommendation.recommendationJson.sessionId
+        : randomUUID());
+    const sessionStartedAt =
+      latestRecommendation?.sessionStartedAt ?? new Date().toISOString();
 
     const recommendation = await generatePersonalizedRecommendation({
       farmName: farm.name,
@@ -488,12 +522,19 @@ export async function POST(
       decodedToken.uid,
       farm.id,
       {
+        sessionId,
+        sessionStartedAt,
         recommendedCrops: recommendation.recommendedCrops,
         analysisText: recommendation.analysisText,
         warningFlags: recommendation.warningFlags,
         generatedBy,
         recommendationJson: sanitizeRecommendationRecord({
           farmId: farm.id,
+          sessionId,
+          sessionStartedAt,
+          farmName: farm.name,
+          farmLocation: farm.location,
+          inputSnapshot: validationResult.data,
           recommendation,
           generatedBy,
           contextSummary,
@@ -558,6 +599,7 @@ export async function POST(
     return successResponse(
       {
         farmId: farm.id,
+        sessionId,
         contextSummary,
         previousRecommendationId: latestRecommendation?.id ?? null,
         recommendation,

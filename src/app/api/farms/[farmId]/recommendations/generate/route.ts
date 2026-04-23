@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { randomUUID } from "node:crypto";
 
 import {
   errorResponse,
@@ -37,6 +38,8 @@ const generateRecommendationSchema = z.object({
   goal: z.string().trim().min(1).max(80).optional(),
   landSize: z.string().trim().min(1).max(80).optional(),
   plantingDuration: z.string().trim().min(1).max(80).optional(),
+  demandSignal: z.string().trim().min(1).max(80).optional(),
+  supplySignal: z.string().trim().min(1).max(80).optional(),
 });
 
 type RecommendationGenerateContext = {
@@ -95,6 +98,29 @@ function toRainRisk(rainfallMm: number | null): NormalizedWeatherSnapshot["rainR
   return "low";
 }
 
+function toPriceTrend(
+  demandSignal: string | undefined,
+  supplySignal: string | undefined,
+) {
+  const demand = demandSignal?.trim().toLowerCase() ?? "";
+  const supply = supplySignal?.trim().toLowerCase() ?? "";
+
+  const demandHigh = demand.includes("high") || demand.includes("strong");
+  const demandLow = demand.includes("low") || demand.includes("weak");
+  const supplyHigh = supply.includes("high") || supply.includes("surplus");
+  const supplyLow = supply.includes("low") || supply.includes("tight");
+
+  if (demandHigh && supplyLow) {
+    return "rising";
+  }
+
+  if (demandLow && supplyHigh) {
+    return "falling";
+  }
+
+  return "stable";
+}
+
 function toNormalizedWeatherSnapshot(
   weatherSnapshot: Awaited<ReturnType<typeof getLatestWeatherSnapshotForFarm>>,
 ): NormalizedWeatherSnapshot | null {
@@ -121,25 +147,42 @@ function buildOpenAIPrompt(input: {
   weather: NormalizedWeatherSnapshot | null;
   contextSummary: ReturnType<typeof summarizeAnalysisInput>;
 }) {
+  const priceTrend = toPriceTrend(input.userInput.demandSignal, input.userInput.supplySignal);
+  const hasMarketContext = input.userInput.demandSignal || input.userInput.supplySignal;
+  
   return [
     "You are an agricultural crop recommendation engine.",
-    "Use only provided farm context. Do not invent measurements.",
-    "Return strict JSON only, no markdown and no extra text.",
-    "JSON schema:",
-    '{"recommendedCrops":[{"crop":"string","score":0-100,"reason":"string"}],"analysisText":"string","warningFlags":["string"]}',
+    "Use ONLY the provided farm context. Do not invent measurements or make assumptions.",
+    "RETURN STRICT JSON ONLY. No markdown, no explanation text, no extra formatting.",
+    "",
+    "Expected JSON format (strict):",
+    "{",
+    '  "recommendedCrops": [',
+    '    {"crop": "crop name (string)", "score": number 0-100, "reason": "explanation (max 300 chars)"},',
+    '    ...',
+    "  ],",
+    '  "analysisText": "full analysis (max 1200 chars)",',
+    '  "warningFlags": ["warning 1", "warning 2"]',
+    "}",
+    "",
     `Farm: ${input.farmName}`,
     `Farm location: ${input.farmLocation ?? "unknown"}`,
-    `User input: ${JSON.stringify(input.userInput)}`,
-    "User input fields include budget, goal, landSize, and plantingDuration.",
-    `Soil context: ${JSON.stringify(input.soil)}`,
-    `Weather context: ${JSON.stringify(input.weather)}`,
+    `User inputs: ${JSON.stringify(input.userInput)}`,
+    `Soil data: ${JSON.stringify(input.soil)}`,
+    `Weather data: ${JSON.stringify(input.weather)}`,
     `Has soil context: ${input.contextSummary.hasSoil}`,
     `Has weather context: ${input.contextSummary.hasWeather}`,
-    "Requirements:",
-    "1) recommendedCrops must be sorted highest score first.",
-    "2) Provide at least 3 crops when possible.",
-    "3) Keep reasons practical and tied to given context.",
-    "4) warningFlags should mention data gaps or risks.",
+    hasMarketContext ? `Market trend: ${priceTrend} (based on demand/supply signals)` : "Market context: not provided",
+    "",
+    "CRITICAL CONSTRAINTS:",
+    "- Score must be a number between 0 and 100 (inclusive)",
+    "- Crop name max 80 characters",
+    "- Reason max 300 characters", 
+    "- Analysis text max 1200 characters",
+    "- Provide minimum 3 crops when possible, maximum 10",
+    "- MANDATORY: Only recommend crops that can realistically grow within the specified plantingDuration",
+    "- warningFlags array: list data gaps or risks",
+    "- Sort crops by score (highest first)",
   ].join("\n");
 }
 
@@ -185,10 +228,14 @@ async function generateOpenAIRecommendation(input: {
   const validationResult = aiRecommendationSchema.safeParse(aiResponse);
 
   if (!validationResult.success) {
+    const errorDetails = {
+      receivedPayload: JSON.stringify(aiResponse).slice(0, 500),
+      validationErrors: validationResult.error.flatten(),
+    };
     throw new AnalysisExternalServiceError(
-      "OpenAI recommendation payload did not match the expected schema.",
+      "OpenAI recommendation payload did not match the expected schema. Check logs for payload details.",
       502,
-      validationResult.error.flatten(),
+      errorDetails,
     );
   }
 
@@ -197,12 +244,23 @@ async function generateOpenAIRecommendation(input: {
 
 function sanitizeRecommendationRecord(input: {
   farmId: string;
+  sessionId: string;
+  sessionStartedAt: string;
+  farmName: string;
+  farmLocation: string | null;
+  inputSnapshot: z.infer<typeof generateRecommendationSchema>;
   recommendation: RecommendationResult;
   generatedBy: "deterministic" | "hybrid" | "openai";
   contextSummary: ReturnType<typeof summarizeAnalysisInput>;
 }) {
   return {
     farmId: input.farmId,
+    sessionId: input.sessionId,
+    sessionStartedAt: input.sessionStartedAt,
+    farmName: input.farmName,
+    farmLocation: input.farmLocation,
+    mode: "initial",
+    inputSnapshot: input.inputSnapshot,
     generatedBy: input.generatedBy,
     recommendedCrops: input.recommendation.recommendedCrops,
     warningFlags: input.recommendation.warningFlags,
@@ -263,6 +321,8 @@ export async function POST(
     const soil = toNormalizedSoilSnapshot(latestSoilProfile);
     const weather = toNormalizedWeatherSnapshot(latestWeatherSnapshot);
     const contextSummary = summarizeAnalysisInput({ soil, weather, market: null });
+    const sessionId = randomUUID();
+    const sessionStartedAt = new Date().toISOString();
 
     const recommendation = await generateOpenAIRecommendation({
       farmName: farm.name,
@@ -279,12 +339,19 @@ export async function POST(
       decodedToken.uid,
       farm.id,
       {
+        sessionId,
+        sessionStartedAt,
         recommendedCrops: recommendation.recommendedCrops,
         analysisText: recommendation.analysisText,
         warningFlags: recommendation.warningFlags,
         generatedBy,
         recommendationJson: sanitizeRecommendationRecord({
           farmId: farm.id,
+          sessionId,
+          sessionStartedAt,
+          farmName: farm.name,
+          farmLocation: farm.location,
+          inputSnapshot: validationResult.data,
           recommendation,
           generatedBy,
           contextSummary,
@@ -299,6 +366,7 @@ export async function POST(
     return successResponse(
       {
         farmId: farm.id,
+        sessionId,
         contextSummary,
         recommendation,
         recommendationRecord,

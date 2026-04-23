@@ -72,9 +72,13 @@ export function createOpenAIService(config: OpenAIServiceConfig = {}) {
     const text = await generateText(prompt);
 
     try {
-      return JSON.parse(text) as Record<string, unknown>;
-    } catch {
-      return { text };
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      return parsed;
+    } catch (error) {
+      const parseError = error instanceof Error ? error.message : "Unknown error";
+      throw new AnalysisConfigurationError(
+        `OpenAI returned invalid JSON. Parse error: ${parseError}. Response: ${text.slice(0, 200)}...`
+      );
     }
   }
 

@@ -10,6 +10,11 @@ import FeaturedCropCard from "@/components/layout/recommendations/FeatureCropCar
 import CropRecommendationCard from "@/components/layout/recommendations/CropRecommendationCard";
 import DiversificationCard from "@/components/layout/recommendations/Diversification";
 import { getClientAuth } from "@/lib/firebaseClient";
+import {
+	groupRecommendationsBySession,
+	type RecommendationSession,
+	type RecommendationSessionRecord,
+} from "@/lib/recommendationSessions";
 import { ChevronDown } from "lucide-react";
 
 type FarmOption = {
@@ -25,14 +30,9 @@ type RecommendationItem = {
 	reason: string;
 };
 
-type CropRecommendationRecord = {
-	id: string;
-	recommendedCrops: RecommendationItem[];
-	analysisText: string;
-	warningFlags: string[];
-	generatedBy: "deterministic" | "openai" | "hybrid";
-	createdAt: string | null;
-	updatedAt: string | null;
+type CropRecommendationRecord = RecommendationSessionRecord & {
+	sessionId: string;
+	sessionStartedAt: string | null;
 };
 
 type SoilProfile = {
@@ -293,10 +293,27 @@ export default function RecommendationsClient() {
 	}, [selectedFarmIdFromQuery]);
 
 	const selectedFarm = farms.find((farm) => farm.id === selectedFarmId) ?? null;
-	const selectedRecommendation = recommendations[0] ?? null;
+	const recommendationSessions = useMemo(
+		() => groupRecommendationsBySession(recommendations),
+		[recommendations],
+	);
+	const selectedSession: RecommendationSession | null = useMemo(() => {
+		if (!recommendationSessions.length) {
+			return null;
+		}
+
+		return recommendationSessions[0];
+	}, [recommendationSessions]);
+	const sessionRecommendations = selectedSession?.records ?? [];
+	const activeSessionStorageId =
+		selectedSession?.sessionId || selectedFarmId;
+	const activeSessionLabel = selectedSession?.sessionCreatedAt
+		? new Date(selectedSession.sessionCreatedAt).toLocaleString()
+		: null;
+	const selectedRecommendation = sessionRecommendations[0] ?? null;
 	const recommendedCrops = useMemo(() => {
 		const seen = new Set<string>();
-		const combined = recommendations.flatMap((record) => record.recommendedCrops);
+		const combined = sessionRecommendations.flatMap((record) => record.recommendedCrops);
 		const unique = combined.filter((crop) => {
 			const key = crop.crop.trim().toLowerCase();
 			if (seen.has(key)) {
@@ -321,7 +338,7 @@ export default function RecommendationsClient() {
 
 			return first.crop.localeCompare(second.crop);
 		});
-	}, [recommendations, sortBy]);
+	}, [sessionRecommendations, sortBy]);
 
 	useEffect(() => {
 		if (!selectedFarmId || recommendedCrops.length === 0) {
@@ -331,7 +348,9 @@ export default function RecommendationsClient() {
 			return;
 		}
 
-		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		const storageKey = activeSessionStorageId
+			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
+			: `piliSeed.selectedCrop.${selectedFarmId}`;
 		const storedSelection = typeof window !== "undefined"
 			? window.localStorage.getItem(storageKey)
 			: null;
@@ -348,7 +367,7 @@ export default function RecommendationsClient() {
 		setConfirmedCrop(null);
 		setShowCropPrompt(true);
 		setCropPromptError("");
-	}, [recommendedCrops, selectedFarmId]);
+	}, [activeSessionStorageId, recommendedCrops, selectedFarmId]);
 
 	function handleFarmChange(farmId: string) {
 		setSelectedFarmId(farmId);
@@ -373,14 +392,49 @@ export default function RecommendationsClient() {
 			return;
 		}
 
-		const storageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+		const storageKey = activeSessionStorageId
+			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
+			: `piliSeed.selectedCrop.${selectedFarmId}`;
+		const farmLevelStorageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
 		setConfirmedCrop(selectedCrop);
 		setShowCropPrompt(false);
 		setCropPromptError("");
 
 		if (typeof window !== "undefined") {
 			window.localStorage.setItem(storageKey, selectedCrop);
+			window.localStorage.setItem(farmLevelStorageKey, selectedCrop);
+			window.dispatchEvent(
+				new CustomEvent("piliSeed:selectedCropChanged", {
+					detail: { farmId: selectedFarmId, crop: selectedCrop },
+				}),
+			);
 		}
+	}
+
+	function handleClearCropSelection() {
+		if (!selectedFarmId) {
+			return;
+		}
+
+		const storageKey = activeSessionStorageId
+			? `piliSeed.selectedCrop.${selectedFarmId}.${activeSessionStorageId}`
+			: `piliSeed.selectedCrop.${selectedFarmId}`;
+		const farmLevelStorageKey = `piliSeed.selectedCrop.${selectedFarmId}`;
+
+		if (typeof window !== "undefined") {
+			window.localStorage.removeItem(storageKey);
+			window.localStorage.removeItem(farmLevelStorageKey);
+			window.dispatchEvent(
+				new CustomEvent("piliSeed:selectedCropChanged", {
+					detail: { farmId: selectedFarmId, crop: null },
+				}),
+			);
+		}
+
+		setConfirmedCrop(null);
+		setSelectedCrop("");
+		setShowCropPrompt(true);
+		setCropPromptError("");
 	}
 
 	function handleChangeCropSelection() {
@@ -427,22 +481,23 @@ export default function RecommendationsClient() {
 				"data" in responseBody &&
 				typeof (responseBody as { data?: unknown }).data === "object"
 					? ((responseBody as { data?: {
+						sessionId?: string;
 						recommendation?: CropRecommendationRecord;
-						recommendationRecord?: { id?: string };
+						recommendationRecord?: CropRecommendationRecord;
 						metadata?: { generatedBy?: "deterministic" | "openai" | "hybrid" };
 					} }).data ?? null)
 					: null;
 
-			if (responseData?.recommendation) {
-				const nowIso = new Date().toISOString();
+			if (responseData?.recommendationRecord) {
 				const newRecord: CropRecommendationRecord = {
-					id: responseData.recommendationRecord?.id ?? `rec-${nowIso}`,
-					recommendedCrops: responseData.recommendation.recommendedCrops,
-					analysisText: responseData.recommendation.analysisText,
-					warningFlags: responseData.recommendation.warningFlags ?? [],
-					generatedBy: responseData.metadata?.generatedBy ?? "openai",
-					createdAt: nowIso,
-					updatedAt: nowIso,
+					...responseData.recommendationRecord,
+					sessionId:
+						responseData.recommendationRecord.sessionId ||
+						responseData.sessionId ||
+						responseData.recommendationRecord.id,
+					sessionStartedAt:
+						responseData.recommendationRecord.sessionStartedAt ??
+						responseData.recommendationRecord.createdAt,
 				};
 
 				setRecommendations((previous) => {
@@ -620,6 +675,11 @@ export default function RecommendationsClient() {
 					</div>
 				) : selectedRecommendation && featuredCrop ? (
 					<>
+						{activeSessionLabel && (
+							<div className="mb-6 rounded-3xl border border-[#C0C9BB1A] bg-white px-5 py-4 text-sm text-[#41493E]">
+								Session started {activeSessionLabel}
+							</div>
+						)}
 						<div className="mb-12 rounded-3xl sm:rounded-4xl border border-[#C0C9BB1A] bg-white px-4 sm:px-6 py-5 sm:py-6">
 							<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 								<div>
@@ -651,6 +711,7 @@ export default function RecommendationsClient() {
 											onChange={(event) => setSelectedCrop(event.target.value)}
 											className="mt-2 w-full rounded-full border border-[#C0C9BB] bg-white px-4 py-3 text-sm font-semibold text-[#171D14]"
 										>
+											<option value="">No crop selected</option>
 											{recommendedCrops.map((crop) => (
 												<option key={crop.crop} value={crop.crop}>
 													{crop.crop}
@@ -669,6 +730,12 @@ export default function RecommendationsClient() {
 											className="w-full md:w-auto rounded-full bg-[#00450D] px-6 py-3 text-sm font-semibold text-white shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33]"
 										>
 											Confirm crop
+										</button>
+										<button
+											onClick={handleClearCropSelection}
+											className="w-full md:w-auto rounded-full border border-[#9C4A00] px-6 py-3 text-sm font-semibold text-[#9C4A00]"
+										>
+											Clear selection
 										</button>
 									</div>
 								</div>
