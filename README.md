@@ -99,6 +99,7 @@ cp .env.example .env
 ```
 
 4. Fill required values in .env:
+
 - NEXT_PUBLIC_FIREBASE_API_KEY
 - NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
 - NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -131,86 +132,86 @@ npm run build
 
 ### Public Page: Landing (/)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                              | Guide                                                                                               |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | <img src="public/landing/Problem.png" width="220"/> | Entry page for product overview, problem framing, and navigation to login/signup and feature pages. |
 
 ### Public Page: About (/about)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                          | Guide                                                                |
+| ----------------------------------------------- | -------------------------------------------------------------------- |
 | <img src="public/about/About.png" width="220"/> | Presents team, product context, and background details for PiliSeed. |
 
 ### Public Page: Features (/features)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                            | Guide                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------- |
 | <img src="public/features/Grid.png" width="220"/> | Shows major product capabilities and value propositions in feature cards. |
 
 ### Public Page: How It Works (/how-it-works)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                                | Guide                                                                           |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------- |
 | <img src="public/how-it-works/HIW2.png" width="220"/> | Explains the end-to-end flow from data input to recommendations and monitoring. |
 
 ### Public Page: Login (/login)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                          | Guide                                                                                   |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------- |
 | <img src="public/login/Login.png" width="220"/> | Authenticates users through Firebase-backed sign-in flow before private feature access. |
 
 ### Public Page: Signup (/signup)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                            | Guide                                                                             |
+| ------------------------------------------------- | --------------------------------------------------------------------------------- |
 | <img src="public/signup/Signup.png" width="220"/> | Registers new users and creates the initial profile scaffold for farm onboarding. |
 
 ### Private Tab: Dashboard (/dashboard)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                               | Guide                                                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | <img src="public/how-it-works/HIW.png" width="220"/> | Aggregates summary insights across weather, soil, recommendations, and yield for the active farm. |
 
 ### Private Tab: Farms (/farms)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                              | Guide                                                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | <img src="public/soil/soildatabg.png" width="220"/> | Manage farm records, location details, and active farm selection used by analytics and dashboard APIs. |
 
 ### Private Tab: Recommendations (/recommendations)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                              | Guide                                                                                          |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | <img src="public/features/Grid_2.png" width="220"/> | Displays ranked crops, recommendation analysis text, warning flags, and latest session output. |
 
 ### Private Tab: Weather (/weather)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                                | Guide                                                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | <img src="public/how-it-works/HIW2.png" width="220"/> | Visualizes current and forecast weather signals that feed recommendation and yield context. |
 
 ### Private Tab: Yield (/yield)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                                     | Guide                                                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | <img src="public/features/Hero_features.png" width="220"/> | Presents expected yield and revenue signals derived from soil, weather, and market context. |
 
 ### Private Tab: Profile (/profile)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                            | Guide                                                                                |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | <img src="public/about/About_2.png" width="220"/> | Allows user profile updates including identity details and profile image management. |
 
 ### Private Tab: Parameters (/parameters)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                                     | Guide                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | <img src="public/features/Hero_features.png" width="220"/> | Hosts configurable preferences and operational parameters used by private workflows. |
 
 ### Private Tab: History (/history)
 
-| Mobile | Guide |
-| --- | --- |
+| Mobile                                            | Guide                                                                             |
+| ------------------------------------------------- | --------------------------------------------------------------------------------- |
 | <img src="public/features/Grid.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
 
 ## Project Architecture
@@ -248,22 +249,297 @@ For full JSON contracts, see docs/backend/API JSON Input Output Summary.md
 
 ## DATABASE SCHEMA
 
-Primary Firestore collections and relationships:
+PiliSeed uses **Google Firestore (NoSQL)** with a **collection-based, document-oriented structure**. There are no SQL joins or foreign-key constraints in the database itself, so relationships are handled through `uid` for ownership and `farmId` for farm-scoped data. Every important document is linked to the authenticated user, and most operational records are also linked to a specific farm.
 
-- users: user profile root records
-- farms: farm metadata, ownership, active-state context
-- farmDevices: IoT device links and activation/readings state
-- soilProfiles: manual/API/device soil records with classification and analysis JSON
-- weatherSnapshots: weather records used for dashboard/recommendation context
-- cropRecommendations: recommendation sessions and ranked crops
-- yieldForecasts: expected yield and revenue projections
-- marketSnapshots: normalized commodity snapshots
+### Core Firestore Design Principles
 
-Ownership model:
+- **Collections represent domains**, not tables in the SQL sense.
+- **Documents are stored flat and queryable** so the app can scale cleanly.
+- **Ownership is enforced using `uid`** across all user-owned records.
+- **Farm-scoped records include `farmId`** for easy filtering and dashboard aggregation.
+- **Time-series data is stored as separate documents**, not as arrays in a single document.
+- **Structured AI outputs are stored as JSON fields** so the system can keep raw and processed results.
+- **Device, weather, soil, recommendation, yield, and market data are all linked to farms**.
 
-- Every farm-scoped document stores uid and farmId
-- API layer validates ownership per request
-- firestore.rules enforces read/write ownership server-side
+---
+
+## Firestore Collections
+
+### 1. `users`
+
+Stores the authenticated user’s profile and account metadata.
+
+Fields:
+
+- `uid`
+- `email`
+- `name`
+- `photoURL`
+- `phone`
+- `address`
+- `providerIds`
+- `createdAt`
+- `updatedAt`
+- `lastLoginAt`
+
+### 2. `farms`
+
+Stores farm records owned by a user.
+
+Fields:
+
+- `id`
+- `uid`
+- `name`
+- `location`
+- `isActive`
+- `createdAt`
+- `updatedAt`
+
+### 3. `farmDevices`
+
+Stores IoT device links and device state for a farm.
+
+Fields:
+
+- `id`
+- `uid`
+- `farmId`
+- `deviceId`
+- `deviceName`
+- `tokenHash`
+- `tokenHint`
+- `activationPending`
+- `lastReadings`
+- `lastCollectedAt`
+- `lastActivationRequestedAt`
+- `lastActivationFulfilledAt`
+- `lastSeenAt`
+- `linkedAt`
+- `createdAt`
+- `updatedAt`
+
+### 4. `soilProfiles`
+
+Stores manual, API-based, and device-assisted soil records.
+
+Fields:
+
+- `id`
+- `uid`
+- `farmId`
+- `texture`
+- `soilClass`
+- `soilClassValue`
+- `soilClassProbability`
+- `soilClassProbabilities`
+- `pH`
+- `moistureContent`
+- `lightLevel`
+- `temperatureC`
+- `humidity`
+- `nitrogen`
+- `phosphorus`
+- `potassium`
+- `soilSource`
+- `classificationJson`
+- `analysisJson`
+- `createdAt`
+- `updatedAt`
+
+### 5. `weatherSnapshots`
+
+Stores weather records for a farm.
+
+Fields:
+
+- `id`
+- `uid`
+- `farmId`
+- `temperatureC`
+- `humidity`
+- `rainfallMm`
+- `recordedAt`
+- `createdAt`
+- `updatedAt`
+
+### 6. `cropRecommendations`
+
+Stores recommendation sessions and ranked crop outputs.
+
+Fields:
+
+- `id`
+- `uid`
+- `farmId`
+- `sessionId`
+- `sessionStartedAt`
+- `recommendedCrops`
+- `analysisText`
+- `warningFlags`
+- `generatedBy`
+- `recommendationJson`
+- `createdAt`
+- `updatedAt`
+
+### 7. `yieldForecasts`
+
+Stores yield estimates and revenue forecasts.
+
+Fields:
+
+- `id`
+- `uid`
+- `farmId`
+- `cropType`
+- `season`
+- `forecastPeriod`
+- `expectedYield`
+- `unit`
+- `estimatedRevenue`
+- `marketContext`
+- `analysisText`
+- `warningFlags`
+- `generatedBy`
+- `forecastJson`
+- `createdAt`
+- `updatedAt`
+
+### 8. `marketSnapshots`
+
+Stores normalized commodity market data for yield and revenue context.
+
+Fields:
+
+- `id`
+- `uid`
+- `farmId`
+- `commodityName`
+- `symbol`
+- `price`
+- `unit`
+- `currency`
+- `sourceDate`
+- `createdAt`
+- `updatedAt`
+
+---
+
+## Firestore Relationships (Mermaid)
+
+```mermaid
+erDiagram
+    USERS {
+        string uid PK
+        string email
+        string name
+        string photoURL
+        string phone
+        string address
+        json providerIds
+        timestamp createdAt
+        timestamp updatedAt
+        timestamp lastLoginAt
+    }
+
+    FARMS {
+        string id PK
+        string uid
+        string name
+        string location
+        boolean isActive
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    FARM_DEVICES {
+        string id PK
+        string uid
+        string farmId
+        string deviceId
+        string deviceName
+        string tokenHash
+        string tokenHint
+        boolean activationPending
+        json lastReadings
+        timestamp lastSeenAt
+        timestamp linkedAt
+    }
+
+    SOIL_PROFILES {
+        string id PK
+        string uid
+        string farmId
+        number pH
+        number nitrogen
+        number phosphorus
+        number potassium
+        number moistureContent
+        number temperatureC
+        number humidity
+        string soilClass
+        number soilClassProbability
+        json classificationJson
+        json analysisJson
+        timestamp createdAt
+    }
+
+    WEATHER_SNAPSHOTS {
+        string id PK
+        string uid
+        string farmId
+        number temperatureC
+        number humidity
+        number rainfallMm
+        timestamp recordedAt
+    }
+
+    CROP_RECOMMENDATIONS {
+        string id PK
+        string uid
+        string farmId
+        string sessionId
+        json recommendedCrops
+        string analysisText
+        json warningFlags
+        string generatedBy
+        json recommendationJson
+        timestamp createdAt
+    }
+
+    YIELD_FORECASTS {
+        string id PK
+        string uid
+        string farmId
+        string cropType
+        string season
+        number expectedYield
+        number estimatedRevenue
+        string generatedBy
+        json forecastJson
+        timestamp createdAt
+    }
+
+    MARKET_SNAPSHOTS {
+        string id PK
+        string uid
+        string farmId
+        string commodityName
+        string symbol
+        number price
+        string currency
+        timestamp sourceDate
+    }
+
+    USERS ||--o{ FARMS : owns
+    USERS ||--o{ FARM_DEVICES : owns
+    FARMS ||--o{ SOIL_PROFILES : has
+    FARMS ||--o{ WEATHER_SNAPSHOTS : has
+    FARMS ||--o{ CROP_RECOMMENDATIONS : generates
+    FARMS ||--o{ YIELD_FORECASTS : produces
+    FARMS ||--o{ MARKET_SNAPSHOTS : tracks
+    FARMS ||--|| FARM_DEVICES : linked_device
+```
 
 ## DEPLOYMENT DIAGRAM
 
@@ -302,7 +578,6 @@ flowchart TB
 - Configurable market provider endpoints
 - OpenAI-compatible responses endpoint for AI explanations
 
-
 ## Firmware
 
 Firmware files are located in firmware/.
@@ -326,5 +601,3 @@ PiliSeed Team
 | FABROS, Adrian Jude | Adrian-Fab | Web Design and Frontend Developer|
 | NAVARRO, Francine Nicole | kuulaid | Backend Developer and Resident |
 | VILLANUEVA, Kie Sha | CPE3B-villanueva-kiesha | Web Design and Frontend Developer |
-
-
