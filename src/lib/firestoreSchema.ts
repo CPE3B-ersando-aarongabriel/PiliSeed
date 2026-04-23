@@ -144,6 +144,8 @@ export type CropRecommendation = {
   id: string;
   uid: string;
   farmId: string;
+  sessionId: string;
+  sessionStartedAt: string | null;
   recommendedCrops: RecommendationItem[];
   analysisText: string;
   warningFlags: string[];
@@ -263,6 +265,8 @@ type FarmDeviceReadingInput = {
 };
 
 type CropRecommendationCreateInput = {
+  sessionId: string;
+  sessionStartedAt: string | null;
   recommendedCrops: RecommendationItem[];
   analysisText: string;
   warningFlags: string[];
@@ -495,6 +499,8 @@ function toCropRecommendation(
     id,
     uid: normalizeText(data.uid, 128) ?? "",
     farmId: normalizeText(data.farmId, 128) ?? "",
+    sessionId: normalizeText(data.sessionId, 128) ?? id,
+    sessionStartedAt: toIsoString(data.sessionStartedAt),
     recommendedCrops: Array.isArray(data.recommendedCrops)
       ? (data.recommendedCrops.filter(
           (item): item is RecommendationItem =>
@@ -1328,6 +1334,8 @@ export async function createCropRecommendationForFarm(
   await recommendationDocRef.set({
     uid,
     farmId,
+    sessionId: normalizeText(input.sessionId, 128),
+    sessionStartedAt: input.sessionStartedAt,
     recommendedCrops: input.recommendedCrops,
     analysisText: normalizeText(input.analysisText, 1200),
     warningFlags: input.warningFlags,
