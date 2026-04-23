@@ -1,6 +1,6 @@
 "use client";
 
-import {MoveUp, MoveDown, Store} from "lucide-react";
+import { MoveUp, MoveDown, Store } from "lucide-react";
 
 interface MarketPrice {
   label: string;
@@ -16,50 +16,36 @@ interface MarketPriceTrendsCardProps {
 
 export default function MarketPriceTrendsCard({ prices }: MarketPriceTrendsCardProps) {
   return (
-    <div className="bg-[#FDCDBC] rounded-[48px] p-8 relative h-[275px] flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <span className="font-semibold text-[#795548] text-xs tracking-[1.20px]">
-          MARKET PRICE TRENDS
-        </span>
-        <Store className="w-[25px] h-[25px] text-[#7A5649]" />
+    <div className="bg-[#FDCDBC] rounded-[32px] p-6 flex flex-col min-h-[200px] w-full shadow-md">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-semibold text-[#7A5649] text-xs tracking-wider uppercase">Market Price Trends</span>
+        <Store className="w-6 h-6 text-[#7A5649]" />
       </div>
-
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 flex flex-col gap-3 mt-2">
         {prices.length === 0 ? (
-          <p className="text-sm font-semibold text-[#795548]/70">
-            Market pricing will appear once a forecast is available.
-          </p>
+          <p className="text-sm font-semibold text-[#7A5649]/70">Market pricing will appear once a forecast is available.</p>
         ) : (
           prices.map((item) => (
-            <div key={item.label} className="border-b border-[#795548]/10 pb-2">
-              <div className="text-xs font-semibold text-[#795548]/60 mb-1">
-                {item.label}
+            <div key={item.label} className="flex flex-col border-b border-[#7A5649]/10 pb-2 last:border-b-0 last:pb-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-[#7A5649]/80">{item.label}</span>
+                <span className="font-bold text-[#7A5649] text-lg">{item.price}</span>
               </div>
-              <div className="flex items-end justify-between">
-                <span className="font-bold text-[#795548] text-xl">
-                  {item.price}
-                </span>
-                <div className="flex items-center gap-1">
-                  {item.isPositive ? (
-                    <MoveUp className="w-4 h-4 text-[#00450D]" />
-                  ) : (
-                    <MoveDown className="w-4 h-4 text-[#AA5649]" />
-                  )}
-                  <span className={`font-semibold text-xs ${item.changeColor}`}>
-                    {item.change}
-                  </span>
-                </div>
+              <div className="flex items-center gap-1 mt-1">
+                {item.isPositive ? (
+                  <MoveUp className="w-4 h-4 text-[#00450D]" />
+                ) : (
+                  <MoveDown className="w-4 h-4 text-[#AA5649]" />
+                )}
+                <span className={`font-semibold text-xs ${item.changeColor}`}>{item.change}</span>
               </div>
             </div>
           ))
         )}
       </div>
-
-      <p className="font-normal text-[#795548]/50 text-[10px] leading-[12.5px] mt-4">
-        Real-time global trade data provided by
-        <br />
-        AgriData Hub.
-      </p>
+      <div className="mt-3">
+        <p className="font-normal text-[#7A5649]/60 text-[10px] leading-[12.5px]">Real-time global trade data provided by AgriData Hub.</p>
+      </div>
     </div>
   );
 }

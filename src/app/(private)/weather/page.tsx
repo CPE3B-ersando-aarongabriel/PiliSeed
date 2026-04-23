@@ -496,8 +496,8 @@ export default function WeatherAnalysis() {
   }, [selectedFarmId, currentUser]);
 
   return (
-    <div className="min-h-screen bg-[#EFF6E7] py-8">
-      <div className="max-w-7xl mx-auto px-12">
+    <div className="min-h-screen bg-[#EFF6E7] py-2 sm:py-4 lg:py-8">
+      <div className="max-w-7xl mx-auto px-0 sm:px-2 lg:px-4">
         <WeatherHeader
           selectedFarmId={selectedFarmId}
           selectedFarmName={selectedFarmName}
@@ -510,7 +510,7 @@ export default function WeatherAnalysis() {
         />
 
         {(statusMessage || warnings.length > 0) && (
-          <div className="mt-4 rounded-3xl border border-[#C0C9BB] bg-white px-6 py-4 text-sm font-semibold text-[#9C4A00]">
+          <div className="mt-4 rounded-2xl sm:rounded-3xl border border-[#C0C9BB] bg-white px-4 sm:px-6 py-3 sm:py-4 text-sm font-semibold text-[#9C4A00]">
             {statusMessage && <p>{statusMessage}</p>}
             {warnings.length > 0 && (
               <p>{warnings.join(" ")}</p>
@@ -518,7 +518,7 @@ export default function WeatherAnalysis() {
           </div>
         )}
 
-        <div className="grid grid-cols-12 gap-8 mt-8 min-h-0 min-w-0">
+        <div className="grid grid-cols-12 gap-4 sm:gap-6 lg:gap-8 mt-6 sm:mt-8 min-h-0 min-w-0">
           <CurrentConditionCard {...data.current} />
           <TemperatureChart data={data.temperatureEvolution} />
           <ForecastCard data={data.forecast} />

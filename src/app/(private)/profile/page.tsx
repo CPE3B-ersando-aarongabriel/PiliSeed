@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { User, Upload, Camera, LogOut } from "lucide-react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 
-import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
+import {
+  fetchWithAuth,
+  extractApiData,
+  getApiErrorMessage,
+} from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
 
 type ProfileData = {
@@ -17,10 +21,17 @@ type ProfileData = {
 };
 
 type ProfileRecord = {
+  email: string | null;
   name: string | null;
+  photoURL: string | null;
+  profileImageUrl: string | null;
   phone: string | null;
   address: string | null;
+  createdAt: string | null;
 };
+
+const MAX_PROFILE_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PROFILE_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const DEFAULT_PROFILE: ProfileData = {
   name: "",
@@ -50,13 +61,29 @@ export default function ProfilePage() {
   const photoInputId = useId();
 
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [initialProfilePhoto, setInitialProfilePhoto] = useState<string | null>(
+    null,
+  );
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<ProfileData>(DEFAULT_PROFILE);
-  const [initialProfile, setInitialProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [initialProfile, setInitialProfile] =
+    useState<ProfileData>(DEFAULT_PROFILE);
+  const [memberSinceLabel, setMemberSinceLabel] = useState("New member");
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (previewPhotoUrl) {
+        URL.revokeObjectURL(previewPhotoUrl);
+      }
+    };
+  }, [previewPhotoUrl]);
 
   useEffect(() => {
     const auth = getClientAuth();
@@ -84,19 +111,42 @@ export default function ProfilePage() {
         const data = extractApiData<{ profile: ProfileRecord }>(body);
         const profile = data?.profile ?? null;
         const phoneParts = splitPhone(profile?.phone ?? null);
+        const resolvedProfilePhoto =
+          profile?.profileImageUrl ?? profile?.photoURL ?? null;
         const nextProfile: ProfileData = {
           name: profile?.name ?? "",
-          email: user.email ?? "",
+          email: profile?.email ?? user.email ?? "",
           countryCode: phoneParts.countryCode,
           phone: phoneParts.phone,
           address: profile?.address ?? "",
         };
 
+        setPreviewPhotoUrl((previousPreviewUrl) => {
+          if (previousPreviewUrl) {
+            URL.revokeObjectURL(previousPreviewUrl);
+          }
+
+          return null;
+        });
+
+        setSelectedPhotoFile(null);
+        setProfilePhoto(resolvedProfilePhoto);
+        setInitialProfilePhoto(resolvedProfilePhoto);
+        setMemberSinceLabel(
+          profile?.createdAt
+            ? new Date(profile.createdAt).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "long",
+              })
+            : "New member",
+        );
         setFormData(nextProfile);
         setInitialProfile(nextProfile);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unable to load your profile right now.";
+          error instanceof Error
+            ? error.message
+            : "Unable to load your profile right now.";
         setErrorMessage(message);
       } finally {
         setIsLoading(false);
@@ -108,12 +158,76 @@ export default function ProfilePage() {
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
+      setErrorMessage("Only JPG, PNG, and WEBP images are supported.");
+      setSuccessMessage("");
+      event.currentTarget.value = "";
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
+      setErrorMessage("Image size must be 5MB or less.");
+      setSuccessMessage("");
+      event.currentTarget.value = "";
+      return;
+    }
+
+    if (previewPhotoUrl) {
+      URL.revokeObjectURL(previewPhotoUrl);
+    }
+
+    const nextPreviewUrl = URL.createObjectURL(file);
+    setSelectedPhotoFile(file);
+    setPreviewPhotoUrl(nextPreviewUrl);
+    setErrorMessage("");
+    setSuccessMessage("Image selected. Save changes to upload and persist it.");
+  };
+
+  const uploadProfilePhoto = async (user: FirebaseUser, file: File) => {
+    setIsUploadingPhoto(true);
+
+    try {
+      const requestBody = new FormData();
+      requestBody.append("file", file);
+
+      const { response, body } = await fetchWithAuth(
+        user,
+        "/api/upload/profile-image",
+        {
+          method: "POST",
+          body: requestBody,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          getApiErrorMessage(
+            body,
+            "Unable to upload your profile image right now.",
+          ),
+        );
+      }
+
+      const data = extractApiData<{
+        profileImageUrl?: string;
+        photoURL?: string;
+      }>(body);
+      const uploadedImageUrl = data?.profileImageUrl ?? data?.photoURL ?? "";
+
+      if (!uploadedImageUrl) {
+        throw new Error(
+          "Upload succeeded but no profile image URL was returned.",
+        );
+      }
+
+      return uploadedImageUrl;
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -129,22 +243,26 @@ export default function ProfilePage() {
     const trimmedName = formData.name.trim();
     const trimmedPhone = formData.phone.trim();
     const trimmedAddress = formData.address.trim();
+    const trimmedInitialName = initialProfile.name.trim();
+    const trimmedInitialPhone = initialProfile.phone.trim();
+    const trimmedInitialAddress = initialProfile.address.trim();
+    const mergedPhone = trimmedPhone
+      ? `${formData.countryCode} ${trimmedPhone}`.trim()
+      : "";
+    const initialMergedPhone = trimmedInitialPhone
+      ? `${initialProfile.countryCode} ${trimmedInitialPhone}`.trim()
+      : "";
 
-    if (trimmedName) {
+    if (trimmedName && trimmedName !== trimmedInitialName) {
       payload.name = trimmedName;
     }
 
-    if (trimmedPhone) {
-      payload.phone = `${formData.countryCode} ${trimmedPhone}`.trim();
+    if (mergedPhone && mergedPhone !== initialMergedPhone) {
+      payload.phone = mergedPhone;
     }
 
-    if (trimmedAddress) {
+    if (trimmedAddress && trimmedAddress !== trimmedInitialAddress) {
       payload.address = trimmedAddress;
-    }
-
-    if (Object.keys(payload).length === 0) {
-      setErrorMessage("Add at least one profile field before saving.");
-      return;
     }
 
     setIsSaving(true);
@@ -152,10 +270,31 @@ export default function ProfilePage() {
     setSuccessMessage("");
 
     try {
-      const { response, body } = await fetchWithAuth(currentUser, "/api/profile", {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
+      let uploadedProfileImageUrl = profilePhoto;
+
+      if (selectedPhotoFile) {
+        uploadedProfileImageUrl = await uploadProfilePhoto(
+          currentUser,
+          selectedPhotoFile,
+        );
+        payload.profileImageUrl = uploadedProfileImageUrl;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        setErrorMessage(
+          "No changes detected. Update a field or choose a new image.",
+        );
+        return;
+      }
+
+      const { response, body } = await fetchWithAuth(
+        currentUser,
+        "/api/profile",
+        {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        },
+      );
 
       if (!response.ok) {
         throw new Error(
@@ -166,6 +305,11 @@ export default function ProfilePage() {
       const data = extractApiData<{ profile: ProfileRecord }>(body);
       const profile = data?.profile ?? null;
       const phoneParts = splitPhone(profile?.phone ?? payload.phone ?? null);
+      const resolvedProfilePhoto =
+        profile?.profileImageUrl ??
+        profile?.photoURL ??
+        uploadedProfileImageUrl ??
+        null;
       const nextProfile: ProfileData = {
         name: profile?.name ?? formData.name,
         email: formData.email,
@@ -174,12 +318,22 @@ export default function ProfilePage() {
         address: profile?.address ?? formData.address,
       };
 
+      if (previewPhotoUrl) {
+        URL.revokeObjectURL(previewPhotoUrl);
+      }
+
+      setPreviewPhotoUrl(null);
+      setSelectedPhotoFile(null);
+      setProfilePhoto(resolvedProfilePhoto);
+      setInitialProfilePhoto(resolvedProfilePhoto);
       setFormData(nextProfile);
       setInitialProfile(nextProfile);
       setSuccessMessage("Profile updated successfully.");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to update your profile right now.";
+        error instanceof Error
+          ? error.message
+          : "Unable to update your profile right now.";
       setErrorMessage(message);
     } finally {
       setIsSaving(false);
@@ -187,6 +341,13 @@ export default function ProfilePage() {
   };
 
   const handleCancel = () => {
+    if (previewPhotoUrl) {
+      URL.revokeObjectURL(previewPhotoUrl);
+    }
+
+    setPreviewPhotoUrl(null);
+    setSelectedPhotoFile(null);
+    setProfilePhoto(initialProfilePhoto);
     setFormData(initialProfile);
     setErrorMessage("");
     setSuccessMessage("");
@@ -203,8 +364,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#EFF6E7] flex flex-col">
-      <div className="flex items-center justify-between px-8 py-6">
+    <main className="min-h-screen bg-[#EFF6E7] flex flex-col w-full">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between px-4 md:px-8 py-6 gap-4 md:gap-0">
         <h1 className="[font-family:'Epilogue-Black',Helvetica] font-black text-[#0d631b] text-3xl tracking-[-0.75px]">
           Account Settings
         </h1>
@@ -218,38 +379,38 @@ export default function ProfilePage() {
       </div>
 
       {isLoading && (
-        <p className="px-8 text-sm font-semibold text-[#00450D]">
+        <p className="px-4 md:px-8 text-sm font-semibold text-[#00450D]">
           Loading profile...
         </p>
       )}
 
-      <div className="flex flex-col w-full items-start gap-8 px-8 py-12">
-        <header className="flex flex-col items-start gap-1 relative self-stretch w-full">
+      <div className="flex flex-col w-full items-start gap-8 px-4 md:px-8 py-6 md:py-12">
+        <header className="flex flex-col items-start gap-1 w-full">
           <p className="relative flex items-center self-stretch [font-family:'Manrope-Medium',Helvetica] font-medium text-[#75584d] text-base tracking-[0] leading-6">
             Manage your digital greenhouse profile and security protocols.
           </p>
         </header>
-        <div className="grid grid-cols-12 h-fit gap-6 w-full">
-          <aside className="relative row-[1_/_2] col-[1_/_5] w-full h-fit flex flex-col items-start px-6 py-10 bg-[#f5f5dc] rounded-[32px] overflow-hidden">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 w-full">
+          <aside className="relative w-full lg:col-span-4 flex flex-col items-start px-4 md:px-6 py-8 md:py-10 bg-[#f5f5dc] rounded-[32px] overflow-hidden mb-6 lg:mb-0">
             <div className="absolute -top-16 -right-16 w-32 h-32 bg-[#0d631b0d] rounded-full" />
-            <div className="relative self-stretch w-full h-[272px] flex flex-col items-center justify-center">
+            <div className="relative w-full flex flex-col items-center justify-center min-h-[200px] md:h-[272px]">
               <div className="flex flex-col items-center gap-3 mt-8">
-                <div className="justify-center w-fit [font-family:'Epilogue-Bold',Helvetica] font-bold text-[#1b1d0e] text-2xl text-center leading-8 relative flex items-center tracking-[0]">
-                  Alex Rivera
+                <div className="justify-center w-fit [font-family:'Epilogue-Bold',Helvetica] font-bold text-[#1b1d0e] text-xl md:text-2xl text-center leading-8 flex items-center tracking-[0]">
+                  {formData.name.trim() || "PiliSeed User"}
                 </div>
-                <div className="justify-center w-fit [font-family:'Manrope-Regular',Helvetica] font-normal text-[#75584d] text-base text-center leading-6 relative flex items-center tracking-[0]">
-                  Member since March 2023
+                <div className="justify-center w-fit [font-family:'Manrope-Regular',Helvetica] font-normal text-[#75584d] text-base text-center leading-6 flex items-center tracking-[0]">
+                  {`Member since ${memberSinceLabel}`}
                 </div>
               </div>
               <div className="mb-4">
-                {profilePhoto ? (
+                {previewPhotoUrl || profilePhoto ? (
                   <img
-                    alt="Alex Rivera profile"
-                    className="w-[232px] h-[242px] object-cover rounded-2xl"
-                    src={profilePhoto}
+                    alt={`${formData.name || "PiliSeed User"} profile`}
+                    className="w-[140px] h-[140px] md:w-[232px] md:h-[242px] object-cover rounded-2xl"
+                    src={previewPhotoUrl ?? profilePhoto ?? ""}
                   />
                 ) : (
-                  <div className="w-[232px] h-[242px] bg-gray-200 rounded-2xl flex items-center justify-center">
+                  <div className="w-[140px] h-[140px] md:w-[232px] md:h-[242px] bg-gray-200 rounded-2xl flex items-center justify-center">
                     <Camera className="w-12 h-12 text-gray-400" />
                   </div>
                 )}
@@ -259,6 +420,7 @@ export default function ProfilePage() {
                 onClick={() => document.getElementById(photoInputId)?.click()}
                 type="button"
                 aria-label="Change profile photo"
+                disabled={isSaving || isUploadingPhoto || isLoading}
               >
                 <Upload className="w-5 h-5 text-white" />
               </button>
@@ -270,37 +432,38 @@ export default function ProfilePage() {
                 className="hidden"
                 aria-label="Upload profile photo"
               />
+              {isUploadingPhoto && (
+                <p className="text-xs font-semibold text-[#00450D]">
+                  Uploading image...
+                </p>
+              )}
             </div>
           </aside>
           <form
-            className="relative row-[1_/_2] col-[5_/_13] w-full h-fit flex flex-col items-start gap-6"
+            className="relative w-full lg:col-span-8 flex flex-col items-start gap-6"
             onSubmit={handleSubmit}
           >
             <section
               aria-labelledby="personal-information-heading"
-              className="flex flex-col items-start gap-6 p-6 relative self-stretch w-full flex-[0_0_auto] bg-white rounded-[32px] shadow-[0px_1px_2px_#0000000d]"
+              className="flex flex-col items-start gap-6 p-4 md:p-6 w-full bg-white rounded-[32px] shadow-[0px_1px_2px_#0000000d]"
             >
-              <div className="flex items-center gap-4 relative self-stretch w-full flex-[0_0_auto]">
-                <div className="w-10 h-10 justify-center bg-[#e4e4cc] rounded-2xl flex items-center relative">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full">
+                <div className="w-10 h-10 justify-center bg-[#e4e4cc] rounded-2xl flex items-center">
                   <User className="w-5 h-5 text-[#1b1d0e]" />
                 </div>
-                <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
-                  <div className="items-start relative self-stretch flex-[0_0_auto] flex flex-col w-full">
-                    <h2
-                      className="w-fit mt-[-1.00px] [font-family:'Epilogue-Bold',Helvetica] font-bold text-[#1b1d0e] text-lg leading-7 whitespace-nowrap relative flex items-center tracking-[0]"
-                      id="personal-information-heading"
-                    >
-                      Personal Information
-                    </h2>
-                  </div>
-                  <div className="flex flex-col items-start relative self-stretch w-full flex-[0_0_auto]">
-                    <p className="w-fit mt-[-1.00px] [font-family:'Manrope-Regular',Helvetica] font-normal text-[#75584d] text-sm leading-5 whitespace-nowrap relative flex items-center tracking-[0]">
-                      Update your profile and contact details.
-                    </p>
-                  </div>
+                <div className="flex flex-col items-start">
+                  <h2
+                    className="w-fit [font-family:'Epilogue-Bold',Helvetica] font-bold text-[#1b1d0e] text-lg leading-7 whitespace-nowrap flex items-center tracking-[0]"
+                    id="personal-information-heading"
+                  >
+                    Personal Information
+                  </h2>
+                  <p className="w-fit [font-family:'Manrope-Regular',Helvetica] font-normal text-[#75584d] text-sm leading-5 whitespace-nowrap flex items-center tracking-[0]">
+                    Update your profile and contact details.
+                  </p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-6 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 <div className="flex flex-col gap-2 w-full">
                   <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
                     FULL NAME
@@ -310,7 +473,12 @@ export default function ProfilePage() {
                       className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                       type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -330,16 +498,21 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="col-span-2 flex flex-col gap-2 w-full">
+                <div className="md:col-span-2 flex flex-col gap-2 w-full">
                   <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
                     PHONE NUMBER
                   </label>
-                  <div className="flex gap-4">
-                    <div className="w-20 px-3 py-3 flex items-center bg-[#eaead1] rounded-xl overflow-hidden">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                    <div className="w-full sm:w-20 px-3 py-3 flex items-center bg-[#eaead1] rounded-xl overflow-hidden">
                       <select
                         className="w-full border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-sm p-0 outline-none cursor-pointer"
                         value={formData.countryCode}
-                        onChange={(e) => setFormData(prev => ({ ...prev, countryCode: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            countryCode: e.target.value,
+                          }))
+                        }
                       >
                         <option value="+1">+1</option>
                         <option value="+44">+44</option>
@@ -351,12 +524,17 @@ export default function ProfilePage() {
                         className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
                       />
                     </div>
                   </div>
                 </div>
-                <div className="col-span-2 flex flex-col gap-2 w-full">
+                <div className="md:col-span-2 flex flex-col gap-2 w-full">
                   <label className="[font-family:'Inter-SemiBold',Helvetica] font-semibold text-[#41493e] text-sm tracking-[0] leading-5">
                     ADDRESS
                   </label>
@@ -365,13 +543,18 @@ export default function ProfilePage() {
                       className="grow border-none bg-transparent [font-family:'Manrope-Regular',Helvetica] font-normal text-[#1b1d0e] text-base tracking-[0] leading-6 p-0 outline-none placeholder:text-[#9a9a9a]"
                       type="text"
                       value={formData.address}
-                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          address: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </div>
               </div>
             </section>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-3 w-full">
               <div className="text-sm font-semibold text-[#9C4A00]">
                 {errorMessage}
               </div>
@@ -379,12 +562,12 @@ export default function ProfilePage() {
                 {successMessage}
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 pt-2 pb-0 px-0 relative self-stretch w-full flex-[0_0_auto]">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2 w-full">
               <button
                 className="all-[unset] box-border inline-flex flex-col items-center justify-center px-8 py-3 relative flex-[0_0_auto] bg-[#e4e4cc] rounded-2xl cursor-pointer"
                 onClick={handleCancel}
                 type="button"
-                disabled={isSaving || isLoading}
+                disabled={isSaving || isLoading || isUploadingPhoto}
               >
                 <div className="justify-center w-fit mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-[#75584d] text-base text-center leading-6 whitespace-nowrap relative flex items-center tracking-[0]">
                   Cancel Changes
@@ -393,11 +576,15 @@ export default function ProfilePage() {
               <button
                 className="all-[unset] box-border inline-flex flex-col items-center justify-center px-8 py-3 relative flex-[0_0_auto] bg-[#0d631b] rounded-2xl cursor-pointer"
                 type="submit"
-                disabled={isSaving || isLoading}
+                disabled={isSaving || isLoading || isUploadingPhoto}
               >
                 <div className="absolute top-0 left-0 w-full h-full bg-[#ffffff01] rounded-2xl shadow-[0px_8px_10px_-6px_#0d631b33,0px_20px_25px_-5px_#0d631b33]" />
                 <div className="justify-center w-fit mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-base text-center leading-6 whitespace-nowrap relative flex items-center tracking-[0]">
-                  {isSaving ? "Saving..." : "Save All Changes"}
+                  {isUploadingPhoto
+                    ? "Uploading Image..."
+                    : isSaving
+                      ? "Saving..."
+                      : "Save All Changes"}
                 </div>
               </button>
             </div>

@@ -40,9 +40,20 @@ const soilAnalysisParameters = [
 export const Grid_features = (): JSX.Element => {
   return (
     <>
-      <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-8 sm:py-16 lg:hidden">
+      <motion.div
+        className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-8 sm:py-16 lg:hidden"
+        variants={gridContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: false, amount: 0.35 }}
+      >
         <div className="grid grid-cols-1 gap-5">
-          <div className="rounded-[28px] bg-white p-6 shadow-[0px_10px_30px_-12px_#00000030]">
+          <motion.div
+            className="rounded-[28px] bg-white p-6 shadow-[0px_10px_30px_-12px_#00000030]"
+            variants={cardReveal}
+            whileHover={{ scale: 1.02, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#00450d1a]">
               <MapPinned className="h-5 w-5 text-[#00450d]" aria-hidden="true" />
             </div>
@@ -50,9 +61,14 @@ export const Grid_features = (): JSX.Element => {
             <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#41493e]">
               Register farms, set one as active, and keep location context locked so soil analysis and recommendations stay farm-specific.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="rounded-[28px] bg-[#fdcdbc] p-6 shadow-[0px_10px_30px_-12px_#00000030]">
+          <motion.div
+            className="rounded-[28px] bg-[#fdcdbc] p-6 shadow-[0px_10px_30px_-12px_#00000030]"
+            variants={cardReveal}
+            whileHover={{ scale: 1.02, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#7955481a]">
               <FlaskConical className="h-5 w-5 text-[#2e150b]" aria-hidden="true" />
             </div>
@@ -74,9 +90,14 @@ export const Grid_features = (): JSX.Element => {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="rounded-[28px] bg-[#e3ebdc] p-6 shadow-[0px_10px_30px_-12px_#00000030]">
+          <motion.div
+            className="rounded-[28px] bg-[#e3ebdc] p-6 shadow-[0px_10px_30px_-12px_#00000030]"
+            variants={cardReveal}
+            whileHover={{ scale: 1.02, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#065f18]">
               <BrainCircuit className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
@@ -84,9 +105,14 @@ export const Grid_features = (): JSX.Element => {
             <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#41493e]">
               Soil, weather, and farm context are combined to rank crop options by confidence and risk.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="rounded-[28px] bg-[#cee5ff] p-6 shadow-[0px_10px_30px_-12px_#00000030]">
+          <motion.div
+            className="rounded-[28px] bg-[#cee5ff] p-6 shadow-[0px_10px_30px_-12px_#00000030]"
+            variants={cardReveal}
+            whileHover={{ scale: 1.02, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#003e63]">
               <CloudSunRain className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
@@ -94,25 +120,30 @@ export const Grid_features = (): JSX.Element => {
             <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#004a75]">
               Plot-level forecasts and atmospheric trends help prevent weather-related losses before they hit.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="rounded-[28px] bg-[#00450d] p-6 text-white shadow-[0px_10px_30px_-12px_#00000030]">
+          <motion.div
+            className="rounded-[28px] bg-[#00450d] p-6 text-white shadow-[0px_10px_30px_-12px_#00000030]"
+            variants={cardReveal}
+            whileHover={{ scale: 1.02, y: -4 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
             <h3 className="[font-family:'Inter-ExtraBold',Helvetica] text-2xl font-extrabold">Harvest the Future with Yield Prediction</h3>
             <p className="mt-3 [font-family:'Inter-Regular',Helvetica] text-sm leading-6 text-[#86d881]">
               Forecast harvest windows and expected volume so planning, logistics, and market timing are easier.
             </p>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       <motion.div
       className="hidden lg:grid mx-auto w-full max-w-[1280px] pt-16 sm:pt-20 px-4 sm:px-8 grid-cols-1 gap-6 lg:grid-cols-12 lg:grid-rows-[620px_452px_505px] h-fit relative"
       variants={gridContainer}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: false, amount: 0.08 }}
     >
-      <motion.div className="relative col-span-1 lg:row-[1_/_2] lg:col-[9_/_13] w-full h-fit flex flex-col items-start justify-between p-6 sm:p-8 bg-[#fdcdbc] rounded-[32px] lg:rounded-[48px]" variants={cardReveal}>
+      <motion.div className="relative col-span-1 lg:row-[1_/_2] lg:col-[9_/_13] w-full h-fit flex flex-col items-start justify-between p-6 sm:p-8 bg-[#fdcdbc] rounded-[32px] lg:rounded-[48px]" variants={cardReveal} whileHover={{ scale: 1.02, y: -6 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
         <div className="relative self-stretch w-full h-[204px]">
           <div className="flex w-14 h-14 items-center justify-center absolute top-0 left-0 bg-[#7955481a] rounded-2xl">
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
@@ -169,7 +200,7 @@ export const Grid_features = (): JSX.Element => {
         </div>
       </motion.div>
 
-      <motion.div className="relative col-span-1 lg:row-[2_/_3] lg:col-[1_/_5] w-full min-h-[452px] bg-[#e3ebdc] rounded-[32px] lg:rounded-[48px]" variants={cardReveal}>
+      <motion.div className="relative col-span-1 lg:row-[2_/_3] lg:col-[1_/_5] w-full min-h-[452px] bg-[#e3ebdc] rounded-[32px] lg:rounded-[48px]" variants={cardReveal} whileHover={{ scale: 1.02, y: -6 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
         <div className="w-14 h-14 justify-center absolute top-8 left-8 bg-[#065f18] flex items-center rounded-2xl">
           <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
             <BrainCircuit className="relative h-[25px] w-[23.76px] text-white" aria-hidden="true" />
@@ -221,7 +252,7 @@ export const Grid_features = (): JSX.Element => {
         </div>
       </motion.div>
 
-      <motion.div className="relative col-span-1 lg:row-[1_/_2] lg:col-[1_/_9] w-full h-full flex flex-col items-start justify-center p-6 sm:p-10 lg:p-12 bg-white rounded-[32px] lg:rounded-[48px] overflow-hidden" variants={cardReveal}>
+      <motion.div className="relative col-span-1 lg:row-[1_/_2] lg:col-[1_/_9] w-full h-full flex flex-col items-start justify-center p-6 sm:p-10 lg:p-12 bg-white rounded-[32px] lg:rounded-[48px] overflow-hidden" variants={cardReveal} whileHover={{ scale: 1.015, y: -6 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
         <div className="flex flex-col w-[75.00%] items-start absolute left-[34.97%] -bottom-20 rotate-[12.00deg] opacity-10">
           <div className="relative max-w-[601.98px] w-[512.01px] h-[512px] rounded-3xl aspect-[1] bg-[url(/features/Grid_2.png)] bg-cover bg-[50%_50%]" />
         </div>
@@ -286,7 +317,7 @@ export const Grid_features = (): JSX.Element => {
         </div>
       </motion.div>
 
-      <motion.div className="relative col-span-1 lg:row-[2_/_3] lg:col-[5_/_13] w-full min-h-[452px] bg-[#cee5ff] rounded-[32px] lg:rounded-[48px] overflow-hidden" variants={cardReveal}>
+      <motion.div className="relative col-span-1 lg:row-[2_/_3] lg:col-[5_/_13] w-full min-h-[452px] bg-[#cee5ff] rounded-[32px] lg:rounded-[48px] overflow-hidden" variants={cardReveal} whileHover={{ scale: 1.02, y: -6 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
         <div className="absolute w-[calc(100%_-_465px)] top-[83px] left-20 h-[286px] flex flex-col">
           <div className="w-14 h-14 relative justify-center bg-[#003e63] flex items-center rounded-2xl">
             <div className="inline-flex flex-col items-start relative flex-[0_0_auto]">
@@ -368,7 +399,7 @@ export const Grid_features = (): JSX.Element => {
         </div>
       </motion.div>
 
-      <motion.div className="relative col-span-1 lg:row-[3_/_4] lg:col-[1_/_13] w-full min-h-[505px] flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 p-8 sm:p-10 lg:p-16 bg-[#00450d] rounded-[32px] lg:rounded-[48px] overflow-hidden" variants={cardReveal}>
+      <motion.div className="relative col-span-1 lg:row-[3_/_4] lg:col-[1_/_13] w-full min-h-[505px] flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 p-8 sm:p-10 lg:p-16 bg-[#00450d] rounded-[32px] lg:rounded-[48px] overflow-hidden" variants={cardReveal} whileHover={{ scale: 1.01, y: -5 }} transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
         <div className="flex flex-col items-start gap-6 relative flex-1 grow">
           <div className="inline-flex items-start px-4 py-1.5 relative flex-[0_0_auto] bg-[#ffffff1a] rounded-full">
             <div className="flex items-center w-[139.41px] h-4 [font-family:'Inter-SemiBold',Helvetica] font-semibold text-white text-xs tracking-[1.20px] leading-4 whitespace-nowrap relative mt-[-1.00px]">

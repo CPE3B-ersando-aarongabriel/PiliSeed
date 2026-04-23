@@ -870,7 +870,7 @@ export default function SoilInputForm({
               </span>
             </div>
 
-            <div className="mt-6 grid gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {planningFields.map((field) => (
                 <div key={field.id} className="flex flex-col gap-2">
                   <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
@@ -915,11 +915,11 @@ export default function SoilInputForm({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !currentUser || !hasFarmLocation}
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#00450D] py-5 shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#00450D] px-4 py-2.5 sm:py-4 text-xs sm:text-base shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Search className="h-[18px] w-[18px] text-[#FFFFFF]"/>
-              <span className="text-base font-semibold text-white">
-                {isSubmitting ? "Analyzing Soil..." : "Get Crop Reccomendation"}
+              <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]"/>
+              <span className="text-center leading-tight whitespace-nowrap font-semibold text-white">
+                {isSubmitting ? "Analyzing Soil..." : "Get Crop Recommendation"}
               </span>
             </button>
 
@@ -949,7 +949,7 @@ export default function SoilInputForm({
                 </span>
               </summary>
 
-              <div className="mt-6 flex flex-col gap-6">
+              <div className="mt-6 flex flex-col gap-4 md:gap-6">
                 <div className="flex items-center gap-3">
                   <FlaskRound className="h-[18px] w-[18px] text-[#41493E]"/>
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
@@ -1026,7 +1026,7 @@ export default function SoilInputForm({
                   </button>
                 </div>
 
-                <div className="mt-6 grid gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {environmentalFields.map((field) => (
                     <div key={field.id} className="flex flex-col gap-2">
                       <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#41493E]">
@@ -1087,10 +1087,10 @@ export default function SoilInputForm({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !currentUser || !hasFarmLocation}
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-[#00450D] py-5 shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-[#00450D] px-4 py-2.5 sm:py-4 text-xs sm:text-base font-semibold text-white hover:bg-[#005610] disabled:opacity-60"
             >
-              <Search className="h-[18px] w-[18px] text-[#FFFFFF]"/>
-              <span className="text-base font-semibold text-white">
+              <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]" />
+              <span className="text-center leading-tight whitespace-nowrap">
                 {isSubmitting ? "Analyzing Soil..." : "Get Crop Recommendation"}
               </span>
             </button>

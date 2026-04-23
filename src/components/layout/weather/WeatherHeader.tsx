@@ -33,21 +33,21 @@ export default function WeatherHeader({
   const isRefreshDisabled = isLoading || !selectedFarmId;
 
   return (
-    <div className="flex items-start justify-between mt-2">
-      <div>
-        <h1 className="font-extrabold text-4xl text-[#00450D] tracking-tight">
+    <div className="mt-2 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+      <div className="min-w-0">
+        <h1 className="font-extrabold text-2xl sm:text-3xl lg:text-4xl text-[#00450D] tracking-tight">
           Weather Analysis
         </h1>
-        <p className="mt-3 text-medium text-[#41493E] leading-relaxed max-w-2xl">
+        <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#41493E] leading-relaxed max-w-2xl">
           Precision meteorological tracking for {selectedFarmName} in the Central
           Highlands. Real-time atmospheric monitoring synced with soil moisture
           sensors.
         </p>
       </div>
 
-      <div className="flex items-end gap-3">
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-end sm:justify-end lg:w-auto">
     
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1.5">
             SELECTED FARM
           </label>
@@ -55,9 +55,9 @@ export default function WeatherHeader({
             <button
               onClick={() => setIsFarmDropdownOpen(!isFarmDropdownOpen)}
               disabled={isDisabled}
-              className="w-[200px] h-[42px] bg-[#E3EBDC] rounded-full shadow-sm flex items-center justify-between px-5 hover:bg-[#D5E0CC] transition-colors"
+              className="h-[42px] w-full min-w-0 sm:w-[220px] bg-[#E3EBDC] rounded-full shadow-sm flex items-center justify-between px-4 sm:px-5 hover:bg-[#D5E0CC] transition-colors"
             >
-              <span className="font-semibold text-[#00450D] text-sm">
+              <span className="font-semibold text-[#00450D] text-sm truncate">
                 {selectedFarmName}
               </span>
               <ChevronDown className="w-5 h-5 text-[#6B7280]" />
@@ -69,7 +69,7 @@ export default function WeatherHeader({
                   className="fixed inset-0 z-40"
                   onClick={() => setIsFarmDropdownOpen(false)}
                 />
-                <div className="absolute left-0 mt-2 w-[185px] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                <div className="absolute left-0 mt-2 w-full sm:w-[220px] bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
                   {farmOptions.map((farm) => (
                     <button
                       key={farm.id}
@@ -102,7 +102,7 @@ export default function WeatherHeader({
         <button
           onClick={onRefresh}
           disabled={isRefreshDisabled}
-          className="flex items-center justify-center gap-2 w-[140px] h-[42px] bg-[#00450D] text-white rounded-full hover:bg-[#00380A] transition-colors disabled:opacity-50 whitespace-nowrap"
+          className="flex items-center justify-center gap-2 h-[42px] w-full sm:w-[160px] bg-[#00450D] text-white rounded-full hover:bg-[#00380A] transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           <RefreshCw className={`w-4 h-4 text-[#FFFFFF] ${isLoading ? "animate-spin" : ""}`} />
           <span className="font-semibold text-sm">Refresh Data</span>

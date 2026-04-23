@@ -32,11 +32,11 @@ export default function TemperatureChart({ data }: TemperatureChartProps) {
   }, []);
 
   return (
-    <div className="col-span-8 min-w-0 min-h-0">
-      <div className="p-8 bg-white rounded-[48px] shadow-sm h-full flex flex-col min-h-0">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-[#171D14]">Temperature Evolution</h3>
-          <div className="flex gap-2">
+    <div className="col-span-12 lg:col-span-8 min-w-0 min-h-0">
+      <div className="p-4 sm:p-6 lg:p-8 bg-white rounded-[24px] sm:rounded-[36px] lg:rounded-[48px] shadow-sm h-full flex flex-col min-h-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h3 className="text-lg sm:text-xl font-bold text-[#171D14]">Temperature Evolution</h3>
+          <div className="flex gap-2 flex-wrap">
             <span className="flex items-center gap-1 px-3 py-1 bg-[#EFF6E7] rounded-full text-xs">
               <span className="w-2 h-2 bg-[#00450D] rounded-full" />
               <p className="text-[#171D14]">Daytime</p>
@@ -48,9 +48,9 @@ export default function TemperatureChart({ data }: TemperatureChartProps) {
           </div>
         </div>
 
-        <div className="h-64 w-full min-w-0 min-h-0">
+        <div className="h-52 sm:h-64 w-full min-w-0 min-h-0">
           {mounted ? (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 15, right: 10, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                 <XAxis
@@ -87,7 +87,7 @@ export default function TemperatureChart({ data }: TemperatureChartProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-[#41493E] mt-2">
+        <div className="flex items-start sm:items-center gap-2 text-xs sm:text-sm text-[#41493E] mt-2">
           <Info className="w-5 h-5 text-[#41493E]"/>
           <p>Average temperature is 2.4°C higher than the seasonal baseline.</p>
         </div>

@@ -53,7 +53,7 @@ export default function AddFarmCard({
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="relative w-[277.33px] h-[498px] inline-flex flex-col items-center justify-center px-[48.66px] py-[153px] bg-[#00450D] rounded-[48px] overflow-hidden shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] cursor-pointer hover:bg-[#005610] transition-colors"
+        className="relative w-full sm:w-[277.33px] min-h-[320px] sm:h-[498px] inline-flex flex-col items-center justify-center px-8 sm:px-[48.66px] py-14 sm:py-[153px] bg-[#00450D] rounded-[28px] sm:rounded-[48px] overflow-hidden shadow-[0px_8px_10px_-6px_#0000001a,0px_20px_25px_-5px_#0000001a] cursor-pointer hover:bg-[#005610] transition-colors"
       >
         <div className="inline-flex pt-0 pb-6 px-0 relative flex-[0_0_auto] flex-col items-start">
           <div className="inline-flex flex-col items-center p-6 relative flex-[0_0_auto] bg-[#FFFFFF1a] rounded-full">
@@ -63,14 +63,14 @@ export default function AddFarmCard({
 
         <div className="inline-flex items-start pt-0 pb-2 px-0 flex-col relative flex-[0_0_auto]">
           <div className="inline-flex items-center flex-col relative flex-[0_0_auto]">
-            <div className="relative flex items-center justify-center w-[162.84px] h-8 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-2xl text-center tracking-[0] leading-8 whitespace-nowrap">
+            <div className="relative flex items-center justify-center h-8 mt-[-1.00px] [font-family:'Manrope-Bold',Helvetica] font-bold text-white text-xl sm:text-2xl text-center tracking-[0] leading-8 whitespace-nowrap">
               Add New Farm
             </div>
           </div>
         </div>
 
         <div className="inline-flex flex-col max-w-[180px] items-center px-[12.62px] py-0 relative flex-[0_0_auto]">
-          <div className="relative w-[154.74px] h-10 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#ffffffb2] text-sm text-center tracking-[0] leading-5">
+          <div className="relative h-10 mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#ffffffb2] text-sm text-center tracking-[0] leading-5">
             Expand your digital
             <br />
             greenhouse ecosystem
@@ -85,7 +85,7 @@ export default function AddFarmCard({
             onClick={handleClose}
           />
 
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 w-[450px] z-50 shadow-xl">
+          <div className="fixed top-1/2 left-1/2 z-50 w-[92vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-[#00450D]">
                 Add New Farm
@@ -105,7 +105,7 @@ export default function AddFarmCard({
               <input
                 type="text"
                 placeholder="e.g. Sunny Brook Orchards"
-                className="w-full px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
+                className="w-full text-[#000000] px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
                 value={farmName}
                 onChange={(e) => setFarmName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
@@ -119,7 +119,7 @@ export default function AddFarmCard({
               <input
                 type="text"
                 placeholder="City, State or Coordinates"
-                className="w-full px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
+                className="w-full text-[#000000] px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
