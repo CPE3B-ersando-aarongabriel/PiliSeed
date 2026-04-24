@@ -1,4 +1,4 @@
-<img src="public/landing/Hero.png">
+<img src="assets/PiliSeed.png">
 
 # PiliSeed
 
@@ -176,43 +176,43 @@ npm run build
 
 | Mobile                                              | Guide                                                                                                  |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| <img src="public/assets/farms.png" width="220"/> | Manage farm records, location details, and active farm selection used by analytics and dashboard APIs. |
+| <img src="assets/farms.png" width="220"/> | Manage farm records, location details, and active farm selection used by analytics and dashboard APIs. |
 
 ### Private Tab: Recommendations (/recommendations)
 
 | Mobile                                              | Guide                                                                                          |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| <img src="public/assets/recommendations.png" width="220"/> | Displays ranked crops, recommendation analysis text, warning flags, and latest session output. |
+| <img src="assets/recommendations.png" width="220"/> | Displays ranked crops, recommendation analysis text, warning flags, and latest session output. |
 
 ### Private Tab: Weather (/weather)
 
 | Mobile                                                | Guide                                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="public/assets/weather.png" width="220"/> | Visualizes current and forecast weather signals that feed recommendation and yield context. |
+| <img src="assets/weather.png" width="220"/> | Visualizes current and forecast weather signals that feed recommendation and yield context. |
 
 ### Private Tab: Yield (/yield)
 
 | Mobile                                                     | Guide                                                                                       |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="public/assets/yield.png" width="220"/> | Presents expected yield and revenue signals derived from soil, weather, and market context. |
+| <img src="assets/yield.png" width="220"/> | Presents expected yield and revenue signals derived from soil, weather, and market context. |
 
 ### Private Tab: Profile (/profile)
 
 | Mobile                                            | Guide                                                                                |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| <img src="public/assets/profile.png" width="220"/> | Allows user profile updates including identity details and profile image management. |
+| <img src="assets/profile.png" width="220"/> | Allows user profile updates including identity details and profile image management. |
 
 ### Private Tab: Parameters (/parameters)
 
 | Mobile                                                     | Guide                                                                                |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| <img src="public/assets/parameters.png" width="220"/> | Hosts configurable preferences and operational parameters used by private workflows. |
+| <img src="assets/parameters.png" width="220"/> | Hosts configurable preferences and operational parameters used by private workflows. |
 
 ### Private Tab: History (/history)
 
 | Mobile                                            | Guide                                                                             |
 | ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <img src="public/assets/history.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
+| <img src="assets/history.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
 
 ## Project Architecture
 
