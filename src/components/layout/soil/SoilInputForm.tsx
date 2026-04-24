@@ -3,13 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { 
-  Clover,
-  Droplet,
-  FlaskRound,
-  Search,
- } from "lucide-react";
- 
+import { Clover, Droplet, FlaskRound, Search } from "lucide-react";
+
 type FarmOption = {
   id: string;
   name: string;
@@ -294,12 +289,14 @@ export default function SoilInputForm({
   const router = useRouter();
   const [values, setValues] = useState<SoilInputValues>(initialValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitPhase, setSubmitPhase] = useState<"idle" | "analyzing" | "generating">("idle");
+  const [submitPhase, setSubmitPhase] = useState<
+    "idle" | "analyzing" | "generating"
+  >("idle");
   const [isFetchingDevice, setIsFetchingDevice] = useState(false);
   const [isLinkingDevice, setIsLinkingDevice] = useState(false);
   const [isCheckingDeviceStatus, setIsCheckingDeviceStatus] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [errors, setErrors] = useState<{plantingDuration?: string;}>({});
+  const [errors, setErrors] = useState<{ plantingDuration?: string }>({});
   const [linkedDeviceId, setLinkedDeviceId] = useState<string | null>(null);
   const [linkedDeviceName, setLinkedDeviceName] = useState<string | null>(null);
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
@@ -340,7 +337,9 @@ export default function SoilInputForm({
     ? "Get Data from Device"
     : "Connect Device";
   const submitStatusLabel =
-    submitPhase === "generating" ? "Generating Recommendation..." : "Analyzing Soil...";
+    submitPhase === "generating"
+      ? "Generating Recommendation..."
+      : "Analyzing Soil...";
 
   useEffect(() => {
     if (!isSubmitting) {
@@ -748,9 +747,8 @@ export default function SoilInputForm({
     }
 
     if (Number(values.plantingDuration) < 20) {
-    setSubmitError("Planting Duration must be at least 20 days."
-    );
-    return;
+      setSubmitError("Planting Duration must be at least 20 days.");
+      return;
     }
 
     if (!hasRequiredPlanningInputs) {
@@ -904,7 +902,6 @@ export default function SoilInputForm({
               <p className="mt-2 text-sm font-semibold text-[#41493E]">
                 Please stay on this page while we complete your recommendation.
               </p>
-              
             </div>
           </div>
         </div>
@@ -943,7 +940,7 @@ export default function SoilInputForm({
           </div>
           <div className="border-t border-[#C0C9BB1A] pt-4">
             <div className="mb-4 flex items-center gap-3">
-              <Clover className="h-4.5 w-4.5 text-[#003E63]"/>
+              <Clover className="h-4.5 w-4.5 text-[#003E63]" />
               <span className="text-sm font-bold tracking-[1.40px] text-[#171D14]">
                 PLANTING PLAN INPUTS
               </span>
@@ -956,8 +953,8 @@ export default function SoilInputForm({
                     {field.label}
                   </label>
 
-                  {field.name === "landSize" || field.name === "plantingDuration" ? (
-
+                  {field.name === "landSize" ||
+                  field.name === "plantingDuration" ? (
                     <div className="flex overflow-hidden rounded-md bg-[#E3EBDC]">
                       <input
                         type="text"
@@ -968,8 +965,14 @@ export default function SoilInputForm({
                         }
                         placeholder={field.placeholder}
                         className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
-                        inputMode={field.name === "landSize" ? "decimal" : "numeric"}
-                        pattern={field.name === "landSize" ? "^\\d+(\\.\\d+)?$" : "^\\d+$"}
+                        inputMode={
+                          field.name === "landSize" ? "decimal" : "numeric"
+                        }
+                        pattern={
+                          field.name === "landSize"
+                            ? "^\\d+(\\.\\d+)?$"
+                            : "^\\d+$"
+                        }
                       />
                       <span className="inline-flex items-center border-l border-[#C0C9BB] px-4 text-sm font-semibold text-[#41493E]">
                         {field.name === "landSize" ? "hectares" : "day/s"}
@@ -1023,7 +1026,7 @@ export default function SoilInputForm({
               }
               className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#00450D] px-4 py-2.5 sm:py-4 text-xs sm:text-base shadow-[0px_8px_10px_-6px_#00450D33,0px_20px_25px_-5px_#00450D33] transition-colors hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]"/>
+              <Search className="h-3.5 w-3.5 sm:h-5 sm:w-5 shrink-0 text-[#FFFFFF]" />
               <span className="text-center leading-tight whitespace-nowrap font-semibold text-white">
                 {isSubmitting ? submitStatusLabel : "Get Crop Recommendation"}
               </span>
@@ -1031,7 +1034,8 @@ export default function SoilInputForm({
 
             {!hasRequiredPlanningInputs && (
               <p className="mt-4 text-center text-xs font-semibold text-[#9C4A00]">
-                Land Size, Planting Duration, Primary Goal, and Budget are required.
+                Land Size, Planting Duration, Primary Goal, and Budget are
+                required.
               </p>
             )}
 
@@ -1063,7 +1067,7 @@ export default function SoilInputForm({
 
               <div className="mt-6 flex flex-col gap-4 md:gap-6">
                 <div className="flex items-center gap-3">
-                  <FlaskRound className="h-4.5 w-4.5 text-[#41493E]"/>
+                  <FlaskRound className="h-4.5 w-4.5 text-[#41493E]" />
                   <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                     NPK and pH inputs
                   </span>
@@ -1104,7 +1108,7 @@ export default function SoilInputForm({
               <div className="mt-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <div className="flex items-center gap-3 px-1 py-1.5">
-                    <Droplet className="h-4.5 w-4.5 text-[#00450D]"/>
+                    <Droplet className="h-4.5 w-4.5 text-[#00450D]" />
                     <div className="flex flex-col">
                       <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#41493E]">
                         Sensor inputs
@@ -1116,7 +1120,7 @@ export default function SoilInputForm({
                       </span>
                     </div>
                   </div>
-                  <button
+                  {/* <button
                     type="button"
                     onClick={handleDeviceSync}
                     disabled={isDeviceActionDisabled}
@@ -1135,7 +1139,7 @@ export default function SoilInputForm({
                     ) : (
                       deviceActionLabel
                     )}
-                  </button>
+                  </button> */}
                 </div>
 
                 <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -1185,13 +1189,13 @@ export default function SoilInputForm({
             </details>
           </div>
 
-          <div className="border-t border-[#C0C9BB1A] pt-6">
+          {/* <div className="border-t border-[#C0C9BB1A] pt-6">
             <p className="text-xs leading-5 text-[#41493E]">
               Environmental readings are optional and come from the connected
               device. Device import currently includes moisture, light,
               temperature, and humidity.
             </p>
-          </div>
+          </div> */}
 
           <div className="border-t border-[#C0C9BB1A] pt-6">
             <button
