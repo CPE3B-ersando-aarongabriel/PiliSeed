@@ -248,8 +248,8 @@ export async function GET(
 
     const geocode = hasStoredGeocode(farm)
       ? {
-          latitude: farm.locationLatitude,
-          longitude: farm.locationLongitude,
+          latitude: farm.locationLatitude as number,
+          longitude: farm.locationLongitude as number,
           formattedAddress: farm.location ?? "Selected farm location",
           confidence: farm.locationConfidence ?? 1,
           source: farm.locationSource ?? "farm-selected",
