@@ -22,6 +22,10 @@ const updateFarmSchema = z
   .object({
     name: z.string().trim().min(1).max(120).optional(),
     location: z.string().trim().min(2).max(180).nullable().optional(),
+    locationLatitude: z.number().min(-90).max(90).nullable().optional(),
+    locationLongitude: z.number().min(-180).max(180).nullable().optional(),
+    locationConfidence: z.number().min(0).max(1).nullable().optional(),
+    locationSource: z.string().trim().min(1).max(80).nullable().optional(),
     isActive: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {

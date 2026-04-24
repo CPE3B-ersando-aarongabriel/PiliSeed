@@ -10,6 +10,7 @@ import AddFarmCard from "@/components/layout/farms/AddFarmCard";
 import FarmCard from "@/components/layout/farms/FarmCard";
 import { fetchWithAuth, extractApiData, getApiErrorMessage } from "@/lib/apiClient";
 import { getClientAuth } from "@/lib/firebaseClient";
+import type { SelectedGeocodeLocation } from "@/lib/analysisContracts";
 
 const MAX_FARMS = 5;
 const FARM_CARD_STRIP_COLORS = ["#CFE6B8", "#E8DFA3"];
@@ -18,6 +19,10 @@ type FarmRecord = {
   id: string;
   name: string;
   location: string | null;
+  locationLatitude: number | null;
+  locationLongitude: number | null;
+  locationConfidence: number | null;
+  locationSource: string | null;
   isActive: boolean;
 };
 
@@ -181,7 +186,11 @@ export default function FarmsPage() {
     });
   };
 
-  const createFarm = async (name: string, location: string) => {
+  const createFarm = async (
+    name: string,
+    location: string,
+    geocode: SelectedGeocodeLocation | null,
+  ) => {
     if (!currentUser) {
       setPageError("Sign in to add farms.");
       return;
@@ -194,6 +203,10 @@ export default function FarmsPage() {
       const payload = {
         name: name.trim(),
         location: location.trim() || null,
+        locationLatitude: geocode?.latitude ?? null,
+        locationLongitude: geocode?.longitude ?? null,
+        locationConfidence: geocode?.confidence ?? null,
+        locationSource: geocode?.source ?? null,
       };
       const { response, body } = await fetchWithAuth(currentUser, "/api/farms", {
         method: "POST",
@@ -222,13 +235,17 @@ export default function FarmsPage() {
     }
   };
 
-  const handleAddFarmFromModal = (name: string, location: string) => {
+  const handleAddFarmFromModal = (
+    name: string,
+    location: string,
+    geocode: SelectedGeocodeLocation | null,
+  ) => {
     if (isDuplicateFarm(name, location)) {
       toast.error("A farm with this name or location already exists");
       return;
     }
 
-    createFarm(name, location);
+    return createFarm(name, location, geocode);
   };
 
   return (
@@ -317,6 +334,7 @@ export default function FarmsPage() {
           onAdd={handleAddFarmFromModal}
           currentFarmCount={farms.length}
           maxFarms={MAX_FARMS}
+          currentUser={currentUser}
         />
 
         {farms.map((farm, index) => (
