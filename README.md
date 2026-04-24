@@ -170,7 +170,7 @@ npm run build
 
 | Mobile                                               | Guide                                                                                             |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| <img src="public/assets/dashboard.png" width="220"/> | Aggregates summary insights across weather, soil, recommendations, and yield for the active farm. |
+| <img src="assets/dashboard.png" width="220"/> | Aggregates summary insights across weather, soil, recommendations, and yield for the active farm. |
 
 ### Private Tab: Farms (/farms)
 
@@ -215,8 +215,6 @@ npm run build
 | <img src="assets/history.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
 
 ## Project Architecture
-
-![PiliSeed Architecture]
 
 ```mermaid
 graph LR
