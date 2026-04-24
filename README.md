@@ -134,37 +134,37 @@ npm run build
 
 | Mobile                                              | Guide                                                                                               |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| <img src="public/assets/landing.png" width="220"/> | Entry page for product overview, problem framing, and navigation to login/signup and feature pages. |
+| <img src="assets/landing.png" width="220"/> | Entry page for product overview, problem framing, and navigation to login/signup and feature pages. |
 
 ### Public Page: About (/about)
 
 | Mobile                                          | Guide                                                                |
 | ----------------------------------------------- | -------------------------------------------------------------------- |
-| <img src="public/assets/about.png" width="220"/> | Presents team, product context, and background details for PiliSeed. |
+| <img src="assets/about.png" width="220"/> | Presents team, product context, and background details for PiliSeed. |
 
 ### Public Page: Features (/features)
 
 | Mobile                                            | Guide                                                                     |
 | ------------------------------------------------- | ------------------------------------------------------------------------- |
-| <img src="public/assets/features.png" width="220"/> | Shows major product capabilities and value propositions in feature cards. |
+| <img src="assets/features.png" width="220"/> | Shows major product capabilities and value propositions in feature cards. |
 
 ### Public Page: How It Works (/how-it-works)
 
 | Mobile                                                | Guide                                                                           |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------- |
-| <img src="public/assets/how-it-works.png" width="220"/> | Explains the end-to-end flow from data input to recommendations and monitoring. |
+| <img src="assets/how-it-works.png" width="220"/> | Explains the end-to-end flow from data input to recommendations and monitoring. |
 
 ### Public Page: Login (/login)
 
 | Mobile                                          | Guide                                                                                   |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------- |
-| <img src="public/assets/login.png" width="220"/> | Authenticates users through Firebase-backed sign-in flow before private feature access. |
+| <img src="assets/login.png" width="220"/> | Authenticates users through Firebase-backed sign-in flow before private feature access. |
 
 ### Public Page: Signup (/signup)
 
 | Mobile                                            | Guide                                                                             |
 | ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <img src="public/assets/signup.png" width="220"/> | Registers new users and creates the initial profile scaffold for farm onboarding. |
+| <img src="assets/signup.png" width="220"/> | Registers new users and creates the initial profile scaffold for farm onboarding. |
 
 ### Private Tab: Dashboard (/dashboard)
 
@@ -216,11 +216,18 @@ npm run build
 
 ## Project Architecture
 
-![PiliSeed Architecture](docs/frontend/image.png)
+![PiliSeed Architecture]
 
-High-level backend flow:
-
-auth -> ownership validation -> input validation -> provider normalization -> deterministic scoring -> optional AI explanation -> Firestore persistence -> API response envelope
+```mermaid
+graph LR
+    A([Auth]) --> B[Ownership Validation]
+    B --> C[Input Validation]
+    C --> D[Provider Normalization]
+    D --> E[Deterministic Scoring]
+    E --> F[Optional AI Explanation]
+    F --> G[(Firestore Persistence)]
+    G --> H([API Response Envelope])
+```
 
 ## SYSTEM ARCHITECTURE
 
