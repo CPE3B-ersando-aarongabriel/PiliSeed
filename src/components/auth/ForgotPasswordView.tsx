@@ -7,10 +7,14 @@ import { toast } from "sonner";
 
 type ForgotPasswordViewProps = {
   title?: string;
+  backHref?: string;
+  backLabel?: string;
 };
 
 export function ForgotPasswordView({
   title = "Forgot Password",
+  backHref = "/login",
+  backLabel = "Back to Login",
 }: ForgotPasswordViewProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -114,8 +118,8 @@ export function ForgotPasswordView({
 
         <div className="mt-6 text-sm text-[#4a5a45] flex items-center gap-2">
           <span>Remember your password?</span>
-          <Link className="font-semibold text-[#0d631b] hover:underline" href="/login">
-            Back to Login
+          <Link className="font-semibold text-[#0d631b] hover:underline" href={backHref}>
+            {backLabel}
           </Link>
         </div>
       </div>

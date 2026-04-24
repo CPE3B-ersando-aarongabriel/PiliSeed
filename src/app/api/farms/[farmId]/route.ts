@@ -20,7 +20,7 @@ const farmParamsSchema = z.object({
 
 const updateFarmSchema = z
   .object({
-    name: z.string().trim().min(1).max(120).optional(),
+    name: z.string().trim().min(1).max(25).optional(),
     location: z.string().trim().min(2).max(180).nullable().optional(),
     locationLatitude: z.number().min(-90).max(90).nullable().optional(),
     locationLongitude: z.number().min(-180).max(180).nullable().optional(),

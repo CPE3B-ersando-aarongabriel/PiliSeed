@@ -161,6 +161,9 @@ const planningFields = [
   },
 ];
 
+const LAND_SIZE_PATTERN = /^\d+(\.\d+)?$/;
+const PLANTING_DURATION_PATTERN = /^\d+$/;
+
 function getSoilInputCacheKey(farmId: string) {
   return `piliSeed.soilInput.${farmId}`;
 }
@@ -296,6 +299,7 @@ export default function SoilInputForm({
   const [isLinkingDevice, setIsLinkingDevice] = useState(false);
   const [isCheckingDeviceStatus, setIsCheckingDeviceStatus] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [errors, setErrors] = useState<{plantingDuration?: string;}>({});
   const [linkedDeviceId, setLinkedDeviceId] = useState<string | null>(null);
   const [linkedDeviceName, setLinkedDeviceName] = useState<string | null>(null);
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
@@ -493,6 +497,32 @@ export default function SoilInputForm({
   }
 
   function handleFieldChange(field: keyof SoilInputValues, value: string) {
+    if (field === "landSize" && value !== "" && !/^\d*\.?\d*$/.test(value)) {
+      return;
+    }
+
+    if (field === "plantingDuration") {
+      if (value !== "" && !/^\d*$/.test(value)) return;
+      setValues((previousValues) => ({
+        ...previousValues,
+        [field]: value,
+      }));
+
+      if (value !== "" && Number(value) < 20) {
+        setErrors((prev) => ({
+          ...prev,
+          plantingDuration: "Must be at least 20 days",
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          plantingDuration: undefined,
+        }));
+      }
+
+      return;
+    }
+
     setValues((previousValues) => ({
       ...previousValues,
       [field]: value,
@@ -717,10 +747,26 @@ export default function SoilInputForm({
       return;
     }
 
+    if (Number(values.plantingDuration) < 20) {
+    setSubmitError("Planting Duration must be at least 20 days."
+    );
+    return;
+    }
+
     if (!hasRequiredPlanningInputs) {
       setSubmitError(
         "Complete Land Size, Planting Duration, Primary Goal, and Budget before getting recommendations.",
       );
+      return;
+    }
+
+    if (!LAND_SIZE_PATTERN.test(values.landSize.trim())) {
+      setSubmitError("Land Size must be a whole number or decimal value.");
+      return;
+    }
+
+    if (!PLANTING_DURATION_PATTERN.test(values.plantingDuration.trim())) {
+      setSubmitError("Planting Duration must be a whole number.");
       return;
     }
 
@@ -911,6 +957,7 @@ export default function SoilInputForm({
                   </label>
 
                   {field.name === "landSize" || field.name === "plantingDuration" ? (
+
                     <div className="flex overflow-hidden rounded-md bg-[#E3EBDC]">
                       <input
                         type="text"
@@ -921,6 +968,8 @@ export default function SoilInputForm({
                         }
                         placeholder={field.placeholder}
                         className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm font-normal text-[#41493E] outline-none placeholder:text-[#7B8776]"
+                        inputMode={field.name === "landSize" ? "decimal" : "numeric"}
+                        pattern={field.name === "landSize" ? "^\\d+(\\.\\d+)?$" : "^\\d+$"}
                       />
                       <span className="inline-flex items-center border-l border-[#C0C9BB] px-4 text-sm font-semibold text-[#41493E]">
                         {field.name === "landSize" ? "hectares" : "day/s"}
@@ -987,7 +1036,7 @@ export default function SoilInputForm({
             )}
 
             {submitError && (
-              <p className="mt-4 text-sm font-semibold text-[#9C4A00]">
+              <p className="mt-4 text-sm text-center font-semibold text-[#9C4A00]">
                 {submitError}
               </p>
             )}
@@ -1158,7 +1207,7 @@ export default function SoilInputForm({
             </button>
 
             {submitError && (
-              <p className="mt-4 text-sm font-semibold text-[#9C4A00]">
+              <p className="mt-4 text-centertext-sm font-semibold text-[#9C4A00]">
                 {submitError}
               </p>
             )}
