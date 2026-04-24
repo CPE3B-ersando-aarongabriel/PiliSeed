@@ -5,7 +5,13 @@ import { FormEvent, useState } from "react";
 import { Mail, Send } from "lucide-react";
 import { toast } from "sonner";
 
-export function ForgotPasswordView() {
+type ForgotPasswordViewProps = {
+  title?: string;
+};
+
+export function ForgotPasswordView({
+  title = "Forgot Password",
+}: ForgotPasswordViewProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -65,7 +71,7 @@ export function ForgotPasswordView() {
     <section className="w-full flex items-center justify-center px-4 py-14 sm:py-20 bg-[#f5fced]">
       <div className="w-full max-w-xl rounded-3xl bg-white shadow-sm border border-[#e6eddf] p-6 sm:p-8">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0d631b] tracking-tight">
-          Forgot Password
+          {title}
         </h1>
         <p className="mt-2 text-sm sm:text-base text-[#4a5a45]">
           Enter your account email and we will generate a secure, time-limited reset link.

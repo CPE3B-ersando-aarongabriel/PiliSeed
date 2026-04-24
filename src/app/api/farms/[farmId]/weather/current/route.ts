@@ -26,6 +26,31 @@ type FarmWeatherCurrentContext = {
 const geocodingService = createGeocodingService();
 const weatherService = createWeatherService();
 
+function resolveStoredGeocode(farm: {
+  locationLatitude: number | null;
+  locationLongitude: number | null;
+  location: string | null;
+  locationConfidence: number | null;
+  locationSource: string | null;
+}) {
+  if (
+    typeof farm.locationLatitude === "number" &&
+    Number.isFinite(farm.locationLatitude) &&
+    typeof farm.locationLongitude === "number" &&
+    Number.isFinite(farm.locationLongitude)
+  ) {
+    return {
+      latitude: farm.locationLatitude,
+      longitude: farm.locationLongitude,
+      formattedAddress: farm.location ?? "Selected farm location",
+      confidence: farm.locationConfidence ?? 1,
+      source: farm.locationSource ?? "farm-selected",
+    };
+  }
+
+  return null;
+}
+
 export async function GET(
   request: Request,
   context: FarmWeatherCurrentContext,
@@ -53,10 +78,12 @@ export async function GET(
       );
     }
 
-    const geocodes = await geocodingService.geocodeLocationText(farm.location, {
-      limit: 1,
-    });
-    const geocode = geocodes[0];
+    const storedGeocode = resolveStoredGeocode(farm);
+    const geocode = storedGeocode
+      ? storedGeocode
+      : (await geocodingService.geocodeLocationText(farm.location, {
+          limit: 1,
+        }))[0];
 
     if (!geocode) {
       return errorResponse(

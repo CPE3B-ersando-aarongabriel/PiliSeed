@@ -1,4 +1,4 @@
-<img src="public/landing/Hero.png">
+<img src="assets/PiliSeed.png">
 
 # PiliSeed
 
@@ -134,37 +134,37 @@ npm run build
 
 | Mobile                                              | Guide                                                                                               |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| <img src="public/assets/landing.png" width="220"/> | Entry page for product overview, problem framing, and navigation to login/signup and feature pages. |
+| <img src="assets/landing.png" width="220"/> | Entry page for product overview, problem framing, and navigation to login/signup and feature pages. |
 
 ### Public Page: About (/about)
 
 | Mobile                                          | Guide                                                                |
 | ----------------------------------------------- | -------------------------------------------------------------------- |
-| <img src="public/assets/about.png" width="220"/> | Presents team, product context, and background details for PiliSeed. |
+| <img src="assets/about.png" width="220"/> | Presents team, product context, and background details for PiliSeed. |
 
 ### Public Page: Features (/features)
 
 | Mobile                                            | Guide                                                                     |
 | ------------------------------------------------- | ------------------------------------------------------------------------- |
-| <img src="public/assets/features.png" width="220"/> | Shows major product capabilities and value propositions in feature cards. |
+| <img src="assets/features.png" width="220"/> | Shows major product capabilities and value propositions in feature cards. |
 
 ### Public Page: How It Works (/how-it-works)
 
 | Mobile                                                | Guide                                                                           |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------- |
-| <img src="public/assets/how-it-works.png" width="220"/> | Explains the end-to-end flow from data input to recommendations and monitoring. |
+| <img src="assets/how-it-works.png" width="220"/> | Explains the end-to-end flow from data input to recommendations and monitoring. |
 
 ### Public Page: Login (/login)
 
 | Mobile                                          | Guide                                                                                   |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------- |
-| <img src="public/assets/login.png" width="220"/> | Authenticates users through Firebase-backed sign-in flow before private feature access. |
+| <img src="assets/login.png" width="220"/> | Authenticates users through Firebase-backed sign-in flow before private feature access. |
 
 ### Public Page: Signup (/signup)
 
 | Mobile                                            | Guide                                                                             |
 | ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <img src="public/assets/signup.png" width="220"/> | Registers new users and creates the initial profile scaffold for farm onboarding. |
+| <img src="assets/signup.png" width="220"/> | Registers new users and creates the initial profile scaffold for farm onboarding. |
 
 ### Private Tab: Dashboard (/dashboard)
 
@@ -176,51 +176,58 @@ npm run build
 
 | Mobile                                              | Guide                                                                                                  |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| <img src="public/assets/farms.png" width="220"/> | Manage farm records, location details, and active farm selection used by analytics and dashboard APIs. |
+| <img src="assets/farms.png" width="220"/> | Manage farm records, location details, and active farm selection used by analytics and dashboard APIs. |
 
 ### Private Tab: Recommendations (/recommendations)
 
 | Mobile                                              | Guide                                                                                          |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| <img src="public/assets/recommendations.png" width="220"/> | Displays ranked crops, recommendation analysis text, warning flags, and latest session output. |
+| <img src="assets/recommendations.png" width="220"/> | Displays ranked crops, recommendation analysis text, warning flags, and latest session output. |
 
 ### Private Tab: Weather (/weather)
 
 | Mobile                                                | Guide                                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="public/assets/weather.png" width="220"/> | Visualizes current and forecast weather signals that feed recommendation and yield context. |
+| <img src="assets/weather.png" width="220"/> | Visualizes current and forecast weather signals that feed recommendation and yield context. |
 
 ### Private Tab: Yield (/yield)
 
 | Mobile                                                     | Guide                                                                                       |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="public/assets/yield.png" width="220"/> | Presents expected yield and revenue signals derived from soil, weather, and market context. |
+| <img src="assets/yield.png" width="220"/> | Presents expected yield and revenue signals derived from soil, weather, and market context. |
 
 ### Private Tab: Profile (/profile)
 
 | Mobile                                            | Guide                                                                                |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| <img src="public/assets/profile.png" width="220"/> | Allows user profile updates including identity details and profile image management. |
+| <img src="assets/profile.png" width="220"/> | Allows user profile updates including identity details and profile image management. |
 
 ### Private Tab: Parameters (/parameters)
 
 | Mobile                                                     | Guide                                                                                |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| <img src="public/assets/parameters.png" width="220"/> | Hosts configurable preferences and operational parameters used by private workflows. |
+| <img src="assets/parameters.png" width="220"/> | Hosts configurable preferences and operational parameters used by private workflows. |
 
 ### Private Tab: History (/history)
 
 | Mobile                                            | Guide                                                                             |
 | ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| <img src="public/assets/history.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
+| <img src="assets/history.png" width="220"/> | Displays historical activity and recommendation sessions for longitudinal review. |
 
 ## Project Architecture
 
-![PiliSeed Architecture](docs/frontend/image.png)
+![PiliSeed Architecture]
 
-High-level backend flow:
-
-auth -> ownership validation -> input validation -> provider normalization -> deterministic scoring -> optional AI explanation -> Firestore persistence -> API response envelope
+```mermaid
+graph LR
+    A([Auth]) --> B[Ownership Validation]
+    B --> C[Input Validation]
+    C --> D[Provider Normalization]
+    D --> E[Deterministic Scoring]
+    E --> F[Optional AI Explanation]
+    F --> G[(Firestore Persistence)]
+    G --> H([API Response Envelope])
+```
 
 ## SYSTEM ARCHITECTURE
 
