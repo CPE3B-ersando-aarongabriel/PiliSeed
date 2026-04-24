@@ -15,7 +15,7 @@ export default function DiversificationCard({
   match,
 }: DiversificationCardProps) {
   return (
-    <div className="bg-[#FDCDBC] rounded-2xl shadow overflow-hidden h-full flex flex-col">
+    <div className="bg-[#FDCDBC] rounded-2xl shadow overflow-hidden h-full flex flex-col transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl">
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start gap-3 mb-4">
           <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">

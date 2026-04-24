@@ -58,6 +58,7 @@ export const LoginSection = (): JSX.Element => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   async function completeLogin(user: FirebaseUser, fallbackName = "") {
     const idToken = await user.getIdToken();
@@ -82,6 +83,7 @@ export const LoginSection = (): JSX.Element => {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedEmail = email.trim();
 
     if (!hasFirebaseConfig) {
       toast.error(
@@ -90,8 +92,13 @@ export const LoginSection = (): JSX.Element => {
       return;
     }
 
-    if (!email.trim()) {
+    if (!trimmedEmail) {
       toast.error("Please enter your email address.");
+      return;
+    }
+
+    if (!EMAIL_PATTERN.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 
@@ -106,7 +113,7 @@ export const LoginSection = (): JSX.Element => {
       const clientAuth = getClientAuth();
       const credential = await signInWithEmailAndPassword(
         clientAuth,
-        email,
+        trimmedEmail,
         password,
       );
 
@@ -278,6 +285,7 @@ export const LoginSection = (): JSX.Element => {
                     name="login-email"
                     placeholder="john@piliseed.com"
                     type="email"
+                    maxLength={254}
                     autoComplete="off"
                     autoCapitalize="none"
                     autoCorrect="off"
@@ -314,6 +322,7 @@ export const LoginSection = (): JSX.Element => {
                     name="login-password"
                     placeholder="••••••••"
                     type={showPassword ? "text" : "password"}
+                    maxLength={128}
                     autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

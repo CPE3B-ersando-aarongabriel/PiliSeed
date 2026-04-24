@@ -50,6 +50,8 @@ async function callSignupEndpoint(
 
 export const SignupSection = (): JSX.Element => {
   const router = useRouter();
+  const MAX_USERNAME_LENGTH = 50;
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -73,6 +75,8 @@ export const SignupSection = (): JSX.Element => {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const trimmedFullName = fullName.trim();
+    const trimmedEmail = email.trim();
 
     if (!hasFirebaseConfig) {
       toast.error(
@@ -81,13 +85,23 @@ export const SignupSection = (): JSX.Element => {
       return;
     }
 
-    if (!fullName.trim()) {
+    if (!trimmedFullName) {
       toast.error("Please enter your full name.");
       return;
     }
 
-    if (!email.trim()) {
+    if (trimmedFullName.length > MAX_USERNAME_LENGTH) {
+      toast.error(`Username must be ${MAX_USERNAME_LENGTH} characters or less.`);
+      return;
+    }
+
+    if (!trimmedEmail) {
       toast.error("Please enter your email address.");
+      return;
+    }
+
+    if (!EMAIL_PATTERN.test(trimmedEmail)) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 
@@ -102,7 +116,7 @@ export const SignupSection = (): JSX.Element => {
       const clientAuth = getClientAuth();
       const credential = await createUserWithEmailAndPassword(
         clientAuth,
-        email,
+        trimmedEmail,
         password,
       );
 
@@ -274,6 +288,7 @@ export const SignupSection = (): JSX.Element => {
                       autoComplete="off"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      maxLength={MAX_USERNAME_LENGTH}
                       placeholder="Johnathan Appleseed"
                       className="autofill-white relative grow border-[none] [background:none] self-stretch mt-[-1.00px] [font-family:'Inter-Regular',Helvetica] font-normal text-[#000000] text-base tracking-[0] leading-[normal] p-0 outline-none placeholder:text-[#c0c9bb]"
                     />
@@ -306,6 +321,7 @@ export const SignupSection = (): JSX.Element => {
                       name="signup-email"
                       placeholder="john@piliseed.com"
                       type="email"
+                      maxLength={254}
                       autoComplete="off"
                       autoCapitalize="none"
                       autoCorrect="off"
@@ -340,6 +356,7 @@ export const SignupSection = (): JSX.Element => {
                       id="password"
                       name="signup-password"
                       type={showPassword ? "text" : "password"}
+                      maxLength={128}
                       autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}

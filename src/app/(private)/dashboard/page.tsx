@@ -304,11 +304,13 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#EFF6E7]">
-        <p className="text-[#00450D] font-semibold text-sm sm:text-base">
-          Loading dashboard...
-        </p>
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-[#EFF6E7] px-4">
+      <div className="w-10 h-10 border-4 border-[#00450D]/20 border-t-[#00450D] rounded-full animate-spin">
       </div>
+      <p className="mt-4 text-[#00450D] font-semibold text-sm sm:text-base text-center">
+        Loading dashboard...
+      </p>
+    </div>
     );
   }
 
