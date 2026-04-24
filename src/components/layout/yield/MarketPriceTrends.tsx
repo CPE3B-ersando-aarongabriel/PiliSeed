@@ -1,6 +1,6 @@
 "use client";
 
-import { MoveUp, MoveDown, Store } from "lucide-react";
+import { TrendingUp, TrendingDown, Store } from "lucide-react";
 
 import type {
   MarketSnapshot,
@@ -22,13 +22,24 @@ interface MarketPriceTrendsCardProps {
 }
 
 function getSourceLabel(source: MarketSourceInfo | null | undefined) {
-  if (!source) {
-    return "Market feed unavailable";
-  }
-
-  const providerLabel = source.provider === "openai" ? "OpenAI fallback" : "Anomura.today";
-
+  if (!source) return "Market feed unavailable";
+  const providerLabel =
+    source.provider === "openai" ? "OpenAI fallback" : "Anomura.today";
   return source.date ? `${providerLabel} • ${source.date}` : providerLabel;
+}
+
+/** Truncate a commodity label to a max character count, appending ellipsis. */
+function truncateLabel(label: string, maxLen = 42): string {
+  if (label.length <= maxLen) return label;
+  return label.slice(0, maxLen - 1).trimEnd() + "…";
+}
+
+/** Title-case a slug-like string: "WATER_SPINACH_KANGKONG" → "Water Spinach Kangkong" */
+function formatCommodityName(raw: string): string {
+  return raw
+    .replace(/[_\-]+/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function MarketPriceTrendsCard({
@@ -39,72 +50,120 @@ export default function MarketPriceTrendsCard({
   const resolvedVariants = marketSnapshot?.variants ?? [];
 
   return (
-    <div className="market-trends-card bg-[#FDCDBC] rounded-4xl p-6 flex flex-col min-h-0 h-full w-full shadow-md overflow-y-auto">
+    <div className="market-trends-card bg-[#FDCDBC] rounded-4xl p-5 flex flex-col min-h-0 h-full w-full shadow-md overflow-y-auto">
+      {/* ── Header ── */}
       <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <span className="font-semibold text-[#7A5649] text-xs tracking-wider uppercase">
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="font-semibold text-[#7A5649] text-xs tracking-wider uppercase truncate">
             Market Price Trends
           </span>
-          <p className="font-normal text-[#7A5649]/60 text-[10px] leading-[12.5px]">
+          <p className="font-normal text-[#7A5649]/55 text-[10px] leading-[14px] truncate">
             {getSourceLabel(marketSource)}
           </p>
         </div>
-        <Store className="w-6 h-6 text-[#7A5649] shrink-0" />
+        <div className="shrink-0 bg-[#7A5649]/10 rounded-xl p-1.5">
+          <Store className="w-4 h-4 text-[#7A5649]" />
+        </div>
       </div>
-      <div className="flex flex-col gap-3">
+
+      {/* ── Main price list ── */}
+      <div className="flex flex-col gap-2.5">
         {prices.length === 0 ? (
-          <p className="text-sm font-semibold text-[#7A5649]/70">Market pricing will appear once a forecast is available.</p>
+          <p className="text-xs font-medium text-[#7A5649]/60 italic">
+            Market pricing will appear once a forecast is available.
+          </p>
         ) : (
           prices.map((item) => (
-            <div key={item.label} className="flex flex-col border-b border-[#7A5649]/10 pb-2 last:border-b-0 last:pb-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#7A5649]/80">{item.label}</span>
-                <span className="font-bold text-[#7A5649] text-lg">{item.price}</span>
+            <div
+              key={item.label}
+              className="rounded-2xl bg-white/50 px-3 py-2.5 flex flex-col gap-1"
+            >
+              {/* Label + price on one row, wrapping gracefully */}
+              <div className="flex items-start justify-between gap-2">
+                {/*
+                  Long label: allow wrapping, but clamp to 3 lines max.
+                  "break-words" ensures very long tokens (like slug strings) wrap.
+                */}
+                <span
+                  className="text-[11px] font-semibold leading-[1.35] text-[#7A5649]/80 break-words min-w-0 line-clamp-3"
+                  title={item.label}
+                >
+                  {item.label}
+                </span>
+
+                {/* Price: shrink-0 so it never gets squished */}
+                <span className="shrink-0 font-bold text-[#7A5649] text-sm leading-tight whitespace-nowrap">
+                  {item.price}
+                </span>
               </div>
-              <div className="flex items-center gap-1 mt-1">
+
+              {/* Change badge */}
+              <div
+                className={`inline-flex items-center gap-1 self-start rounded-full px-2 py-0.5 text-[10px] font-semibold
+                  ${item.isPositive
+                    ? "bg-[#00450D]/10 text-[#00450D]"
+                    : "bg-[#AA5649]/10 text-[#AA5649]"
+                  }`}
+              >
                 {item.isPositive ? (
-                  <MoveUp className="w-4 h-4 text-[#00450D]" />
+                  <TrendingUp className="w-3 h-3 shrink-0" />
                 ) : (
-                  <MoveDown className="w-4 h-4 text-[#AA5649]" />
+                  <TrendingDown className="w-3 h-3 shrink-0" />
                 )}
-                <span className={`font-semibold text-xs ${item.changeColor}`}>{item.change}</span>
+                <span className="truncate max-w-[12rem]">{item.change}</span>
               </div>
             </div>
           ))
         )}
       </div>
-      <div className="mt-3 flex flex-col gap-2">
-        {resolvedVariants.length > 0 ? (
-          resolvedVariants.map((variant, index) => (
-            <div
-              key={`${variant.commodityName}-${variant.score}-${variant.date ?? "no-date"}-${index}`}
-              className="rounded-2xl bg-white/65 px-3 py-2 text-[#7A5649] shadow-sm"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[11px] font-semibold leading-tight">
-                  {variant.commodityName}
-                </span>
-                <span className="text-xs font-bold whitespace-nowrap">
-                  PHP {variant.price.toFixed(2)}
-                </span>
+
+      {/* ── Variant chips ── */}
+      {resolvedVariants.length > 0 && (
+        <div className="mt-3 flex flex-col gap-2">
+          {resolvedVariants.map((variant, index) => {
+            const displayName = formatCommodityName(variant.commodityName);
+            const truncatedName = truncateLabel(displayName, 48);
+            const needsTitle = truncatedName !== displayName;
+
+            return (
+              <div
+                key={`${variant.commodityName}-${variant.score}-${variant.date ?? "no-date"}-${index}`}
+                className="rounded-2xl bg-white/65 px-3 py-2 text-[#7A5649] shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  {/*
+                    Commodity name: prettified + safely truncated.
+                    "overflow-hidden" + "break-words" handles both long pretty names
+                    and pathological slug-style strings that survive formatCommodityName.
+                  */}
+                  <span
+                    className="min-w-0 text-[11px] font-semibold leading-snug break-words line-clamp-2 overflow-hidden"
+                    title={needsTitle ? displayName : undefined}
+                  >
+                    {truncatedName}
+                  </span>
+
+                  <span className="shrink-0 whitespace-nowrap text-right text-xs font-bold">
+                    PHP {variant.price.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="mt-1 flex items-center justify-between gap-2 text-[10px] font-medium text-[#7A5649]/70">
+                  <span className="truncate">{variant.category ?? "Uncategorized"}</span>
+                  <span className="shrink-0 whitespace-nowrap">{variant.date ?? "No date"}</span>
+                </div>
               </div>
-              <div className="mt-1 flex items-center justify-between gap-3 text-[10px] font-medium text-[#7A5649]/70">
-                <span>{variant.category ?? "Uncategorized"}</span>
-                <span>{variant.date ?? "No date"}</span>
-              </div>
-            </div>
-          ))
-        ) : null}
-      </div>
+            );
+          })}
+        </div>
+      )}
+
       <style jsx>{`
         .market-trends-card {
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
-
         .market-trends-card::-webkit-scrollbar {
-          width: 0;
-          height: 0;
           display: none;
         }
       `}</style>
