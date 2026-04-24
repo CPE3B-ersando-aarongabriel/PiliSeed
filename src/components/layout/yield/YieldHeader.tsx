@@ -38,14 +38,14 @@ export default function YieldHeader({
         <h1 className="font-extrabold text-2xl sm:text-3xl lg:text-4xl text-[#171D14] tracking-tight">
           Yield Prediction
         </h1>
-        <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#41493E] leading-relaxed max-w-2xl">
-          AI-driven harvest forecasting for <span className="text-[#00450D] font-semibold">{selectedFarmName}</span>.
+        <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#41493E] leading-relaxed max-w-2xl min-w-0">
+          AI-driven harvest forecasting for <span className="inline-block max-w-full align-bottom truncate text-[#00450D] font-semibold">{selectedFarmName}</span>.
         </p>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-3 w-full lg:w-auto">
       
-        <div className="flex flex-col w-full sm:w-auto">
+        <div className="flex min-w-0 flex-col w-full sm:w-auto">
           <label className="text-[10px] font-semibold text-[#41493E] tracking-widest mb-1.5">
             SELECTED FARM
           </label>
@@ -53,9 +53,9 @@ export default function YieldHeader({
             <button
               onClick={() => setIsFarmDropdownOpen(!isFarmDropdownOpen)}
               disabled={isDisabled}
-              className="w-[200px] h-[42px] bg-[#E3eBDC] rounded-full shadow-sm flex items-center justify-between px-5 hover:bg-[#D5E0CC] transition-colors"
+              className="w-full sm:w-[200px] min-w-0 h-[42px] bg-[#E3eBDC] rounded-full shadow-sm flex items-center justify-between px-5 hover:bg-[#D5E0CC] transition-colors"
             >
-              <span className="font-semibold text-[#00450D] text-sm">
+              <span className="flex-1 min-w-0 pr-2 font-semibold text-[#00450D] text-sm truncate text-left">
                 {selectedFarmName}
               </span>
               <ChevronDown className="w-5 h-5 text-[#6B7280]" />

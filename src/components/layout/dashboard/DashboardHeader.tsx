@@ -44,16 +44,16 @@ export default function DashboardHeader({
         </div>
 
    
-        <div className="border-2 border-[#41493E]/20 bg-[#E3EBDC] rounded-full px-3 sm:px-4 lg:px-5 py-1 flex items-center w-fit">
+        <div className="border-2 border-[#41493E]/20 bg-[#E3EBDC] rounded-full px-3 sm:px-4 lg:px-5 py-1 flex items-center w-fit max-w-full">
           <div className="w-8 h-8 sm:w-9 h-9 lg:w-10 lg:h-10 rounded-full bg-[#00450D] flex items-center justify-center -ml-2 mr-2">
             <Leaf className="w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-white" />
           </div>
 
-          <div>
+          <div className="min-w-0">
             <p className="text-[10px] sm:text-[11px] lg:text-[12px] font-bold text-[#41493E]/50">
               ACTIVE FARM
             </p>
-            <p className="text-xs sm:text-[13px] lg:text-[14px] font-bold text-[#41493E]">
+            <p className="max-w-[180px] truncate text-xs sm:text-[13px] lg:text-[14px] font-bold text-[#41493E]">
               {activeFarm.name}
             </p>
           </div>
