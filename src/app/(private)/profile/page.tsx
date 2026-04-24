@@ -639,10 +639,10 @@ export default function ProfilePage() {
 
             <div className="w-full flex justify-end -mt-2">
               <Link
-                href="/forgot-password"
+                href="/change-password"
                 className="text-sm font-semibold text-[#0d631b] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0d631b] rounded-sm"
               >
-                Forgot Password?
+                Change Password
               </Link>
             </div>
 
