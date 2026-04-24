@@ -7,7 +7,7 @@ export default function ChangePasswordPage() {
     <div className="w-full min-h-screen flex flex-col bg-[#f5fced]">
       <Header />
       <div className="flex-1">
-        <ForgotPasswordView title="Change Password" />
+        <ForgotPasswordView title="Change Password" backHref="/profile" backLabel="Back to Profile" />
       </div>
       <Footer absolute={false} />
     </div>

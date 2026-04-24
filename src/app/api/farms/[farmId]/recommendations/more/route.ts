@@ -30,11 +30,19 @@ const farmParamsSchema = z.object({
   farmId: z.string().trim().min(1),
 });
 
+const landSizeFieldSchema = z.string().trim().regex(/^\d+(\.\d+)?$/, {
+  message: "Land size must be a whole number or decimal value.",
+});
+
+const plantingDurationFieldSchema = z.string().trim().regex(/^\d+$/, {
+  message: "Planting duration must be a whole number.",
+});
+
 const moreRecommendationSchema = z.object({
   budget: z.string().trim().min(1).max(40).optional(),
   goal: z.string().trim().min(1).max(80).optional(),
-  landSize: z.string().trim().min(1).max(80).optional(),
-  plantingDuration: z.string().trim().min(1).max(80).optional(),
+  landSize: landSizeFieldSchema.optional(),
+  plantingDuration: plantingDurationFieldSchema.optional(),
 });
 
 type RecommendationMoreContext = {

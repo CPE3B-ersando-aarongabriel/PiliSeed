@@ -11,7 +11,7 @@ import { ensureUserScaffold } from "../../../../lib/firestoreSchema";
 export const runtime = "nodejs";
 
 const signupBodySchema = z.object({
-  name: z.string().trim().min(1).max(80).optional(),
+  name: z.string().trim().min(1).max(50).optional(),
 });
 
 export async function POST(request: Request) {

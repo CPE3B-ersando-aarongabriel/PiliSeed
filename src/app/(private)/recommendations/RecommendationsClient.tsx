@@ -377,15 +377,6 @@ export default function RecommendationsClient() {
 
 	const featuredCrop = recommendedCrops[0] ?? null;
 	const secondaryCrops = recommendedCrops.slice(1);
-	const moistureNeed =
-		soilProfile?.moistureContent !== null && soilProfile?.moistureContent !== undefined
-			? `${soilProfile.moistureContent}%`
-			: null;
-	const tempRange =
-		soilProfile?.temperatureC !== null && soilProfile?.temperatureC !== undefined
-			? `${Math.max(-10, Math.round(soilProfile.temperatureC - 3))}°C - ${Math.round(soilProfile.temperatureC + 3)}°C`
-			: null;
-
 	function handleConfirmCropSelection() {
 		if (!selectedCrop) {
 			setCropPromptError("Choose a crop to continue.");
@@ -753,18 +744,14 @@ export default function RecommendationsClient() {
 							</div>
 						)}
 
-						<div className="grid grid-cols-1 gap-6 mb-12">
+						<div className="mb-12 grid grid-cols-1 md:grid-cols-3 auto-rows-fr gap-6">
 							<FeaturedCropCard
 								cropName={featuredCrop.crop}
 								description={featuredCrop.reason || selectedRecommendation.analysisText}
 								match={formatScore(featuredCrop.score)}
 								imageUrl={cropImageFor(featuredCrop.crop)}
-								{...(moistureNeed ? { moistureNeed } : {})}
-								{...(tempRange ? { tempRange } : {})}
 							/>
-						</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
 							{secondaryCrops.map((crop, index) => {
 								if (index === 0 && crop.crop.toLowerCase().includes("divers")) {
 									return (
