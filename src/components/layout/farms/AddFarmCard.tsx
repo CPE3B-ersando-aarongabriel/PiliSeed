@@ -1,24 +1,114 @@
 "use client";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import type { User } from "firebase/auth";
+import { Plus, Search } from "lucide-react";
+import { extractApiData, fetchWithAuth, getApiErrorMessage } from "@/lib/apiClient";
+import type { SelectedGeocodeLocation } from "@/lib/analysisContracts";
+
 interface AddFarmCardProps {
-  onAdd: (farmName: string, location: string) => void;
+  onAdd: (
+    farmName: string,
+    location: string,
+    geocode: SelectedGeocodeLocation | null,
+  ) => void | Promise<void>;
   currentFarmCount: number;
   maxFarms: number;
+  currentUser: User | null;
 }
 
 export default function AddFarmCard({
   onAdd,
   currentFarmCount,
   maxFarms,
+  currentUser,
 }: AddFarmCardProps) {
   const MAX_FARM_NAME_LENGTH = 25;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [farmName, setFarmName] = useState("");
   const [location, setLocation] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [matches, setMatches] = useState<SelectedGeocodeLocation[]>([]);
+  const [selectedMatch, setSelectedMatch] = useState<SelectedGeocodeLocation | null>(null);
   const [error, setError] = useState("");
 
-  const handleSubmit = () => {
+  function dedupeMatches(entries: SelectedGeocodeLocation[]) {
+    const uniqueMatches = new Map<string, SelectedGeocodeLocation>();
+    for (const entry of entries) {
+      const key = [entry.formattedAddress.trim().toLowerCase()].join("|");
+      if (!uniqueMatches.has(key)) {
+        uniqueMatches.set(key, entry);
+      }
+    }
+    return Array.from(uniqueMatches.values());
+  }
+
+  async function handleSearch() {
+    setError("");
+    setSearchError("");
+    if (!currentUser) {
+      setSearchError("Sign in before searching for a location.");
+      return;
+    }
+
+    if (!location.trim()) {
+      setSearchError("Please enter a location to search.");
+      return;
+    }
+
+    setIsSearching(true);
+    setMatches([]);
+    setSelectedMatch(null);
+
+    try {
+      const { response, body } = await fetchWithAuth(
+        currentUser,
+        "/api/location/geocode",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            locationText: location.trim(),
+            limit: 5,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          getApiErrorMessage(body, "Unable to search for this location.")
+        );
+      }
+
+      const data = extractApiData<{ geocodes?: SelectedGeocodeLocation[] }>(body);
+      const geocodes = data?.geocodes ?? [];
+
+      if (geocodes.length === 0) {
+        setSearchError("No matching locations were found.");
+        return;
+      }
+
+      const normalizedMatches = dedupeMatches(
+        geocodes.map((geocode) => ({
+          ...geocode,
+          queryText: location.trim(),
+        }))
+      );
+
+      setMatches(normalizedMatches);
+      setSelectedMatch(normalizedMatches[0] ?? null);
+    } catch (searchError) {
+      setSearchError(
+        searchError instanceof Error
+          ? searchError.message
+          : "Unable to search for this location."
+      );
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  const handleSubmit = async () => {
     setError("");
 
     if (!farmName.trim()) {
@@ -36,22 +126,41 @@ export default function AddFarmCard({
       return;
     }
 
+    if (!selectedMatch) {
+      setError("Search and select one of the location matches.");
+      return;
+    }
+
     if (currentFarmCount >= maxFarms) {
       setError(`Maximum ${maxFarms} farms allowed`);
       return;
     }
 
-    onAdd(farmName, location);
-    setFarmName("");
-    setLocation("");
-    setError("");
-    setIsModalOpen(false);
+    setIsAdding(true);
+
+    try {
+      await Promise.resolve(
+        onAdd(farmName, selectedMatch.formattedAddress, selectedMatch)
+      );
+      setFarmName("");
+      setLocation("");
+      setMatches([]);
+      setSelectedMatch(null);
+      setError("");
+      setSearchError("");
+      setIsModalOpen(false);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleClose = () => {
     setFarmName("");
     setLocation("");
+    setMatches([]);
+    setSelectedMatch(null);
     setError("");
+    setSearchError("");
     setIsModalOpen(false);
   };
 
@@ -124,14 +233,70 @@ export default function AddFarmCard({
               <label className="text-xs font-semibold text-[#41493E] block mb-1">
                 LOCATION
               </label>
-              <input
-                type="text"
-                placeholder="City/State"
-                className="w-full text-[#000000] px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="City and state"
+                  className="flex-1 text-[#000000] px-4 py-3 border border-[#41493E]/20 rounded-xl outline-none focus:border-[#00450D] transition"
+                  value={location}
+                  onChange={(e) => {
+                    setLocation(e.target.value);
+                    setSelectedMatch(null);
+                  }}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  disabled={isSearching || !currentUser}
+                  className="shrink-0 rounded-xl bg-[#00450D] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#005610] disabled:cursor-not-allowed disabled:opacity-60 flex items-center gap-2"
+                >
+                  <Search className="h-4 w-4" />
+                  {isSearching ? "Searching..." : "Search"}
+                </button>
+              </div>
+              {searchError && (
+                <div className="mt-2 text-sm text-[#9C4A00]">
+                  {searchError}
+                </div>
+              )}
+              <div
+                className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                  matches.length > 0
+                    ? "grid-rows-[1fr] opacity-100"
+                    : "grid-rows-[0fr] opacity-0"
+                }`}
+              >
+                <div className="min-h-0 overflow-hidden">
+                  {matches.length > 0 && (
+                    <div className="mt-3 max-h-56 space-y-2 overflow-y-auto pr-1 [scrollbar-gutter:stable] [scrollbar-width:thin] [scrollbar-color:#00450D_#E3EBDC] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[#E3EBDC] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#00450D] [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-solid [&::-webkit-scrollbar-thumb]:border-[#E3EBDC]">
+                      {matches.map((match) => {
+                        const isSelected =
+                          selectedMatch?.latitude === match.latitude &&
+                          selectedMatch?.longitude === match.longitude &&
+                          selectedMatch?.formattedAddress ===
+                            match.formattedAddress;
+                        return (
+                          <button
+                            key={`${match.formattedAddress}-${match.latitude}-${match.longitude}`}
+                            type="button"
+                            onClick={() => setSelectedMatch(match)}
+                            className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+                              isSelected
+                                ? "border-[#00450D] bg-[#EAF4E2]"
+                                : "border-[#41493E]/20 bg-white hover:bg-[#F8FAF5]"
+                            }`}
+                          >
+                            <div className="text-sm font-semibold text-[#171D14]">
+                              {match.formattedAddress}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {error && (
@@ -149,9 +314,10 @@ export default function AddFarmCard({
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 px-4 py-3 bg-[#00450D] text-white rounded-full font-semibold hover:bg-[#005610] transition"
+                disabled={isAdding}
+                className="flex-1 px-4 py-3 bg-[#00450D] text-white rounded-full font-semibold hover:bg-[#005610] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Add Farm
+                {isAdding ? "Adding..." : "Add Farm"}
               </button>
             </div>
 

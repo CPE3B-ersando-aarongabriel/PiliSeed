@@ -47,8 +47,8 @@ export default function FarmCard({
 
       <div className="flex flex-col w-full items-start justify-between flex-1 p-3.5 min-h-0 gap-1.5">
         <div className="flex items-start justify-between gap-2 w-full min-h-0">
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <div className="text-[#171D14] text-[15px] font-bold leading-5 break-words line-clamp-2">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <div className="text-[#171D14] text-[15px] font-bold leading-5 truncate">
               {name}
             </div>
 
@@ -61,7 +61,7 @@ export default function FarmCard({
             </div>
           </div>
 
-          <div className={`flex flex-shrink-0 items-center rounded-full px-2 py-0.5 text-[9px] font-semibold tracking-[0.8px] ${isActive ? "bg-[#00450D] text-white" : "invisible"}`}>
+          <div className={`flex flex-shrink-0 ml-1 items-center rounded-full px-2 py-0.5 text-[9px] font-semibold tracking-[0.8px] whitespace-nowrap ${isActive ? "bg-[#00450D] text-white" : "invisible"}`}>
             ACTIVE
           </div>
         </div>

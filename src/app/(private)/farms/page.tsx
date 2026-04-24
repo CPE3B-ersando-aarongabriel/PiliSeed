@@ -189,7 +189,7 @@ export default function FarmsPage() {
   const createFarm = async (
     name: string,
     location: string,
-    geocode?: SelectedGeocodeLocation | null,
+    geocode: SelectedGeocodeLocation | null,
   ) => {
     if (!currentUser) {
       setPageError("Sign in to add farms.");
@@ -238,7 +238,7 @@ export default function FarmsPage() {
   const handleAddFarmFromModal = (
     name: string,
     location: string,
-    geocode?: SelectedGeocodeLocation | null,
+    geocode: SelectedGeocodeLocation | null,
   ) => {
     if (isDuplicateFarm(name, location)) {
       toast.error("A farm with this name or location already exists");
@@ -334,6 +334,7 @@ export default function FarmsPage() {
           onAdd={handleAddFarmFromModal}
           currentFarmCount={farms.length}
           maxFarms={MAX_FARMS}
+          currentUser={currentUser}
         />
 
         {farms.map((farm, index) => (
