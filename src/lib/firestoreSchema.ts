@@ -72,6 +72,10 @@ export type Farm = {
   uid: string;
   name: string;
   location: string | null;
+  locationLatitude: number | null;
+  locationLongitude: number | null;
+  locationConfidence: number | null;
+  locationSource: string | null;
   isActive: boolean;
   createdAt: string | null;
   updatedAt: string | null;
@@ -209,12 +213,20 @@ type UserProfileUpdates = {
 type FarmCreateInput = {
   name: string;
   location?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
+  locationConfidence?: number | null;
+  locationSource?: string | null;
   isActive?: boolean;
 };
 
 type FarmUpdateInput = {
   name?: string;
   location?: string | null;
+  locationLatitude?: number | null;
+  locationLongitude?: number | null;
+  locationConfidence?: number | null;
+  locationSource?: string | null;
   isActive?: boolean;
 };
 
@@ -379,6 +391,10 @@ function toFarm(id: string, data: DocumentData): Farm {
     uid: normalizeText(data.uid, 128) ?? "",
     name: normalizeText(data.name, 120) ?? "Untitled Farm",
     location: normalizeText(data.location, 180),
+    locationLatitude: toNullableNumber(data.locationLatitude),
+    locationLongitude: toNullableNumber(data.locationLongitude),
+    locationConfidence: toNullableNumber(data.locationConfidence),
+    locationSource: normalizeText(data.locationSource, 80),
     isActive: data.isActive === true,
     createdAt: toIsoString(data.createdAt),
     updatedAt: toIsoString(data.updatedAt),
@@ -911,6 +927,10 @@ export async function createFarm(
     uid,
     name: normalizeText(input.name, 120),
     location: normalizeText(input.location, 180),
+    locationLatitude: toNullableNumber(input.locationLatitude),
+    locationLongitude: toNullableNumber(input.locationLongitude),
+    locationConfidence: toNullableNumber(input.locationConfidence),
+    locationSource: normalizeText(input.locationSource, 80),
     isActive: shouldBeActive,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -963,6 +983,22 @@ export async function updateFarmByIdForUser(
 
   if (Object.prototype.hasOwnProperty.call(updates, "location")) {
     updatePayload.location = normalizeText(updates.location, 180);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "locationLatitude")) {
+    updatePayload.locationLatitude = toNullableNumber(updates.locationLatitude);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "locationLongitude")) {
+    updatePayload.locationLongitude = toNullableNumber(updates.locationLongitude);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "locationConfidence")) {
+    updatePayload.locationConfidence = toNullableNumber(updates.locationConfidence);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(updates, "locationSource")) {
+    updatePayload.locationSource = normalizeText(updates.locationSource, 80);
   }
 
   if (Object.prototype.hasOwnProperty.call(updates, "isActive")) {

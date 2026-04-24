@@ -8,6 +8,7 @@ import DashboardFarm from "@/components/layout/dashboard/DashboardFarm";
 import DashboardWeather from "@/components/layout/dashboard/DashboardWeather";
 import DashboardYieldPred from "@/components/layout/dashboard/DashboardYieldPred";
 import { CloudSun, Sparkles } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/apiClient";
 import type {
   FarmMarketApiData,
   MarketSnapshot,
@@ -164,7 +165,9 @@ async function fetchWithAuth<T>(url: string, user: User): Promise<T> {
 
   if (!res.ok) {
     const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to fetch");
+    throw new Error(
+      getApiErrorMessage(errorData, "Failed to fetch"),
+    );
   }
 
   const result = await res.json();

@@ -8,6 +8,10 @@ export type NormalizedGeocodeResult = {
   source: string;
 };
 
+export type SelectedGeocodeLocation = NormalizedGeocodeResult & {
+  queryText: string;
+};
+
 export type NormalizedWeatherSnapshot = {
   temperatureC: number | null;
   humidity: number | null;
